@@ -1,0 +1,180 @@
+# وِرْدي (Wirdi) — Daily Quran Wird Tracking
+
+## 🏗️ Structure
+
+**Monorepo:** `apps/client` (React), `apps/backend` (NestJS), `packages/shared` (DTOs only)
+
+---
+
+## 🌍 Global
+
+- **Single source of truth** → `packages/shared`
+- No DTO duplication
+- Customize types via `Pick` / `Omit` / `Partial` only
+- Client & backend share contracts
+
+---
+
+## 🌱 Domain
+
+Wirdi tracks daily Quran recitation (wird) in study groups.
+
+- **Roles:** `ADMIN` / `MODERATOR` / `STUDENT` (no TUTOR)
+- **Week** = Saturday → Thursday (6 days, `dayNumber` 0–5 where 0 = Sunday... max 5, no Friday)
+- **StudentWird** = one record per student per day per week (`ATTENDED` / `MISSED` / `LATE`)
+- **GroupMember** = student in a group with an optional mate (الزميل المقروء عليه)
+- **Request** = `EXCUSE` or `ACTIVATION` request by a student, reviewed by a moderator
+- All timestamps stored as UTC; display in `User.timezone`
+- Week `startDate` is always Saturday; `endDate` auto-calculated as start + 5 days
+
+---
+
+## ⚛️ Client Stack
+
+React 19, Vite, TS, Tailwind v4, shadcn/ui, React Router v7
+
+---
+
+## 📦 Client Architecture
+
+- **One feature = one module**
+- Modules live in `src/modules/*`
+- `src/components/ui` is only for generic, app-wide UI primitives (no feature/business logic)
+- Every module owns its components inside `src/modules/[module]/components`
+- Use Atomic Design inside modules (`atoms`, `molecules`, `organisms`) when needed
+- If another module needs a component, export it from that module public API (`src/modules/[module]/index.ts`)
+- Avoid deep cross-module imports; consume only module public exports
+- Types → `@wirdi/shared` or module-local
+
+---
+
+## 🔐 Zod Schemas
+
+- All schemas live in `packages/shared/src/validation/` as factory functions `schema(locale?: 'ar' | 'en')` (default `'ar'`); import directly from `@wirdi/shared`
+- Backend: import directly from `@wirdi/shared` and call with `'en'` inline — no local validation wrapper files
+- Create `modules/[module]/utils/[module].validation.ts` **only** for client- or backend-only extensions; import shared schema and extend it with Zod's `.extend()` or `.merge()`
+
+---
+
+## 📋 Forms
+
+- you must use react-hook-form for any forms small or large
+- Use `FormField` for dynamic fields
+- Lives in `src/components/forms/form-field.tsx`
+
+---
+
+## 🎨 MVVM
+
+- **View** = JSX only
+- **ViewModel** = logic/state/actions (usually in `hooks/` or `view-model/`)
+- No business logic in View components
+- View components receive prepared state/handlers from ViewModel
+- Keep components small, focused, and easy to read
+- Atomic Design for components
+- Small, focused components
+
+---
+
+## 🎨 Design / Tailwind
+
+- `index.css` = Tailwind source
+- Tailwind v4 only (`@import 'tailwindcss'`, `@theme inline`, `@custom-variant`)
+- Prefer tokens from `index.css` and semantic utilities (`bg-background`, `text-foreground`, etc.)
+- Avoid arbitrary values unless required for Radix/Base UI CSS variables or advanced state selectors
+- Minimal layout classes
+- use simple flex box with no much elements and wrapper just style the elements with tokens and CVA variants or make wrapper div if needed
+- No shadcn overrides
+
+---
+
+## 🧩 shadcn
+
+- shadcn only (via MCP)
+- Use CVA for variants/colors for the components similar to button, badge, etc
+- Extend before creating
+
+---
+
+## 📝 Components / HTML
+
+- No native HTML elements
+- Always use reusable components or shadcn
+- Single source of truth
+- No inline styles
+- Keep code simple, readable, and short and no too much nesting and wrapper
+- Follow React best practices and patterns
+
+---
+
+## 🔄 Data Fetching
+
+- **GET** → `useApiQuery`
+- **Mutations** → `useApiMutation`
+- Query keys centralized
+- Mutations invalidate cache
+- No raw TanStack hooks
+
+---
+
+## ⚠️ Mutations
+
+- All mutations require `ConfirmDialog` Component
+- No execution without confirmation
+- after mutation fire `toast` with success or error message
+
+## ⚠️ Forbidden Practices
+
+- No `useEffect` unless there is no safer alternative
+
+## 🔧 Backend
+
+- always use existing modules if exist or create with Nest CLI `nest g res modules/[name] --no-spec`
+- Shared DTOs only
+- `DatesAsObjects` backend-only
+- we have 2 global guards applied AuthGuard, RolesGuard but we have decorators for customization them
+- we have zod-validation pipe for any DTO or Query and it should only applied Route parameter not route handler
+- we have user decorator that extract user info from request and attach it to request object use it in your controllers don't add any custom logic
+- must use prisma transactions for multi-step operations or operations that modify multiple tables
+- Use an Orchestrator module for multi-domain workflows, and wrap all related writes in a single Prisma transaction for atomicity
+
+---
+
+## ✅ Review Checklist
+
+- [ ] Module structure
+- [ ] No duplicated types
+- [ ] MVVM respected
+- [ ] shadcn + CVA only
+- [ ] Tokens + minimal Tailwind
+- [ ] Standard API hooks
+- [ ] Cache invalidation
+- [ ] ConfirmDialog present
+
+---
+
+## 💡 Principles
+
+- Modular, DRY, strict separation
+- Consistency > creativity
+- Simple, reusable
+- No READMEs
+- No `DatesAsObjects` on client
+
+## important - for handling Date
+
+Store all event timestamps in DB as UTC (DATETIME).
+
+Use `User.timezone` for displaying dates in the UI.
+
+Week periods: Saturday (start) → Thursday (end), `dayNumber` is 0-indexed (0 = Sunday... no Friday = no day 6).
+
+Do not store Friday as a valid `dayNumber`.
+
+Use only shared `date.util` (Luxon-based) for all date logic.
+
+Use only shared `timezone.util` for timezone operations.
+
+Do not add any date/time libraries in client or backend apps.
+
+Return date values in responses exactly as stored in DB (UTC).

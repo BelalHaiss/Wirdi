@@ -1,0 +1,2 @@
+pnpm lint-staged --config lint-staged.config.cjs
+pnpm typecheck

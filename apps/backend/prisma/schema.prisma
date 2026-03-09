@@ -1,0 +1,179 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+  // generatedFileExtension = "ts" // we need this when run tests 
+  // importFileExtension = "ts" // we need this when run tests
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        String   @id @default(ulid())
+  username  String?  @unique @db.VarChar(50)
+  name      String   @db.VarChar(100)
+  password  String?  @db.VarChar(255)
+  role      UserRole
+  timezone  String   @default("Africa/Cairo") @db.VarChar(50)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Group moderator relation
+  moderatedGroups Group[] @relation("GroupModerator")
+
+  // GroupMember relations (student enrolled, or listed as mate)
+  groupMemberships  GroupMember[] @relation("GroupMemberStudent")
+  mateInMemberships GroupMember[] @relation("GroupMemberMate")
+
+  // StudentWird relations (owns the wird, or is the mate read upon)
+  studentWirds StudentWird[] @relation("StudentWirdOwner")
+  wirdReadUpon StudentWird[] @relation("StudentWirdMate")
+
+  // Request relations (student making request, or moderator reviewing)
+  submittedRequests Request[] @relation("RequestStudent")
+  reviewedRequests  Request[] @relation("RequestReviewer")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Group {
+  id          String      @id @default(ulid())
+  name        String      @db.VarChar(100)
+  timezone    String      @db.VarChar(50)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  awrad       Json?
+  moderatorId String?     @map("moderator_id")
+  status      GroupStatus @default(ACTIVE)
+  description String?     @db.VarChar(500)
+
+  moderator User?         @relation("GroupModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  members   GroupMember[]
+  weeks     Week[]
+  requests  Request[]
+
+  @@index([moderatorId])
+  @@index([status])
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String   @id @default(ulid())
+  groupId   String   @map("group_id")
+  studentId String   @map("student_id")
+  mateId    String?  @map("mate_id")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student User  @relation("GroupMemberStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  mate    User? @relation("GroupMemberMate", fields: [mateId], references: [id], onDelete: SetNull)
+
+  @@unique([groupId, studentId])
+  @@index([studentId])
+  @@index([mateId])
+  @@map("group_members")
+}
+
+model Week {
+  id         String   @id @default(ulid())
+  groupId    String   @map("group_id")
+  weekNumber Int      @map("week_number")
+  startDate  DateTime @map("start_date") @db.Date
+  endDate    DateTime @map("end_date") @db.Date
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  group          Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  scheduleImages ScheduleImage[]
+  studentWirds   StudentWird[]
+
+  @@unique([groupId, weekNumber])
+  @@unique([groupId, startDate])
+  @@index([groupId])
+  @@map("weeks")
+}
+
+model ScheduleImage {
+  id        String   @id @default(ulid())
+  weekId    String   @map("week_id")
+  name      String   @db.VarChar(100)
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  week Week @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@index([weekId])
+  @@map("schedule_images")
+}
+
+model StudentWird {
+  id           String     @id @default(ulid())
+  studentId    String     @map("student_id")
+  weekId       String     @map("week_id")
+  dayNumber    Int        @map("day_number") @db.TinyInt
+  status       WirdStatus
+  readOnMateId String?    @map("read_on_mate_id")
+  recordedAt   DateTime   @map("recorded_at")
+
+  student    User  @relation("StudentWirdOwner", fields: [studentId], references: [id], onDelete: Cascade)
+  week       Week  @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  readOnMate User? @relation("StudentWirdMate", fields: [readOnMateId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, weekId, dayNumber])
+  @@index([studentId])
+  @@index([weekId])
+  @@map("student_wirds")
+}
+
+model Request {
+  id         String        @id @default(ulid())
+  studentId  String        @map("student_id")
+  groupId    String        @map("group_id")
+  type       RequestType
+  reason     String?       @db.Text
+  status     RequestStatus @default(PENDING)
+  reviewedBy String?       @map("reviewed_by")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  reviewedAt DateTime?     @map("reviewed_at")
+
+  student  User  @relation("RequestStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("RequestReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([groupId])
+  @@index([status])
+  @@map("requests")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  MODERATOR
+  STUDENT
+}
+
+enum GroupStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum WirdStatus {
+  ATTENDED
+  MISSED
+  LATE
+}
+
+enum RequestType {
+  EXCUSE
+  ACTIVATION
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
