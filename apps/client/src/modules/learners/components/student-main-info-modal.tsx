@@ -155,7 +155,7 @@ export function StudentMainInfoModal({
           onOpenChange(nextOpen);
         }}
       >
-        <DialogContent dir='rtl' className='w-full sm:max-w-lg'>
+        <DialogContent className='w-full sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
@@ -224,6 +224,7 @@ export function StudentMainInfoModal({
               {!isViewMode ? (
                 <Button
                   type='submit'
+                  color='success'
                   disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}
                 >
                   {isLoading ? 'جاري الحفظ...' : 'حفظ'}

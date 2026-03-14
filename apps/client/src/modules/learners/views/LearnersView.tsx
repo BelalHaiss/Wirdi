@@ -14,7 +14,7 @@ import {
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { StudentTableItem } from '@/modules/learners/components/student-table-item';
 import { StudentMainInfoModal } from '@/modules/learners/components/student-main-info-modal';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import type { StudentMainInfoSubmitArgs } from '@/modules/learners/components/student-main-info-modal';
 import { useLearnersViewModel } from '../viewmodels/learners.viewmodel';
 
 export default function LearnersView() {
@@ -27,6 +27,11 @@ export default function LearnersView() {
       </Alert>
     );
   }
+
+  const handleCreateSubmit = async (args: StudentMainInfoSubmitArgs) => {
+    if (args.mode !== 'create') return;
+    await vm.submitCreate(args.data);
+  };
 
   return (
     <div className='space-y-4'>
@@ -86,8 +91,9 @@ export default function LearnersView() {
                 learner={learner}
                 showActions={vm.canManageLearners}
                 onClick={vm.openViewModal}
-                onEdit={vm.openEditModal}
-                onDelete={vm.setLearnerPendingDelete}
+                onEditSubmit={(data) => vm.updateLearner(learner.id, data)}
+                onDeleteConfirm={() => vm.deleteLearner(learner.id)}
+                isUpdating={vm.isUpdatingLearner}
               />
             ))
           )}
@@ -101,32 +107,14 @@ export default function LearnersView() {
         disabled={vm.isLoading || vm.isRefreshing}
       />
 
+      {/* View / Create modal */}
       <StudentMainInfoModal
         open={vm.isStudentModalOpen}
         onOpenChange={vm.setIsStudentModalOpen}
         mode={vm.studentModalMode}
         learner={vm.selectedLearner}
-        onSubmit={vm.submitLearner}
-        isLoading={vm.isSubmittingLearner}
-      />
-
-      <ConfirmDialog
-        open={Boolean(vm.learnerPendingDelete)}
-        onOpenChange={(open) => {
-          if (!open) {
-            vm.setLearnerPendingDelete(null);
-          }
-        }}
-        title='حذف المتعلم'
-        description={
-          vm.learnerPendingDelete
-            ? `هل تريد حذف "${vm.learnerPendingDelete.name}"؟`
-            : 'هل تريد حذف هذا المتعلم؟'
-        }
-        confirmText='حذف'
-        cancelText='إلغاء'
-        intent='destructive'
-        onConfirm={vm.confirmDeleteLearner}
+        onSubmit={vm.studentModalMode === 'create' ? handleCreateSubmit : undefined}
+        isLoading={vm.isSubmittingCreate}
       />
     </div>
   );

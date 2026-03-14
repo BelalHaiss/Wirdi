@@ -9,7 +9,6 @@ import argon from 'argon2';
 import { DatabaseService } from '../database/database.service';
 import {
   ChangeOwnPasswordDto,
-  CountDto,
   CreateStaffUserDto,
   CreateLearnerDto,
   DEFAULT_TIMEZONE,
@@ -262,6 +261,13 @@ export class UserService {
           notes: true,
           createdAt: true,
           updatedAt: true,
+          groupMemberships: {
+            select: {
+              group: {
+                select: { id: true, name: true },
+              },
+            },
+          },
         },
       }),
       this.prismaService.user.count({ where }),
@@ -324,19 +330,6 @@ export class UserService {
     if (deletedLearnersCount.count === 0) {
       throw new NotFoundException('Learner not found');
     }
-  }
-
-  async getLearnersCount(): Promise<number> {
-    return this.prismaService.user.count({
-      where: {
-        role: UserRole.STUDENT,
-      },
-    });
-  }
-
-  async getLearnersCountDto(): Promise<CountDto> {
-    const count = await this.getLearnersCount();
-    return { count };
   }
 
   private assertActorCanManageStaff(actor: User): void {
@@ -417,7 +410,13 @@ export class UserService {
     notes: string | null;
     createdAt: Date;
     updatedAt: Date;
+    groupMemberships?: { group: { id: string; name: string } }[];
   }): LearnerDto {
+    const groups = (user.groupMemberships ?? []).map((m) => ({
+      id: m.group.id,
+      name: m.group.name,
+    }));
+
     return {
       id: user.id,
       name: user.name,
@@ -426,8 +425,8 @@ export class UserService {
       contact: {
         notes: user.notes ?? undefined,
       },
-      groupCount: 0,
-      groups: [],
+      groupCount: groups.length,
+      groups,
       createdAt: user.createdAt.toISOString() as ISODateString,
       updatedAt: user.updatedAt.toISOString() as ISODateString,
     };

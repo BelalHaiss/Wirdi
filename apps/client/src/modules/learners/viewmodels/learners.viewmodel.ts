@@ -7,13 +7,7 @@ import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { queryClient, queryKeys } from '@/lib/query-client';
 import { learnerService } from '../services/learner.service';
 
-export type LearnerModalMode = 'view' | 'edit' | 'create';
-
-export type SubmitLearnerArgs = {
-  mode: 'create' | 'edit';
-  learnerId?: string;
-  data: CreateLearnerDto | UpdateLearnerDto;
-};
+export type LearnerModalMode = 'view' | 'create';
 
 const PAGE_SIZE = 10;
 
@@ -26,7 +20,6 @@ export function useLearnersViewModel() {
   const [selectedLearner, setSelectedLearner] = useState<LearnerDto | null>(null);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [studentModalMode, setStudentModalMode] = useState<LearnerModalMode>('view');
-  const [learnerPendingDelete, setLearnerPendingDelete] = useState<LearnerDto | null>(null);
 
   const learnersQuery = useApiQuery<LearnerDto[]>({
     queryKey: queryKeys.learners.list({
@@ -84,43 +77,19 @@ export function useLearnersViewModel() {
     setIsStudentModalOpen(true);
   };
 
-  const openEditModal = (learner: LearnerDto) => {
-    if (!canManageLearners) {
-      return;
-    }
-
-    setSelectedLearner(learner);
-    setStudentModalMode('edit');
-    setIsStudentModalOpen(true);
+  const submitCreate = async (data: CreateLearnerDto) => {
+    if (!canManageLearners) throw new Error('غير مصرح لك بتنفيذ العملية');
+    await createLearnerMutation.mutateAsync(data);
   };
 
-  const submitLearner = async (args: SubmitLearnerArgs) => {
-    if (!canManageLearners) {
-      throw new Error('غير مصرح لك بتنفيذ العملية');
-    }
-
-    if (args.mode === 'create') {
-      await createLearnerMutation.mutateAsync(args.data as CreateLearnerDto);
-      return;
-    }
-
-    if (!args.learnerId) {
-      throw new Error('معرف المتعلم غير موجود');
-    }
-
-    await updateLearnerMutation.mutateAsync({
-      id: args.learnerId,
-      data: args.data as UpdateLearnerDto,
-    });
+  const updateLearner = async (id: string, data: UpdateLearnerDto) => {
+    if (!canManageLearners) throw new Error('غير مصرح لك بتنفيذ العملية');
+    await updateLearnerMutation.mutateAsync({ id, data });
   };
 
-  const confirmDeleteLearner = async () => {
-    if (!canManageLearners || !learnerPendingDelete) {
-      return;
-    }
-
-    await deleteLearnerMutation.mutateAsync(learnerPendingDelete.id);
-    setLearnerPendingDelete(null);
+  const deleteLearner = async (id: string) => {
+    if (!canManageLearners) return;
+    await deleteLearnerMutation.mutateAsync(id);
   };
 
   return {
@@ -143,14 +112,13 @@ export function useLearnersViewModel() {
     studentModalMode,
     openCreateModal,
     openViewModal,
-    openEditModal,
-    submitLearner,
+    submitCreate,
 
-    learnerPendingDelete,
-    setLearnerPendingDelete,
-    confirmDeleteLearner,
+    updateLearner,
+    deleteLearner,
 
-    isSubmittingLearner: createLearnerMutation.isPending || updateLearnerMutation.isPending,
+    isSubmittingCreate: createLearnerMutation.isPending,
+    isUpdatingLearner: updateLearnerMutation.isPending,
     isDeletingLearner: deleteLearnerMutation.isPending,
   };
 }

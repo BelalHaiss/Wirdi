@@ -21,8 +21,8 @@ export interface User {
   email?: string;
   role: UserRole;
   timezone: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
   profile?: UserProfile;
 }
 
@@ -77,8 +77,8 @@ export interface StaffUserDto {
   name: string;
   role: UserAuthRole;
   timezone: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
 }
 
 export interface CreateStaffUserDto {

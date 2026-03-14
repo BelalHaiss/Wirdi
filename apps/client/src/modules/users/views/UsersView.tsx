@@ -58,7 +58,7 @@ function UsersView() {
             </DialogTrigger>
           }
         />
-        <DialogContent className='w-full sm:max-w-md' dir='rtl'>
+        <DialogContent className='w-full sm:max-w-md'>
           <DialogHeader>
             <DialogTitle>{vm.editingUser ? 'تعديل مستخدم' : 'إضافة مستخدم جديد'}</DialogTitle>
             <DialogDescription>
@@ -128,7 +128,7 @@ function UsersView() {
             </div>
 
             <DialogFooter>
-              <Button type='submit' disabled={vm.isSubmitting || !vm.canSubmitForm}>
+              <Button type='submit' color='success' disabled={vm.isSubmitting || !vm.canSubmitForm}>
                 {vm.editingUser ? 'حفظ التعديلات' : 'إضافة'}
               </Button>
             </DialogFooter>
@@ -186,6 +186,7 @@ function UsersView() {
                       <Button
                         variant='ghost'
                         size='sm'
+                        color='warning'
                         onClick={() => vm.openEditDialog(userItem)}
                         disabled={!canManage}
                         className='h-8 w-8 p-0'
@@ -195,9 +196,10 @@ function UsersView() {
                       <Button
                         variant='ghost'
                         size='sm'
+                        color='danger'
                         onClick={() => vm.setPendingDeleteUser(userItem)}
                         disabled={!canManage}
-                        className='h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20'
+                        className='h-8 w-8 p-0'
                       >
                         <Trash2 className='w-4 h-4' />
                       </Button>

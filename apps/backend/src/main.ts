@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ResponseInterceptor } from './interceptor/response.interceptor';
 import {
   HttpExceptionFilter,
+  ImageKitExceptionFilter,
   PrismaExceptionFilter,
   UncaughtExceptionFilter,
   ZodExceptionFilter,
@@ -26,6 +27,7 @@ async function bootstrap() {
 
   app.useGlobalFilters(
     new UncaughtExceptionFilter(appLogger),
+    new ImageKitExceptionFilter(appLogger),
     new PrismaExceptionFilter(appLogger),
     new ZodExceptionFilter(appLogger),
     new HttpExceptionFilter(appLogger)

@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User } from '@wirdi/shared';
-import { LogOut, GraduationCap, Menu, X, Moon, Sun, UserCog, Settings } from 'lucide-react';
+import { LogOut, GraduationCap, Menu, X, Moon, Sun, UserCog, Settings, Users } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 import { cn } from '@/lib/utils';
@@ -24,6 +24,12 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
   const sidebarId = 'app-sidebar';
 
   const navigation = [
+    {
+      name: 'الحلقات',
+      href: '/groups',
+      icon: Users,
+      roles: ['ADMIN', 'MODERATOR', 'TUTOR'],
+    },
     {
       name: 'المستخدمون',
       href: '/users',
@@ -67,7 +73,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
   }, [isMobileMenuOpen]);
 
   return (
-    <div className='h-dvh overflow-hidden bg-muted/30' dir='rtl'>
+    <div className='h-dvh overflow-hidden bg-muted/30'>
       {/* Mobile Menu Button */}
       <Button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

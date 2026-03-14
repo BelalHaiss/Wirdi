@@ -2,6 +2,7 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { LoginView } from '@/modules/auth';
 import { UsersView, UserProfileView } from '@/modules/users';
 import { LearnersView } from '@/modules/learners';
+import { GroupsView, GroupDetailView, GroupLearnersView } from '@/modules/groups';
 import { RouteErrorElement } from '@/modules/observability';
 import { ProtectedLayout } from '@/components/ProtectedLayout';
 
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <LearnersView />,
+        element: <GroupsView />,
       },
       {
         path: 'users',
@@ -27,6 +28,18 @@ export const router = createBrowserRouter([
       {
         path: 'learners',
         element: <LearnersView />,
+      },
+      {
+        path: 'groups',
+        element: <GroupsView />,
+      },
+      {
+        path: 'groups/:id',
+        element: <GroupDetailView />,
+      },
+      {
+        path: 'groups/:id/learners',
+        element: <GroupLearnersView />,
       },
       {
         path: 'profile',

@@ -2,253 +2,188 @@ import { DateTime } from 'luxon';
 import {
   ISODateOnlyString,
   ISODateString,
-  MinutesFromMidnight,
   TimeMinutes,
+  MinutesFromMidnight,
   TimeHHMMString,
 } from '../types/api.types';
 
-export type DateInput = string | Date;
+export type DateInput = ISODateString | ISODateOnlyString | Date;
+
+// Known Luxon format tokens used across the codebase — extend as needed.
+// `string & {}` keeps it open while still providing autocomplete for the known values.
+export type LuxonToken =
+  | 'yyyy-MM-dd'
+  | 'yyyy-LL-dd'
+  | 'HH:mm'
+  | 'MMM'
+  | 'ccc'
+  | 'MMMM yyyy'
+  | 'dd/MM/yyyy'
+  | (string & {});
+
+export type SupportedLocale = 'ar-SA' | 'ar' | 'en' | (string & {});
 
 export type FormatDateParams = {
   date: DateInput;
-  token: string;
+  token: LuxonToken;
   timezone?: string;
-  locale?: string;
+  locale?: SupportedLocale;
 };
 
-export function getNowAsUTC(): string {
-  return DateTime.utc().toISO() || '';
+// ─── Core ──────────────────────────────────────────────────────────────────────
+
+export function getNowAsUTC(): ISODateString {
+  return DateTime.utc().toISO() as ISODateString;
 }
 
-export function formatDate({ date, token, timezone, locale }: FormatDateParams): string {
-  const parsedDate =
-    date instanceof Date ? DateTime.fromJSDate(date) : DateTime.fromISO(date, { setZone: true });
-  const zonedDate = timezone ? parsedDate.setZone(timezone) : parsedDate.toUTC();
-  const localizedDate = locale ? zonedDate.setLocale(locale) : zonedDate;
-
-  return localizedDate.toFormat(token);
+/** Parse any DateInput into a Luxon DateTime (defaults to utc zone) */
+function toDateTime(date: DateInput, zone = 'utc'): DateTime {
+  return date instanceof Date
+    ? DateTime.fromJSDate(date, { zone })
+    : DateTime.fromISO(date, { zone });
 }
 
-export function timeToStartMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-export function getTodayDayOfWeek(timezone: string): number {
-  // Luxon uses 1-7 (Monday-Sunday), convert to 0-6 (Sunday-Saturday)
-  const luxonDay = DateTime.now().setZone(timezone).weekday;
-  return luxonDay === 7 ? 0 : luxonDay;
-}
-
-export function fromUTC(utcString: string, timezone: string): DateTime {
+/** Convert UTC ISO string → DateTime shifted to the given timezone */
+export function fromUTC(utcString: ISODateString, timezone: string): DateTime {
   return DateTime.fromISO(utcString, { zone: 'utc' }).setZone(timezone);
 }
 
-/**
- * Format UTC Date to user timezone date and time
- * @param startedAt - UTC date (string or Date object)
- * @param timezone - IANA timezone
- * @returns Object with date (YYYY-MM-DD) and time as minutes from midnight
- */
-export function formatSessionDateAndTime(startedAt: Date | string, timezone: string) {
-  const utcString = startedAt instanceof Date ? startedAt.toISOString() : startedAt;
-  const dateTime = fromUTC(utcString, timezone);
-  const timeMinutes = dateTime.hour * 60 + dateTime.minute;
+// ─── Universal Formatter ───────────────────────────────────────────────────────
 
-  return {
-    date: dateTime.toFormat('yyyy-LL-dd') as ISODateOnlyString,
-    time: timeMinutes as TimeMinutes,
-  };
+/** Format any date with a Luxon token. Optionally shift to a timezone and/or locale. */
+export function formatDate({ date, token, timezone, locale }: FormatDateParams): string {
+  const dt = toDateTime(date, timezone ?? 'utc');
+  return (locale ? dt.setLocale(locale) : dt).toFormat(token);
 }
 
-/**
- * Format any ISO date string to date and time based on user timezone
- * @param isoDate - ISO date string
- * @param timezone - IANA timezone
- * @returns Object with date string and time as TimeMinutes
- */
-export function formatISODateToUserTimezone(
-  isoDate: ISODateString,
-  timezone: string
-): { date: string; time: TimeMinutes } {
-  return formatSessionDateAndTime(isoDate, timezone);
+// ─── Arabic Display Helpers ────────────────────────────────────────────────────
+
+/** Arabic long date e.g. "الأحد، 21 فبراير 2026" — uses toLocaleString, not a token */
+export function formatDateLongArabic(dateStr: ISODateOnlyString): string {
+  const dt = DateTime.fromISO(dateStr).setLocale('ar-SA');
+  if (!dt.isValid) return dateStr;
+  return dt.toLocaleString({ weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-/**
- * Get start and end of day in timezone
- * @param timezone - IANA timezone
- * @param date - Optional date string or DateTime (defaults to today)
- * @returns Object with DateTime and JS Date objects for start/end of day
- */
-export function getStartAndEndOfDay(
-  timezone: string,
-  date?: string | DateTime
-): {
-  startAsDatetime: DateTime;
-  startAsJSDate: Date;
-  endAsDatetime: DateTime;
-  endAsJSDate: Date;
-} {
-  let dt: DateTime;
-  if (typeof date === 'string') {
-    dt = DateTime.fromISO(date, { zone: timezone });
-  } else if (date) {
-    dt = date;
-  } else {
-    dt = DateTime.now().setZone(timezone);
-  }
-
-  const startOfDay = dt.startOf('day');
-  const endOfDay = dt.endOf('day');
-
-  return {
-    startAsDatetime: startOfDay,
-    endAsDatetime: endOfDay,
-    startAsJSDate: startOfDay.toUTC().toJSDate(),
-    endAsJSDate: endOfDay.toUTC().toJSDate(),
-  };
+/** Arabic date without weekday e.g. "21 فبراير 2026" */
+export function formatDateArabicNoWeekday(dateStr: ISODateOnlyString): string {
+  const dt = DateTime.fromISO(dateStr).setLocale('ar-SA');
+  if (!dt.isValid) return dateStr;
+  return dt.toLocaleString({ year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-/**
- * Combine date and time (as minutes from midnight) in timezone, return as UTC
- * @param dateStr - Date string (YYYY-MM-DD)
- * @param timeMinutes - Minutes from midnight (0-1439)
- * @param timezone - IANA timezone
- * @returns UTC ISO string
- */
-export function combineDateTime(
-  dateStr: string,
-  timeMinutes: TimeMinutes,
-  timezone: string
-): string {
-  const date = DateTime.fromISO(dateStr, { zone: timezone });
-  const hours = Math.floor(timeMinutes / 60);
-  const minutes = timeMinutes % 60;
-  return date.set({ hour: hours, minute: minutes }).toUTC().toISO()!;
+// ─── Date-Only String ──────────────────────────────────────────────────────────
+
+/** YYYY-MM-DD → JS Date */
+export function parseDateString(dateStr: ISODateOnlyString): Date | undefined {
+  const dt = DateTime.fromISO(dateStr);
+  return dt.isValid ? dt.toJSDate() : undefined;
 }
 
-/**
- * Convert minutes from midnight to 12-hour formatted time string with Arabic AM/PM
- * @param timeMinutes - Minutes from midnight (0-1439)
- * @returns Formatted time string (e.g., "02:30 م")
- */
+/** YYYY-MM-DD → JS Date at midnight UTC (for Prisma @db.Date fields and DB writes) */
+export function dateOnlyToUTC(dateStr: ISODateOnlyString): Date {
+  return DateTime.fromISO(dateStr, { zone: 'utc' }).toJSDate();
+}
+
+// ─── Time (minutes) ────────────────────────────────────────────────────────────
+
+/** "HH:mm" → minutes from midnight */
+export function timeStringToMinutes(timeStr: string): TimeMinutes {
+  const dt = DateTime.fromFormat(timeStr, 'HH:mm');
+  return (dt.hour * 60 + dt.minute) as TimeMinutes;
+}
+
+/** minutes from midnight → "HH:mm" (24h, for <input type="time">) */
+export function minutesToInputTimeString(timeMinutes: TimeMinutes): string {
+  return DateTime.fromObject({
+    hour: Math.floor(timeMinutes / 60),
+    minute: timeMinutes % 60,
+  }).toFormat('HH:mm');
+}
+
+/** minutes from midnight → Arabic 12h string e.g. "02:30 م" */
 export function minutesToTimeString(timeMinutes: TimeMinutes): TimeHHMMString {
   const hours = Math.floor(timeMinutes / 60);
   const minutes = timeMinutes % 60;
-
-  // Convert to 12-hour format
   const period = hours >= 12 ? 'م' : 'ص';
   const hours12 = hours % 12 || 12;
-
-  return `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(
-    2,
-    '0'
-  )} ${period}` as TimeHHMMString;
-}
-
-/**
- * Convert time string (HH:mm) to minutes from midnight
- * @param timeStr - Time string in 24-hour format (e.g., "14:30")
- * @returns Minutes from midnight
- */
-export function timeStringToMinutes(timeStr: string): TimeMinutes {
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return (hours * 60 + minutes) as TimeMinutes;
-}
-
-/**
- * Convert minutes from midnight to 24-hour time string for input fields
- * @param timeMinutes - Minutes from midnight (0-1439)
- * @returns 24-hour time string (e.g., "14:30")
- */
-export function minutesToInputTimeString(timeMinutes: TimeMinutes): string {
-  const hours = Math.floor(timeMinutes / 60);
-  const minutes = timeMinutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  return `${String(hours12).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}` as TimeHHMMString;
 }
 
 export function startMinutesToTime(startMinutes: MinutesFromMidnight): TimeHHMMString {
   return minutesToTimeString(startMinutes as TimeMinutes);
 }
 
-/**
- * Format date to short month name in Arabic
- * @param date - JavaScript Date object
- * @returns Short month name (e.g., "يناير")
- */
-export function formatMonthShort(date: Date): string {
-  const dt = DateTime.fromJSDate(date).setLocale('ar-SA');
-  return dt.toFormat('MMM');
+// ─── Session / Timezone ────────────────────────────────────────────────────────
+
+/** Converts a UTC datetime → { date, time } in the given timezone */
+export function formatSessionDateAndTime(startedAt: Date | ISODateString, timezone: string) {
+  const dt =
+    startedAt instanceof Date
+      ? DateTime.fromJSDate(startedAt, { zone: 'utc' }).setZone(timezone)
+      : fromUTC(startedAt, timezone);
+  return {
+    date: dt.toFormat('yyyy-LL-dd') as ISODateOnlyString,
+    time: (dt.hour * 60 + dt.minute) as TimeMinutes,
+  };
 }
 
-/**
- * Format date to weekday name in Arabic
- * @param date - JavaScript Date object
- * @returns Short weekday name (e.g., "الأحد")
- */
-export function formatWeekdayName(date: Date): string {
-  const dt = DateTime.fromJSDate(date).setLocale('ar-SA');
-  return dt.toFormat('ccc');
+/** 0-indexed day of week in user's timezone (0 = Sunday … 6 = Saturday, no Friday) */
+export function getTodayDayOfWeek(timezone: string): number {
+  const day = DateTime.now().setZone(timezone).weekday;
+  return day === 7 ? 0 : day;
 }
 
-/**
- * Format date to month and year in Arabic
- * @param date - JavaScript Date object
- * @returns Full month and year (e.g., "يناير 2026")
- */
-export function formatMonthYear(date: Date): string {
-  const dt = DateTime.fromJSDate(date).setLocale('ar-SA');
-  return dt.toFormat('MMMM yyyy');
+export function getStartAndEndOfDay(
+  timezone: string,
+  date?: ISODateOnlyString | DateTime
+): {
+  startAsDatetime: DateTime;
+  startAsJSDate: Date;
+  endAsDatetime: DateTime;
+  endAsJSDate: Date;
+} {
+  const dt =
+    typeof date === 'string'
+      ? DateTime.fromISO(date, { zone: timezone })
+      : (date ?? DateTime.now().setZone(timezone));
+  return {
+    startAsDatetime: dt.startOf('day'),
+    endAsDatetime: dt.endOf('day'),
+    startAsJSDate: dt.startOf('day').toUTC().toJSDate(),
+    endAsJSDate: dt.endOf('day').toUTC().toJSDate(),
+  };
 }
 
-/**
- * Parse date string (YYYY-MM-DD) to Date object
- * @param dateStr - Date string in YYYY-MM-DD format
- * @returns JavaScript Date object or undefined
- */
-export function parseDateString(dateStr: string): Date | undefined {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  if (!year || !month || !day) return undefined;
-
-  return new Date(year, month - 1, day);
+/** Combine YYYY-MM-DD + minutes-from-midnight in a timezone → UTC ISODateString */
+export function combineDateTime(
+  dateStr: ISODateOnlyString,
+  timeMinutes: TimeMinutes,
+  timezone: string
+): ISODateString {
+  return DateTime.fromISO(dateStr, { zone: timezone })
+    .set({ hour: Math.floor(timeMinutes / 60), minute: timeMinutes % 60 })
+    .toUTC()
+    .toISO() as ISODateString;
 }
 
-/**
- * Format Date object to YYYY-MM-DD string
- * @param date - JavaScript Date object
- * @returns Date string in YYYY-MM-DD format
- */
-export function formatDateToISOString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+// ─── Week / Saturday Utilities ─────────────────────────────────────────────────
+
+// Luxon: Saturday = weekday 6
+export function isSaturday(dateStr: ISODateOnlyString): boolean {
+  return DateTime.fromISO(dateStr, { zone: 'utc' }).weekday === 6;
 }
 
-/**
- * Format date to Arabic long format for display
- * @param dateStr - Date string in YYYY-MM-DD format
- * @returns Arabic formatted date (e.g., "الأحد، 21 فبراير 2026")
- */
-export function formatDateLongArabic(dateStr: string): string {
-  const date = parseDateString(dateStr);
-  if (!date) return dateStr;
-  const dt = DateTime.fromJSDate(date).setLocale('ar-SA');
-  return dt.toLocaleString({
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+export function addDaysToDateStr(dateStr: ISODateOnlyString, days: number): ISODateOnlyString {
+  return DateTime.fromISO(dateStr, { zone: 'utc' })
+    .plus({ days })
+    .toFormat('yyyy-MM-dd') as ISODateOnlyString;
 }
 
-/**
- * Format ISO date string to short date format (DD/MM/YYYY)
- * @param isoDate - ISO date string
- * @param timezone - IANA timezone
- * @returns Short date format (e.g., "21/02/2026")
- */
-export function formatDateShort(isoDate: ISODateString, timezone: string): string {
-  const dt = DateTime.fromISO(isoDate).setZone(timezone);
-  return dt.toFormat('dd/MM/yyyy');
+export function getNextSaturdayFrom(saturdayDateStr: ISODateOnlyString): ISODateOnlyString {
+  return addDaysToDateStr(saturdayDateStr, 7);
+}
+
+export function isDateTodayOrFuture(dateStr: ISODateOnlyString): boolean {
+  return DateTime.fromISO(dateStr, { zone: 'utc' }).startOf('day') >= DateTime.utc().startOf('day');
 }

@@ -18,6 +18,7 @@ const buttonVariants = cva(
       color: {
         primary: '',
         success: '',
+        warning: '',
         danger: '',
         muted: '',
       },
@@ -45,6 +46,11 @@ const buttonVariants = cva(
       },
       {
         variant: 'solid',
+        color: 'warning',
+        className: 'bg-warning text-warning-foreground hover:bg-warning/90',
+      },
+      {
+        variant: 'solid',
         color: 'danger',
         className: 'bg-danger text-danger-foreground hover:bg-danger/90',
       },
@@ -63,6 +69,11 @@ const buttonVariants = cva(
         variant: 'outline',
         color: 'success',
         className: 'bg-background shadow-xs border-success/30 text-success hover:bg-success/10',
+      },
+      {
+        variant: 'outline',
+        color: 'warning',
+        className: 'bg-background shadow-xs border-warning/40 text-warning hover:bg-warning/10',
       },
       {
         variant: 'outline',
@@ -88,6 +99,11 @@ const buttonVariants = cva(
       },
       {
         variant: 'ghost',
+        color: 'warning',
+        className: 'text-warning hover:bg-warning/10',
+      },
+      {
+        variant: 'ghost',
         color: 'danger',
         className: 'text-danger hover:bg-danger/10',
       },
@@ -106,6 +122,11 @@ const buttonVariants = cva(
         variant: 'soft',
         color: 'success',
         className: 'bg-success/10 text-success hover:bg-success/15',
+      },
+      {
+        variant: 'soft',
+        color: 'warning',
+        className: 'bg-warning/10 text-warning hover:bg-warning/15',
       },
       {
         variant: 'soft',

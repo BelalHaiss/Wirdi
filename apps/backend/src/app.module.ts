@@ -12,6 +12,9 @@ import { ObservabilityModule } from './modules/observability/observability.modul
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { resolve } from 'path';
+import { GroupMemberModule } from './modules/group-member/group-member.module';
+import { GroupModule } from './modules/group/group.module';
+import { FileModule } from './modules/file/file.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { resolve } from 'path';
     UserModule,
     LoggingModule,
     ObservabilityModule,
+    GroupMemberModule,
+    GroupModule,
+    FileModule,
   ],
   providers: [
     {

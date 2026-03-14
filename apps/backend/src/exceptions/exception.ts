@@ -12,6 +12,7 @@ import { isDevelopment } from 'src/utils/util';
 import { ApiErrorResponse, getNowAsUTC } from '@wirdi/shared';
 import { Prisma } from 'generated/prisma/client';
 import { AppLogger } from 'src/modules/logging/app-logger.service';
+import { APIError } from '@imagekit/nodejs';
 
 // Error response type for exception handling
 
@@ -250,5 +251,44 @@ export class UncaughtExceptionFilter implements ExceptionFilter {
     });
 
     return res.status(status).json(errorResponse);
+  }
+}
+@Injectable()
+@Catch(APIError)
+export class ImageKitExceptionFilter implements ExceptionFilter {
+  constructor(private readonly appLogger: AppLogger) {}
+
+  catch(exception: APIError, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const res = ctx.getResponse<Response>();
+    const req = ctx.getRequest<Request>();
+
+    const status =
+      typeof exception.status === 'number' && exception.status >= 400
+        ? exception.status
+        : HttpStatus.BAD_GATEWAY;
+
+    const error: ApiErrorResponse = {
+      timestamp: new Date().toISOString(),
+      success: false,
+      statusCode: status,
+      path: req.url,
+      message: 'We couldn’t handle your image upload right now. Please try again later',
+    };
+
+    this.appLogger.logBackendError({
+      source: 'backend',
+      context: 'ImageKitExceptionFilter',
+      message: exception.message,
+      timestamp: error.timestamp,
+      statusCode: status,
+      method: req.method,
+      path: req.url,
+      stack: exception instanceof Error ? exception.stack : undefined,
+      requestId: extractRequestId(req),
+      userId: req.user?.id,
+    });
+
+    return res.status(status).json(error);
   }
 }

@@ -17,6 +17,7 @@ type Messages = {
   invalidTime: string;
   invalidTimezone: string;
   atLeastOneField: string;
+  awradMin: string;
   currentPasswordRequired: string;
   confirmPasswordRequired: string;
   passwordMismatch: string;
@@ -46,6 +47,7 @@ export const validationMessages: Record<ValidationLocale, Messages> = {
     invalidTime: 'الوقت غير صحيح',
     invalidTimezone: 'يرجى اختيار منطقة زمنية صحيحة',
     atLeastOneField: 'قم بتعديل حقل واحد على الأقل',
+    awradMin: 'يجب اختيار ورد واحد على الأقل',
     currentPasswordRequired: 'كلمة المرور الحالية مطلوبة',
     confirmPasswordRequired: 'تأكيد كلمة المرور مطلوب',
     passwordMismatch: 'كلمة المرور غير متطابقة',
@@ -73,6 +75,7 @@ export const validationMessages: Record<ValidationLocale, Messages> = {
     invalidTime: 'Invalid time',
     invalidTimezone: 'Please select a valid timezone',
     atLeastOneField: 'At least one field is required',
+    awradMin: 'At least one wird must be selected',
     currentPasswordRequired: 'Current password is required',
     confirmPasswordRequired: 'Password confirmation is required',
     passwordMismatch: 'Password confirmation does not match',

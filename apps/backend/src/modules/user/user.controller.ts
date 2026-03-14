@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import type {
   ChangeOwnPasswordDto,
-  CountDto,
   CreateStaffUserDto,
   CreateLearnerDto,
   LearnerDto,
@@ -122,10 +121,5 @@ export class UserController {
     dto: ChangeOwnPasswordDto
   ): Promise<void> {
     await this.userService.changeOwnPassword(user.id, dto);
-  }
-
-  @Get('stats/learners-count')
-  getLearnersCount(): Promise<CountDto> {
-    return this.userService.getLearnersCountDto();
   }
 }

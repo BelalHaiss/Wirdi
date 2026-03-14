@@ -45,7 +45,7 @@ model Group {
   name        String      @db.VarChar(100)
   timezone    String      @db.VarChar(50)
   createdAt   DateTime    @default(now()) @map("created_at")
-  awrad       Json?
+  awrad       Json // array ["wird1", "wird2", ...]
   moderatorId String?     @map("moderator_id")
   status      GroupStatus @default(ACTIVE)
   description String?     @db.VarChar(500)
@@ -96,11 +96,12 @@ model Week {
 }
 
 model ScheduleImage {
-  id        String   @id @default(ulid())
-  weekId    String   @map("week_id")
-  name      String   @db.VarChar(100)
-  imageUrl  String   @map("image_url") @db.VarChar(500)
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String   @id @default(ulid())
+  weekId         String   @map("week_id")
+  name           String   @db.VarChar(100)
+  imageUrl       String   @map("image_url") @db.VarChar(500)
+  imagekitFileId String   @map("imagekit_file_id") @db.VarChar(500)
+  createdAt      DateTime @default(now()) @map("created_at")
 
   week Week @relation(fields: [weekId], references: [id], onDelete: Cascade)
 

@@ -134,7 +134,7 @@ function AlertDialogAction({
   intent?: 'default' | 'destructive';
   size?: ButtonSizes;
 }) {
-  const color = intent === 'destructive' ? 'danger' : 'primary';
+  const color = intent === 'destructive' ? 'danger' : 'success';
 
   return (
     <Button variant='solid' color={color} size={size} asChild>

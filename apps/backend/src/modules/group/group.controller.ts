@@ -1,0 +1,129 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UserRole } from 'generated/prisma/client';
+import { Roles } from 'src/decorators/roles.decorator';
+import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
+import { FileCleanupInterceptor } from 'src/modules/file/cleanup-file.interceptor';
+import { FolderInterceptor } from 'src/modules/file/folder.interceptor';
+import {
+  createGroupSchema,
+  createWeekScheduleSchema,
+  updateGroupSchema,
+  updateScheduleImageSchema,
+  type CreateGroupDto,
+  type CreateWeekScheduleDto,
+  type UpdateGroupDto,
+  type UpdateScheduleImageDto,
+} from '@wirdi/shared';
+import { GroupService } from './group.service';
+@Controller('group')
+export class GroupController {
+  constructor(private readonly groupService: GroupService) {}
+
+  // ─── Groups CRUD ─────────────────────────────────────────────────────────
+
+  @Get('stats')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getStats() {
+    return this.groupService.getStats();
+  }
+
+  @Get()
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  queryGroups() {
+    return this.groupService.queryGroups();
+  }
+
+  @Get(':id')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getGroup(@Param('id') id: string) {
+    return this.groupService.getGroupById(id);
+  }
+
+  @Post()
+  @Roles([UserRole.ADMIN])
+  createGroup(@Body(new ZodValidationPipe(createGroupSchema('en'))) dto: CreateGroupDto) {
+    return this.groupService.createGroup(dto);
+  }
+
+  @Patch(':id/schedule-image/:imageId')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  @UseInterceptors(
+    FolderInterceptor((req) => `wirdi-assets/groups/${req.params['id'] as string}`),
+    FileInterceptor('image'),
+    FileCleanupInterceptor
+  )
+  updateScheduleImage(
+    @Param('imageId') imageId: string,
+    @Body(new ZodValidationPipe(updateScheduleImageSchema())) dto: UpdateScheduleImageDto,
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    return this.groupService.updateScheduleImage(imageId, file?.url, file?.fileId, dto.name);
+  }
+
+  @Patch(':id')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  updateGroup(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateGroupSchema('en'))) dto: UpdateGroupDto
+  ) {
+    return this.groupService.updateGroup(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles([UserRole.ADMIN])
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteGroup(@Param('id') id: string): Promise<void> {
+    return this.groupService.deleteGroup(id);
+  }
+
+  // ─── Weekly Schedules ─────────────────────────────────────────────────────
+
+  @Get(':id/schedule')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getGroupSchedules(@Param('id') id: string) {
+    return this.groupService.getGroupSchedules(id);
+  }
+
+  @Post(':id/schedule')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  @UseInterceptors(
+    FolderInterceptor((req) => `wirdi-assets/groups/${req.params['id'] as string}`),
+    FileInterceptor('image'),
+    FileCleanupInterceptor
+  )
+  createSchedule(
+    @Param('id') groupId: string,
+    @Body(new ZodValidationPipe(createWeekScheduleSchema('en')))
+    dto: CreateWeekScheduleDto,
+    @UploadedFile() file: Express.Multer.File
+  ) {
+    return this.groupService.createScheduleImage(
+      groupId,
+      dto.saturdayDate,
+      file.url!,
+      dto.scheduleName,
+      file.fileId!
+    );
+  }
+
+  // ─── Group Learners ─────────────────────────────────────────────────────────
+
+  @Get(':id/learners')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getGroupLearners(@Param('id') id: string) {
+    return this.groupService.getGroupLearners(id);
+  }
+}

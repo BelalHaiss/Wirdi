@@ -39,6 +39,8 @@ export const queryKeys = {
     tutors: () => [...queryKeys.groups.all, 'tutors'] as const,
     details: () => [...queryKeys.groups.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.groups.details(), id] as const,
+    schedules: (id: string) => [...queryKeys.groups.all, 'schedules', id] as const,
+    learners: (id: string) => [...queryKeys.groups.all, 'learners', id] as const,
   },
 
   // Sessions queries

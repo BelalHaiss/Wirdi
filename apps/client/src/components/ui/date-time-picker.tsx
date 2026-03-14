@@ -1,10 +1,11 @@
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import {
+  type ISODateOnlyString,
   type TimeMinutes,
   minutesToInputTimeString,
   timeStringToMinutes,
   parseDateString,
-  formatDateToISOString,
+  formatDate,
   formatDateLongArabic,
 } from '@wirdi/shared';
 import { Calendar } from './calendar';
@@ -17,9 +18,9 @@ type DateTimePickerMode = 'dateTime' | 'dateOnly' | 'timeOnly';
 
 interface DateTimePickerProps {
   mode?: DateTimePickerMode;
-  date?: string;
+  date?: ISODateOnlyString;
   time?: number;
-  onDateChange?: (date: string) => void;
+  onDateChange?: (date: ISODateOnlyString) => void;
   onTimeChange?: (time: number) => void;
   onDateBlur?: () => void;
   onTimeBlur?: () => void;
@@ -50,7 +51,7 @@ export function DateTimePicker({
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate && onDateChange) {
-      onDateChange(formatDateToISOString(selectedDate));
+      onDateChange(formatDate({ date: selectedDate, token: 'yyyy-MM-dd' }) as ISODateOnlyString);
     }
     onDateBlur?.();
   };

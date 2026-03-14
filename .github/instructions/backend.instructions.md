@@ -1,0 +1,71 @@
+---
+applyTo: 'apps/backend/**'
+---
+
+# Backend Rules
+
+## Module Setup
+
+- Reuse existing modules when possible
+- Generate new: `nest g res modules/[name] --no-spec`
+- Multi-domain workflows → dedicated Orchestrator module
+
+## Guards & Decorators
+
+- `AuthGuard` + `RolesGuard` are applied globally
+- `@Public()` — bypass auth; `@Roles(...)` — restrict by role
+- `@User()` — extract request user in controllers; never access `req.user` directly
+
+## Validation
+
+- `ZodValidationPipe` on route parameters only (`@Body(...)`, `@Param(...)`, `@Query(...)`)
+- Import schemas from `@wirdi/shared`, call inline with `'en'` locale
+- No validation logic in controllers or services — schemas + DB constraints only
+
+```ts
+// ✅ correct
+@Post()
+create(
+  @Body(new ZodValidationPipe(createGroupSchema('en'))) dto: CreateGroupDto,
+): Promise<GroupDto> { ... }
+```
+
+## DTOs & Types
+
+- All DTOs from `@wirdi/shared` — no local DTO files
+- `DatesAsObjects` is backend-only — never import on client
+- Customize via `Pick` / `Omit` / `Partial` only
+- Every controller and service method must have an explicit return type
+
+## File Uploads
+
+**Required interceptor order:**
+
+1. `FolderInterceptor(folder)` — sets `req.folder` for storage
+2. `FileInterceptor('field')` — handles upload via `imageKitMulterStorage` it registerd automatically no need to pass option
+3. Cleanup interceptor — removes file on error
+
+Never set folder names inside `FileService` — folder belongs at the route level.
+Read the uploaded URL from `file.url` — never construct it manually.
+
+```ts
+// ✅ correct order
+@Post('cover')
+@UseInterceptors(
+  FolderInterceptor('groups'),
+  FileInterceptor('image'),
+  CleanupInterceptor,
+)
+async uploadCover(
+  @UploadedFile() file: Express.Multer.File,
+): Promise<GroupDto> {
+  return this.service.updateCover(file.url); // use file.url directly
+}
+```
+
+## Database
+
+- Prisma transactions for any multi-step / multi-table write
+- Orchestrator modules wrap all related writes in a single `$transaction`
+- No raw SQL unless Prisma cannot express the query
+- **Never create `findXOrThrow` helpers** — let Prisma and the DB throw naturally (`update`/`delete` throw P2025 when record not found; use `findUniqueOrThrow` for explicit reads that require existence)

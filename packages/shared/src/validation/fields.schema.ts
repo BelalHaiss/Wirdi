@@ -97,9 +97,6 @@ export const isoDateOnlySchema = (locale: ValidationLocale = 'ar') => {
     .transform((v) => v as ISODateOnlyString);
 };
 
-export const optionalIsoDateOnlySchema = (locale: ValidationLocale = 'ar') =>
-  isoDateOnlySchema(locale).optional();
-
 export const timeMinutesSchema = (locale: ValidationLocale = 'ar') => {
   const m = getMessages(locale);
   return z.custom<TimeMinutes>(

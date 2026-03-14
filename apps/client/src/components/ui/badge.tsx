@@ -18,6 +18,7 @@ const badgeVariants = cva(
       color: {
         primary: '',
         success: '',
+        warning: '',
         danger: '',
         muted: '',
         purple: '',
@@ -36,6 +37,11 @@ const badgeVariants = cva(
         variant: 'solid',
         color: 'success',
         className: 'border-transparent bg-success text-success-foreground',
+      },
+      {
+        variant: 'solid',
+        color: 'warning',
+        className: 'border-transparent bg-warning text-warning-foreground',
       },
       {
         variant: 'solid',
@@ -60,6 +66,11 @@ const badgeVariants = cva(
       },
       {
         variant: 'outline',
+        color: 'warning',
+        className: 'bg-transparent border-warning/40 text-warning',
+      },
+      {
+        variant: 'outline',
         color: 'danger',
         className: 'bg-transparent border-danger/30 text-danger',
       },
@@ -81,6 +92,11 @@ const badgeVariants = cva(
       },
       {
         variant: 'ghost',
+        color: 'warning',
+        className: 'border-transparent text-warning hover:bg-warning/10',
+      },
+      {
+        variant: 'ghost',
         color: 'danger',
         className: 'border-transparent text-danger hover:bg-danger/10',
       },
@@ -99,6 +115,11 @@ const badgeVariants = cva(
         variant: 'soft',
         color: 'success',
         className: 'border-transparent bg-success/10 text-success',
+      },
+      {
+        variant: 'soft',
+        color: 'warning',
+        className: 'border-transparent bg-warning/10 text-warning',
       },
       {
         variant: 'soft',

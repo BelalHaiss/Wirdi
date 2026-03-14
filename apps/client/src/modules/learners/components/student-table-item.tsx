@@ -1,23 +1,26 @@
-import { LearnerDto } from '@wirdi/shared';
-import { Pencil, Trash2, UserCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LearnerDto, UpdateLearnerDto } from '@wirdi/shared';
+import { UserCircle2 } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { TimezoneDisplay } from '@/components/ui/timezone-display';
+import { LearnerEditDeleteActions } from './learner-edit-delete-actions';
 
 type StudentTableItemProps = {
   learner: LearnerDto;
   showActions?: boolean;
   onClick: (learner: LearnerDto) => void;
-  onEdit: (learner: LearnerDto) => void;
-  onDelete: (learner: LearnerDto) => void;
+  onEditSubmit: (data: UpdateLearnerDto) => Promise<void>;
+  onDeleteConfirm: () => Promise<void>;
+  isUpdating?: boolean;
+  isDeleting?: boolean;
 };
 
 export function StudentTableItem({
   learner,
   showActions = true,
   onClick,
-  onEdit,
-  onDelete,
+  onEditSubmit,
+  onDeleteConfirm,
+  isUpdating = false,
 }: StudentTableItemProps) {
   const learnerInitial = learner.name.trim().charAt(0) || '؟';
 
@@ -58,34 +61,13 @@ export function StudentTableItem({
       <TableCell className='px-4 py-3 text-right'>
         {showActions ? (
           <div className='flex items-center justify-end gap-2'>
-            <Button
-              type='button'
-              variant='ghost'
-              color='primary'
-              size='sm'
-              className='h-8 w-8 p-0'
-              onClick={(event) => {
-                event.stopPropagation();
-                onEdit(learner);
-              }}
-              aria-label='تعديل المتعلم'
-            >
-              <Pencil className='w-4 h-4' />
-            </Button>
-            <Button
-              type='button'
-              variant='ghost'
-              color='danger'
-              size='sm'
-              className='h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20'
-              onClick={(event) => {
-                event.stopPropagation();
-                onDelete(learner);
-              }}
-              aria-label='حذف المتعلم'
-            >
-              <Trash2 className='w-4 h-4' />
-            </Button>
+            <LearnerEditDeleteActions
+              learner={learner}
+              deleteDescription={`هل تريد حذف "${learner.name}"؟`}
+              onEditSubmit={onEditSubmit}
+              onDeleteConfirm={onDeleteConfirm}
+              isUpdating={isUpdating}
+            />
           </div>
         ) : (
           '-'

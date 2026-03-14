@@ -57,7 +57,7 @@ export const LoginView = () => {
   const canSubmit = isDirty && isValid;
 
   return (
-    <div dir='rtl' className='min-h-screen bg-muted/30 p-4 sm:p-6'>
+    <div className='min-h-screen bg-muted/30 p-4 sm:p-6'>
       <div className='mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-6 lg:flex-row'>
         <Card className='w-full max-w-md border-border/80 bg-muted/30 shadow-xl backdrop-blur lg:w-96'>
           <CardHeader className='space-y-4 text-center'>

@@ -21,7 +21,7 @@ CREATE TABLE `groups` (
     `name` VARCHAR(100) NOT NULL,
     `timezone` VARCHAR(50) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `awrad` JSON NULL,
+    `awrad` JSON NOT NULL,
     `moderator_id` VARCHAR(191) NULL,
     `status` ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
     `description` VARCHAR(500) NULL,
@@ -66,6 +66,7 @@ CREATE TABLE `schedule_images` (
     `week_id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
     `image_url` VARCHAR(500) NOT NULL,
+    `imagekit_file_id` VARCHAR(500) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     INDEX `schedule_images_week_id_idx`(`week_id`),

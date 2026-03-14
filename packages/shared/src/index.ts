@@ -2,6 +2,7 @@ export * from './types/api.types';
 export * from './types/client-error-log.types';
 export * from './user.types';
 export * from './learner.types';
+export * from './group.types';
 export * from './validation/fields.constants';
 
 // Export utilities
@@ -18,3 +19,4 @@ export * from './validation/api.schema';
 export * from './validation/auth.schema';
 export * from './validation/user.schema';
 export * from './validation/learner.schema';
+export * from './validation/group.schema';

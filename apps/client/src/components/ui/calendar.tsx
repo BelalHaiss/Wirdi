@@ -1,12 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  formatMonthShort,
-  formatWeekdayName,
-  formatMonthYear,
-  getStartAndEndOfDay,
-} from '@wirdi/shared';
+import { formatDate, getStartAndEndOfDay } from '@wirdi/shared';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { DayPicker, getDefaultClassNames, type DayButton, type Matcher } from 'react-day-picker';
 
@@ -60,7 +55,6 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       disabled={mergedDisabled}
-      dir='rtl'
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -69,9 +63,12 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: formatMonthShort,
-        formatWeekdayName: formatWeekdayName,
-        formatCaption: formatMonthYear,
+        formatMonthDropdown: (date) =>
+          formatDate({ date, token: 'MMM', locale: 'ar-SA', timezone: browserTimezone }),
+        formatWeekdayName: (date) =>
+          formatDate({ date, token: 'ccc', locale: 'ar-SA', timezone: browserTimezone }),
+        formatCaption: (date) =>
+          formatDate({ date, token: 'MMMM yyyy', locale: 'ar-SA', timezone: browserTimezone }),
         ...formatters,
       }}
       classNames={{
