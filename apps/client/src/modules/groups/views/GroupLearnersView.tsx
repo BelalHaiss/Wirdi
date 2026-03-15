@@ -8,10 +8,13 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { GroupLearnersTable } from '../components/organisms/GroupLearnersTable';
 import { AddGroupLearnersModal } from '../components/organisms/AddGroupLearnersModal';
 import { EditMateDialog } from '../components/organisms/EditMateDialog';
+import { ExcuseModal } from '../components/organisms/ExcuseModal';
 import { useGroupLearnersViewModel } from '../viewmodels/group-learners.viewmodel';
+import { useApp } from '@/contexts/AppContext';
 
 export default function GroupLearnersView() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useApp();
   const vm = useGroupLearnersViewModel(id!);
 
   if (vm.queryError) {
@@ -40,9 +43,13 @@ export default function GroupLearnersView() {
       <GroupLearnersTable
         members={vm.members}
         isLoading={vm.isLoading}
+        groupId={id!}
+        userTimezone={user?.timezone ?? 'UTC'}
+        canManage={vm.canManage}
         onEditMate={vm.canManage ? vm.setMemberPendingMateEdit : undefined}
         onEditLearner={vm.canManage ? vm.handleUpdateLearner : undefined}
         onDeleteLearner={vm.canManage ? vm.handleRemoveMember : undefined}
+        onOpenExcuseModal={vm.canManage ? vm.setExcuseModalMember : undefined}
         isUpdatingLearner={vm.isUpdatingLearner}
       />
 
@@ -72,6 +79,17 @@ export default function GroupLearnersView() {
         onConfirm={vm.handleUpdateMate}
         isLoading={vm.isUpdatingMate}
       />
+
+      {vm.excuseModalMember && (
+        <ExcuseModal
+          key={vm.excuseModalMember.id}
+          open={!!vm.excuseModalMember}
+          onOpenChange={(open) => !open && vm.setExcuseModalMember(null)}
+          studentId={vm.excuseModalMember.studentId}
+          studentName={vm.excuseModalMember.studentName}
+          groupId={id!}
+        />
+      )}
     </div>
   );
 }

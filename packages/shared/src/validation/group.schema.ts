@@ -3,6 +3,7 @@ import {
   AssignLearnersToGroupDto,
   AwradType,
   CreateAndAssignLearnersDto,
+  CreateExcuseDto,
   CreateGroupDto,
   CreateWeekScheduleDto,
   GroupStatus,
@@ -10,6 +11,7 @@ import {
   UpdateMemberMateDto,
   UpdateScheduleImageDto,
 } from '../group.types';
+import { ISODateString } from '../types/api.types';
 import { getMessages, ValidationLocale } from './messages';
 import {
   descriptionSchema,
@@ -97,3 +99,16 @@ export const updateMemberMateSchema = () =>
   z.object({
     mateId: z.string().trim().nullable(),
   }) satisfies ZodType<UpdateMemberMateDto>;
+
+export const createExcuseSchema = (locale: ValidationLocale = 'ar') =>
+  z.object({
+    studentId: nonEmptyIdSchema(locale),
+    groupId: nonEmptyIdSchema(locale),
+    expiresAt: z
+      .string()
+      .datetime({
+        message: locale === 'ar' ? 'تاريخ انتهاء الصلاحية غير صالح' : 'Invalid expiry date',
+      })
+      .transform((v) => v as ISODateString),
+    requestId: z.string().trim().optional(),
+  }) satisfies ZodType<CreateExcuseDto>;

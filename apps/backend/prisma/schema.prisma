@@ -36,6 +36,10 @@ model User {
   submittedRequests Request[] @relation("RequestStudent")
   reviewedRequests  Request[] @relation("RequestReviewer")
 
+  // Excuse relations
+  excusesAsStudent Excuse[] @relation("ExcuseStudent")
+  excusesCreated   Excuse[] @relation("ExcuseCreator")
+
   @@index([role])
   @@map("users")
 }
@@ -54,6 +58,7 @@ model Group {
   members   GroupMember[]
   weeks     Week[]
   requests  Request[]
+  excuses   Excuse[]
 
   @@index([moderatorId])
   @@index([status])
@@ -139,14 +144,33 @@ model Request {
   createdAt  DateTime      @default(now()) @map("created_at")
   reviewedAt DateTime?     @map("reviewed_at")
 
-  student  User  @relation("RequestStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  reviewer User? @relation("RequestReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  student  User    @relation("RequestStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  group    Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("RequestReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  excuse   Excuse?
 
   @@index([studentId])
   @@index([groupId])
   @@index([status])
   @@map("requests")
+}
+
+model Excuse {
+  id        String   @id @default(ulid())
+  studentId String   @map("student_id")
+  groupId   String   @map("group_id")
+  createdBy String   @map("created_by")
+  requestId String?  @unique @map("request_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  student User     @relation("ExcuseStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  group   Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator User     @relation("ExcuseCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  request Request? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+
+  @@map("excuses")
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────────

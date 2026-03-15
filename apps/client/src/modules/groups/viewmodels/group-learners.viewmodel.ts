@@ -24,6 +24,9 @@ export function useGroupLearnersViewModel(groupId: string) {
   // Mate edit state (still managed at view level because it needs the members list)
   const [memberPendingMateEdit, setMemberPendingMateEdit] = useState<GroupMemberDto | null>(null);
 
+  // Excuse modal state
+  const [excuseModalMember, setExcuseModalMember] = useState<GroupMemberDto | null>(null);
+
   const learnersQuery = useApiQuery<GroupMemberDto[]>({
     queryKey: queryKeys.groups.learners(groupId),
     queryFn: () => groupService.getGroupLearners(groupId),
@@ -119,5 +122,8 @@ export function useGroupLearnersViewModel(groupId: string) {
     setMemberPendingMateEdit,
     handleUpdateMate,
     isUpdatingMate: updateMateMutation.isPending,
+    // Excuse modal
+    excuseModalMember,
+    setExcuseModalMember,
   };
 }

@@ -4,6 +4,7 @@ import type {
   CreateWeekScheduleDto,
   GroupDto,
   GroupStatsDto,
+  LearnerDto,
   QueryGroupsResponseDto,
   UpdateGroupDto,
   WeekDto,
@@ -86,6 +87,10 @@ export const groupService = {
     dto: CreateAndAssignLearnersDto
   ): Promise<UnifiedApiResponse<GroupMemberDto[]>> => {
     return apiClient.post<GroupMemberDto[]>('/group-member/group-learners/create', dto);
+  },
+
+  getUnassignedLearners: async (groupId: string): Promise<UnifiedApiResponse<LearnerDto[]>> => {
+    return apiClient.get<LearnerDto[]>(`/group-member/${groupId}/unassigned`);
   },
 
   assignLearnersToGroup: async (

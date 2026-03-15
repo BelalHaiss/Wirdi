@@ -100,7 +100,8 @@ export interface GroupMemberDto {
   mateName?: string;
   notes?: string;
   joinedAt: ISODateString;
-  pendingExcuseCount: number;
+  /** ISO datetime of the active excuse expiry, undefined if no active excuse */
+  activeExcuseExpiresAt?: ISODateString;
 }
 
 /** Assign multiple existing learners to a group at once */
@@ -123,4 +124,26 @@ export interface CreateAndAssignLearnersDto {
 export interface UpdateMemberMateDto {
   /** Pass null to remove the mate */
   mateId: string | null;
+}
+
+// ============================================================================
+// Excuse DTOs
+// ============================================================================
+
+export interface ExcuseDto {
+  id: string;
+  studentId: string;
+  groupId: string;
+  createdBy: string;
+  requestId?: string;
+  expiresAt: ISODateString;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
+
+export interface CreateExcuseDto {
+  studentId: string;
+  groupId: string;
+  expiresAt: ISODateString;
+  requestId?: string;
 }

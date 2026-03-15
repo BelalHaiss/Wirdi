@@ -9,6 +9,7 @@ import {
   AssignLearnersToGroupDto,
   CreateAndAssignLearnersDto,
   GroupMemberDto,
+  LearnerDto,
   UpdateMemberMateDto,
 } from '@wirdi/shared';
 import { UserRole } from 'generated/prisma/client';
@@ -58,7 +59,7 @@ export class GroupMemberService {
           mateName: member.mate?.name ?? undefined,
           notes: member.student.notes ?? undefined,
           joinedAt: member.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
-          pendingExcuseCount: 0,
+          activeExcuseExpiresAt: undefined,
         });
       }
 
@@ -118,7 +119,7 @@ export class GroupMemberService {
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
-      pendingExcuseCount: 0,
+      activeExcuseExpiresAt: undefined,
     }));
   }
 
@@ -164,7 +165,7 @@ export class GroupMemberService {
       mateName: updated.mate?.name ?? undefined,
       notes: updated.student.notes ?? undefined,
       joinedAt: updated.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
-      pendingExcuseCount: 0,
+      activeExcuseExpiresAt: undefined,
     };
   }
 
@@ -187,5 +188,33 @@ export class GroupMemberService {
       }),
       this.db.groupMember.delete({ where: { id: memberId } }),
     ]);
+  }
+
+  /**
+   * Get all STUDENT users who are NOT members of the given group.
+   */
+  async getUnassignedLearners(groupId: string): Promise<LearnerDto[]> {
+    await this.db.group.findUniqueOrThrow({ where: { id: groupId }, select: { id: true } });
+
+    const assigned = await this.db.groupMember.findMany({
+      where: { groupId },
+      select: { studentId: true },
+    });
+    const assignedIds = assigned.map((m) => m.studentId);
+
+    const learners = await this.db.user.findMany({
+      where: { role: UserRole.STUDENT, id: { notIn: assignedIds } },
+      orderBy: { name: 'asc' },
+    });
+
+    return learners.map((u) => ({
+      id: u.id,
+      name: u.name,
+      role: 'STUDENT' as const,
+      timezone: u.timezone,
+      contact: { notes: u.notes ?? undefined },
+      createdAt: u.createdAt.toISOString() as LearnerDto['createdAt'],
+      updatedAt: u.updatedAt.toISOString() as LearnerDto['updatedAt'],
+    }));
   }
 }

@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { UserRole } from 'generated/prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
@@ -15,6 +25,12 @@ import { GroupMemberService } from './group-member.service';
 @Controller('group-member')
 export class GroupMemberController {
   constructor(private readonly groupMemberService: GroupMemberService) {}
+
+  @Get(':groupId/unassigned')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getUnassignedLearners(@Param('groupId') groupId: string) {
+    return this.groupMemberService.getUnassignedLearners(groupId);
+  }
 
   @Post('group-learners/create')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])

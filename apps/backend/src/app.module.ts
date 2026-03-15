@@ -15,6 +15,7 @@ import { resolve } from 'path';
 import { GroupMemberModule } from './modules/group-member/group-member.module';
 import { GroupModule } from './modules/group/group.module';
 import { FileModule } from './modules/file/file.module';
+import { ExcuseModule } from './modules/excuse/excuse.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { FileModule } from './modules/file/file.module';
     GroupMemberModule,
     GroupModule,
     FileModule,
+    ExcuseModule,
   ],
   providers: [
     {

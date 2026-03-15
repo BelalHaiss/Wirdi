@@ -41,6 +41,7 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.groups.details(), id] as const,
     schedules: (id: string) => [...queryKeys.groups.all, 'schedules', id] as const,
     learners: (id: string) => [...queryKeys.groups.all, 'learners', id] as const,
+    unassigned: (id: string) => [...queryKeys.groups.all, 'unassigned', id] as const,
   },
 
   // Sessions queries
@@ -105,5 +106,12 @@ export const queryKeys = {
   profile: {
     all: ['profile'] as const,
     me: () => [...queryKeys.profile.all, 'me'] as const,
+  },
+
+  // Excuses queries
+  excuses: {
+    all: ['excuses'] as const,
+    student: (studentId: string, groupId: string) =>
+      [...queryKeys.excuses.all, 'student', studentId, groupId] as const,
   },
 } as const;

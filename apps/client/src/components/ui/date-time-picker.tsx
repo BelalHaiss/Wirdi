@@ -45,13 +45,25 @@ export function DateTimePicker({
   invalid = false,
   disablePastDates = false,
 }: DateTimePickerProps) {
+  const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const selectedDate = date ? parseDateString(date) : undefined;
   const showDate = mode !== 'timeOnly';
   const showTime = mode !== 'dateOnly';
 
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    if (selectedDate && onDateChange) {
-      onDateChange(formatDate({ date: selectedDate, token: 'yyyy-MM-dd' }) as ISODateOnlyString);
+  // DayPicker constructs JS Dates in local time (e.g. 2026-03-15T00:00:00+03:00).
+  // Without a timezone, formatDate defaults to UTC and reads the raw UTC offset,
+  // which shifts the date by one day for UTC+ users. We must use the browser
+  // timezone to extract the correct calendar date.
+  const handleDateSelect = (day: Date | undefined) => {
+    if (day && onDateChange) {
+      console.log('Selected date (local):', day);
+      const newDateStr = formatDate({
+        date: day,
+        token: 'yyyy-MM-dd',
+        timezone: browserTimezone,
+      }) as ISODateOnlyString;
+      console.log('Formatted date string (ISO):', newDateStr);
+      onDateChange(newDateStr);
     }
     onDateBlur?.();
   };

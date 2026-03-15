@@ -185,26 +185,35 @@ export class GroupService {
   // ─── Group Learners ─────────────────────────────────────────────────────────
 
   async getGroupLearners(groupId: string): Promise<GroupMemberDto[]> {
-    const where = { groupId };
+    const now = new Date();
 
     const members = await this.db.groupMember.findMany({
-      where,
+      where: { groupId },
       orderBy: { joinedAt: 'desc' },
       include: {
-        student: { select: { name: true, timezone: true, notes: true } },
+        student: {
+          select: {
+            name: true,
+            timezone: true,
+            notes: true,
+            excusesAsStudent: {
+              where: { groupId, expiresAt: { gt: now } },
+              orderBy: { expiresAt: 'desc' },
+              take: 1,
+              select: { expiresAt: true },
+            },
+          },
+        },
         mate: { select: { name: true } },
       },
     });
 
-    const studentIds = members.map((m) => m.studentId);
-    const excuseCounts = await this.db.request.groupBy({
-      by: ['studentId'],
-      where: { studentId: { in: studentIds }, groupId, type: 'EXCUSE', status: 'PENDING' },
-      _count: { id: true },
-    });
-    const excuseMap = new Map(excuseCounts.map((e) => [e.studentId, e._count.id]));
-
-    return members.map((m) => this.toGroupMemberDto(m, excuseMap.get(m.studentId) ?? 0));
+    return members.map((m) =>
+      this.toGroupMemberDto(
+        m,
+        m.student.excusesAsStudent[0]?.expiresAt.toISOString() as GroupMemberDto['activeExcuseExpiresAt']
+      )
+    );
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
@@ -327,10 +336,15 @@ export class GroupService {
       studentId: string;
       mateId: string | null;
       joinedAt: Date;
-      student: { name: string; timezone: string; notes: string | null };
+      student: {
+        name: string;
+        timezone: string;
+        notes: string | null;
+        excusesAsStudent?: { expiresAt: Date }[];
+      };
       mate: { name: string } | null;
     },
-    pendingExcuseCount: number
+    activeExcuseExpiresAt: GroupMemberDto['activeExcuseExpiresAt']
   ): GroupMemberDto {
     return {
       id: m.id,
@@ -342,7 +356,7 @@ export class GroupService {
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
-      pendingExcuseCount,
+      activeExcuseExpiresAt,
     };
   }
 }
