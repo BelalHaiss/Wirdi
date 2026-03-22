@@ -10,6 +10,7 @@ import {
   UpdateGroupDto,
   UpdateMemberMateDto,
   UpdateScheduleImageDto,
+  UpdateStudentWirdsDto,
 } from '../group.types';
 import { ISODateString } from '../types/api.types';
 import { getMessages, ValidationLocale } from './messages';
@@ -112,3 +113,18 @@ export const createExcuseSchema = (locale: ValidationLocale = 'ar') =>
       .transform((v) => v as ISODateString),
     requestId: z.string().trim().optional(),
   }) satisfies ZodType<CreateExcuseDto>;
+
+export const updateStudentWirdsSchema = (locale: ValidationLocale = 'ar') =>
+  z.object({
+    updates: z
+      .array(
+        z.object({
+          dayNumber: z.number().int().min(0).max(6),
+          status: z.enum(['ATTENDED', 'MISSED']),
+        })
+      )
+      .min(
+        1,
+        locale === 'ar' ? 'يجب تحديد يوم واحد على الأقل' : 'At least one day update required'
+      ),
+  }) satisfies ZodType<UpdateStudentWirdsDto>;

@@ -147,3 +147,98 @@ export interface CreateExcuseDto {
   expiresAt: ISODateString;
   requestId?: string;
 }
+
+// ============================================================================
+// StudentWird / Tracking DTOs
+// ============================================================================
+
+/** Values stored in the DB — what was actually recorded for a day. */
+export type RecordedWirdStatus = 'ATTENDED' | 'MISSED' | 'LATE';
+
+/**
+ * Full display state for a day cell.
+ * ATTENDED / MISSED / LATE — recorded values from the DB.
+ * EMPTY — day is in the past/today but not yet recorded.
+ * FUTURE — day has not arrived yet.
+ * Always resolved by the backend; client never needs date math.
+ */
+export type WirdStatus = RecordedWirdStatus | 'FUTURE' | 'EMPTY';
+
+/**
+ * One day slot within a week for a specific student.
+ * `wirdStatus` is the fully resolved display state — computed by the backend.
+ * `dayNumber` uses JS native convention: 0=Sun, 1=Mon … 6=Sat (5=Fri is never used).
+ */
+export interface DayWirdDto {
+  dayNumber: number;
+  /** Resolved display state — backend-computed, ready to render directly */
+  wirdStatus: WirdStatus;
+  readOnMateId?: string;
+  readOnMateName?: string;
+  recordedAt?: ISODateString;
+}
+
+/**
+ * One row in the tracking table.
+ * `days` is always 6 items ordered for Arabic display: Sat(6)→Sun(0)→Mon(1)→Tue(2)→Wed(3)→Thu(4).
+ * The client can iterate `days` directly in order — no day-number math needed.
+ */
+export interface GroupWirdTrackingRowDto {
+  memberId: string;
+  studentId: string;
+  studentName: string;
+  days: DayWirdDto[];
+  /** Number of alerts for this student in the selected week */
+  weekAlertCount: number;
+  /** Total alerts for this student across all weeks of this group */
+  totalAlertCount: number;
+  /** ISO datetime of the active excuse expiry, undefined if no active excuse */
+  activeExcuseExpiresAt?: ISODateString;
+}
+
+/** Full tracking grid for a single week */
+export interface GroupWirdTrackingDto {
+  weekId: string;
+  rows: GroupWirdTrackingRowDto[];
+}
+
+/** Week with flags set by the backend — no date math needed on the client */
+export interface WeekWithCurrentFlagDto extends WeekDto {
+  /** true when today falls within startDate..endDate (inclusive) */
+  isCurrent: boolean;
+  /** true when startDate > today — week has not started yet */
+  isUpcoming: boolean;
+  /** true when this week is the recommended default tab (current week, or last past week if no current) */
+  isDefault: boolean;
+}
+
+// ============================================================================
+// Manual Attendance Edit DTOs
+// ============================================================================
+
+/** One day slot returned for admin attendance editing. */
+export interface StudentDayWird {
+  dayNumber: number;
+  /** Recorded DB value — null when no record exists for this day */
+  recordedStatus: RecordedWirdStatus | null;
+  /** true when this day is in the future and cannot be edited */
+  isBlocked: boolean;
+}
+
+/** Response for fetching all days of a student in a specific week */
+export interface StudentWeekWirdsDto {
+  studentId: string;
+  weekId: string;
+  days: StudentDayWird[];
+}
+
+/** A single day update for manual attendance override */
+export interface UpdateStudentWirdDayDto {
+  dayNumber: number;
+  status: 'ATTENDED' | 'MISSED';
+}
+
+/** Payload for PATCH /student-wird/student/:studentId/week/:weekId */
+export interface UpdateStudentWirdsDto {
+  updates: UpdateStudentWirdDayDto[];
+}

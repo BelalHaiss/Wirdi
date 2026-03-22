@@ -65,7 +65,7 @@ async uploadCover(
 
 ## Database
 
-- Prisma transactions for any multi-step / multi-table write
+- Prisma transactions for any multi-step / multi-table write don`t use Promise.all
 - Orchestrator modules wrap all related writes in a single `$transaction`
 - No raw SQL unless Prisma cannot express the query
 - **Never create `findXOrThrow` helpers** — let Prisma and the DB throw naturally (`update`/`delete` throw P2025 when record not found; use `findUniqueOrThrow` for explicit reads that require existence)

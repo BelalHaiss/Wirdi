@@ -187,3 +187,8 @@ export function getNextSaturdayFrom(saturdayDateStr: ISODateOnlyString): ISODate
 export function isDateTodayOrFuture(dateStr: ISODateOnlyString): boolean {
   return DateTime.fromISO(dateStr, { zone: 'utc' }).startOf('day') >= DateTime.utc().startOf('day');
 }
+
+/** Convert a JS Date (UTC) to an ISO date-only string (YYYY-MM-DD) */
+export function dateToISODateOnly(date: Date): ISODateOnlyString {
+  return DateTime.fromJSDate(date, { zone: 'utc' }).toFormat('yyyy-MM-dd') as ISODateOnlyString;
+}

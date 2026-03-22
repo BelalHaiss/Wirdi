@@ -16,6 +16,7 @@ import { GroupMemberModule } from './modules/group-member/group-member.module';
 import { GroupModule } from './modules/group/group.module';
 import { FileModule } from './modules/file/file.module';
 import { ExcuseModule } from './modules/excuse/excuse.module';
+import { StudentWirdModule } from './modules/student-wird/student-wird.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ExcuseModule } from './modules/excuse/excuse.module';
     GroupModule,
     FileModule,
     ExcuseModule,
+    StudentWirdModule,
   ],
   providers: [
     {

@@ -114,4 +114,14 @@ export const queryKeys = {
     student: (studentId: string, groupId: string) =>
       [...queryKeys.excuses.all, 'student', studentId, groupId] as const,
   },
+
+  // StudentWird / tracking queries
+  wirds: {
+    all: ['wirds'] as const,
+    weeks: (groupId: string) => [...queryKeys.wirds.all, 'weeks', groupId] as const,
+    tracking: (groupId: string, weekId: string) =>
+      [...queryKeys.wirds.all, 'tracking', groupId, weekId] as const,
+    studentWeek: (studentId: string, weekId: string) =>
+      [...queryKeys.wirds.all, 'student-week', studentId, weekId] as const,
+  },
 } as const;

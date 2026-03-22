@@ -8,7 +8,12 @@ import { excuseService } from '../services/excuse.service';
 import { getNowAsUTC, dateOnlyToUTC } from '@wirdi/shared';
 import type { ExcuseDto, ISODateOnlyString } from '@wirdi/shared';
 
-export function useExcuseModalViewModel(studentId: string, groupId: string, isOpen: boolean) {
+export function useExcuseModalViewModel(
+  studentId: string,
+  groupId: string,
+  isOpen: boolean,
+  weekId?: string
+) {
   const { user } = useApp();
   const userTimezone = user?.timezone ?? 'UTC';
 
@@ -28,6 +33,10 @@ export function useExcuseModalViewModel(studentId: string, groupId: string, isOp
         queryKey: queryKeys.excuses.student(studentId, groupId),
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
+      if (weekId)
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.wirds.tracking(groupId, weekId),
+        });
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),
   });
@@ -49,6 +58,10 @@ export function useExcuseModalViewModel(studentId: string, groupId: string, isOp
         queryKey: queryKeys.excuses.student(studentId, groupId),
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
+      if (weekId)
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.wirds.tracking(groupId, weekId),
+        });
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),
   });

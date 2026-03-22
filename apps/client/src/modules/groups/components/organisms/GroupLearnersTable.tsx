@@ -1,4 +1,4 @@
-import { Loader2, Users, AlertCircle, Pencil } from 'lucide-react';
+import { Loader2, Users, Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -7,10 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LearnerEditDeleteActions } from '@/modules/learners';
-import { formatDate } from '@wirdi/shared';
+import { ExcuseModal } from './ExcuseModal';
 import type { GroupMemberDto, UpdateLearnerDto } from '@wirdi/shared';
 
 type GroupLearnersTableProps = {
@@ -18,23 +17,20 @@ type GroupLearnersTableProps = {
   isLoading: boolean;
   groupId: string;
   userTimezone: string;
-  canManage?: boolean;
   onEditMate?: (member: GroupMemberDto) => void;
   onEditLearner?: (studentId: string, data: UpdateLearnerDto) => Promise<void>;
   onDeleteLearner?: (memberId: string) => Promise<void>;
-  onOpenExcuseModal?: (member: GroupMemberDto) => void;
   isUpdatingLearner?: boolean;
 };
 
 export function GroupLearnersTable({
   members,
   isLoading,
+  groupId,
   userTimezone,
-  canManage = false,
   onEditMate,
   onEditLearner,
   onDeleteLearner,
-  onOpenExcuseModal,
   isUpdatingLearner = false,
 }: GroupLearnersTableProps) {
   return (
@@ -92,44 +88,13 @@ export function GroupLearnersTable({
                 {member.notes ?? '—'}
               </TableCell>
               <TableCell className='px-4 py-3'>
-                {member.activeExcuseExpiresAt ? (
-                  <div className='flex items-center gap-1.5'>
-                    <Badge variant='soft' color='warning' className='gap-1 text-xs'>
-                      <AlertCircle className='h-3 w-3' />
-                      حتى{' '}
-                      {formatDate({
-                        date: member.activeExcuseExpiresAt,
-                        token: 'dd/MM/yyyy',
-                        timezone: userTimezone,
-                      })}
-                    </Badge>
-                    {canManage && onOpenExcuseModal && (
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        color='warning'
-                        className='h-6 w-6'
-                        onClick={() => onOpenExcuseModal(member)}
-                      >
-                        <Pencil className='h-3 w-3' />
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  canManage &&
-                  onOpenExcuseModal && (
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      color='muted'
-                      className='h-7 text-xs gap-1 text-muted-foreground'
-                      onClick={() => onOpenExcuseModal(member)}
-                    >
-                      <AlertCircle className='h-3 w-3' />
-                      إضافة
-                    </Button>
-                  )
-                )}
+                <ExcuseModal
+                  studentId={member.studentId}
+                  studentName={member.studentName}
+                  groupId={groupId}
+                  userTimezone={userTimezone}
+                  activeExcuseExpiresAt={member.activeExcuseExpiresAt}
+                />
               </TableCell>
               <TableCell className='px-4 py-3'>
                 <div className='flex items-center gap-1 justify-end'>

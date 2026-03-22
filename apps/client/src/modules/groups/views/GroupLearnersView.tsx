@@ -8,7 +8,6 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { GroupLearnersTable } from '../components/organisms/GroupLearnersTable';
 import { AddGroupLearnersModal } from '../components/organisms/AddGroupLearnersModal';
 import { EditMateDialog } from '../components/organisms/EditMateDialog';
-import { ExcuseModal } from '../components/organisms/ExcuseModal';
 import { useGroupLearnersViewModel } from '../viewmodels/group-learners.viewmodel';
 import { useApp } from '@/contexts/AppContext';
 
@@ -31,12 +30,10 @@ export default function GroupLearnersView() {
         title='إدارة المتعلمين'
         description='نظرة عامة على جميع المتعلمين المسجلين وحالاتهم الحالية'
         actions={
-          vm.canManage ? (
-            <Button onClick={vm.openAddModal} className='gap-2'>
-              <UserPlus className='w-4 h-4' />
-              إضافة متعلم جديد
-            </Button>
-          ) : null
+          <Button onClick={vm.openAddModal} className='gap-2'>
+            <UserPlus className='w-4 h-4' />
+            إضافة متعلم جديد
+          </Button>
         }
       />
 
@@ -45,11 +42,9 @@ export default function GroupLearnersView() {
         isLoading={vm.isLoading}
         groupId={id!}
         userTimezone={user?.timezone ?? 'UTC'}
-        canManage={vm.canManage}
-        onEditMate={vm.canManage ? vm.setMemberPendingMateEdit : undefined}
-        onEditLearner={vm.canManage ? vm.handleUpdateLearner : undefined}
-        onDeleteLearner={vm.canManage ? vm.handleRemoveMember : undefined}
-        onOpenExcuseModal={vm.canManage ? vm.setExcuseModalMember : undefined}
+        onEditMate={vm.setMemberPendingMateEdit}
+        onEditLearner={vm.handleUpdateLearner}
+        onDeleteLearner={vm.handleRemoveMember}
         isUpdatingLearner={vm.isUpdatingLearner}
       />
 
@@ -60,15 +55,13 @@ export default function GroupLearnersView() {
         <PaginationControls value={vm.page} totalPages={vm.totalPages} onValueChange={vm.setPage} />
       </div>
 
-      {vm.canManage && (
-        <AddGroupLearnersModal
-          open={vm.isAddModalOpen}
-          onOpenChange={vm.closeAddModal}
-          groupId={id!}
-          onSubmit={vm.handleAddLearners}
-          isLoading={vm.isAdding}
-        />
-      )}
+      <AddGroupLearnersModal
+        open={vm.isAddModalOpen}
+        onOpenChange={vm.closeAddModal}
+        groupId={id!}
+        onSubmit={vm.handleAddLearners}
+        isLoading={vm.isAdding}
+      />
 
       <EditMateDialog
         key={vm.memberPendingMateEdit?.id}
@@ -79,17 +72,6 @@ export default function GroupLearnersView() {
         onConfirm={vm.handleUpdateMate}
         isLoading={vm.isUpdatingMate}
       />
-
-      {vm.excuseModalMember && (
-        <ExcuseModal
-          key={vm.excuseModalMember.id}
-          open={!!vm.excuseModalMember}
-          onOpenChange={(open) => !open && vm.setExcuseModalMember(null)}
-          studentId={vm.excuseModalMember.studentId}
-          studentName={vm.excuseModalMember.studentName}
-          groupId={id!}
-        />
-      )}
     </div>
   );
 }

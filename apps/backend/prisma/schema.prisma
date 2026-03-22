@@ -40,6 +40,9 @@ model User {
   excusesAsStudent Excuse[] @relation("ExcuseStudent")
   excusesCreated   Excuse[] @relation("ExcuseCreator")
 
+  // Alert relations
+  alerts Alert[] @relation("AlertStudent")
+
   @@index([role])
   @@map("users")
 }
@@ -59,6 +62,7 @@ model Group {
   weeks     Week[]
   requests  Request[]
   excuses   Excuse[]
+  alerts    Alert[]
 
   @@index([moderatorId])
   @@index([status])
@@ -93,6 +97,7 @@ model Week {
   group          Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
   scheduleImages ScheduleImage[]
   studentWirds   StudentWird[]
+  alerts         Alert[]
 
   @@unique([groupId, weekNumber])
   @@unique([groupId, startDate])
@@ -201,4 +206,20 @@ enum RequestStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+model Alert {
+  id        String   @id @default(ulid())
+  studentId String   @map("student_id")
+  groupId   String   @map("group_id")
+  weekId    String   @map("week_id")
+  dayNumber Int      @map("day_number") @db.TinyInt
+  createdAt DateTime @default(now()) @map("created_at")
+
+  student User  @relation("AlertStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  week    Week  @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, weekId, dayNumber])
+  @@map("alerts")
 }

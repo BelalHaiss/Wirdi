@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { queryClient, queryKeys } from '@/lib/query-client';
-import { useApp } from '@/contexts/AppContext';
 import { groupService } from '../services/group.service';
 import { learnerService } from '@/modules/learners/services/learner.service';
 import type {
@@ -15,17 +14,11 @@ import type {
 } from '@wirdi/shared';
 
 export function useGroupLearnersViewModel(groupId: string) {
-  const { user } = useApp();
-  const canManage = user?.role === 'ADMIN' || user?.role === 'MODERATOR';
-
   const [page, setPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Mate edit state (still managed at view level because it needs the members list)
   const [memberPendingMateEdit, setMemberPendingMateEdit] = useState<GroupMemberDto | null>(null);
-
-  // Excuse modal state
-  const [excuseModalMember, setExcuseModalMember] = useState<GroupMemberDto | null>(null);
 
   const learnersQuery = useApiQuery<GroupMemberDto[]>({
     queryKey: queryKeys.groups.learners(groupId),
@@ -105,7 +98,6 @@ export function useGroupLearnersViewModel(groupId: string) {
     setPage,
     isLoading: learnersQuery.isLoading,
     queryError: learnersQuery.error?.message ?? null,
-    canManage,
     // Add modal
     isAddModalOpen,
     openAddModal: () => setIsAddModalOpen(true),
@@ -122,8 +114,5 @@ export function useGroupLearnersViewModel(groupId: string) {
     setMemberPendingMateEdit,
     handleUpdateMate,
     isUpdatingMate: updateMateMutation.isPending,
-    // Excuse modal
-    excuseModalMember,
-    setExcuseModalMember,
   };
 }
