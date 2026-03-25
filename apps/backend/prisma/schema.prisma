@@ -94,10 +94,10 @@ model Week {
   endDate    DateTime @map("end_date") @db.Date
   createdAt  DateTime @default(now()) @map("created_at")
 
-  group          Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  scheduleImages ScheduleImage[]
-  studentWirds   StudentWird[]
-  alerts         Alert[]
+  group         Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  scheduleImage ScheduleImage?
+  studentWirds  StudentWird[]
+  alerts        Alert[]
 
   @@unique([groupId, weekNumber])
   @@unique([groupId, startDate])
@@ -107,7 +107,7 @@ model Week {
 
 model ScheduleImage {
   id             String   @id @default(ulid())
-  weekId         String   @map("week_id")
+  weekId         String   @unique @map("week_id")
   name           String   @db.VarChar(100)
   imageUrl       String   @map("image_url") @db.VarChar(500)
   imagekitFileId String   @map("imagekit_file_id") @db.VarChar(500)
@@ -115,7 +115,6 @@ model ScheduleImage {
 
   week Week @relation(fields: [weekId], references: [id], onDelete: Cascade)
 
-  @@index([weekId])
   @@map("schedule_images")
 }
 

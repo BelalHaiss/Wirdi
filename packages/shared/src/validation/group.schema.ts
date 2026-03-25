@@ -7,6 +7,7 @@ import {
   CreateGroupDto,
   CreateWeekScheduleDto,
   GroupStatus,
+  RecordLearnerWirdDto,
   UpdateGroupDto,
   UpdateMemberMateDto,
   UpdateScheduleImageDto,
@@ -128,3 +129,11 @@ export const updateStudentWirdsSchema = (locale: ValidationLocale = 'ar') =>
         locale === 'ar' ? 'يجب تحديد يوم واحد على الأقل' : 'At least one day update required'
       ),
   }) satisfies ZodType<UpdateStudentWirdsDto>;
+
+export const recordLearnerWirdSchema = (locale: ValidationLocale = 'ar') =>
+  z.object({
+    groupId: nonEmptyIdSchema(locale),
+    weekId: nonEmptyIdSchema(locale),
+    dayNumber: z.number().int().min(0).max(6),
+    mateId: z.string().trim().nullable().optional(),
+  }) satisfies ZodType<RecordLearnerWirdDto>;

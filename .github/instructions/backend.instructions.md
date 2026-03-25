@@ -65,6 +65,7 @@ async uploadCover(
 
 ## Database
 
+- Always use 1 round trip per query — use Prisma `include` / `select` relations instead of separate follow-up queries
 - Prisma transactions for any multi-step / multi-table write don`t use Promise.all
 - Orchestrator modules wrap all related writes in a single `$transaction`
 - No raw SQL unless Prisma cannot express the query

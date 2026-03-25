@@ -14,9 +14,11 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserRole } from 'generated/prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
+import { User } from 'src/decorators/user.decorator';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import { FileCleanupInterceptor } from 'src/modules/file/cleanup-file.interceptor';
 import { FolderInterceptor } from 'src/modules/file/folder.interceptor';
+import type { User as PrismaUser } from 'generated/prisma/client';
 import {
   createGroupSchema,
   createWeekScheduleSchema,
@@ -47,9 +49,10 @@ export class GroupController {
   }
 
   @Get(':id')
-  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
-  getGroup(@Param('id') id: string) {
-    return this.groupService.getGroupById(id);
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])
+  getGroup(@Param('id') id: string, @User() user: PrismaUser) {
+    const studentId = user.role === UserRole.STUDENT ? user.id : undefined;
+    return this.groupService.getGroupById(id, studentId);
   }
 
   @Post()
@@ -122,7 +125,7 @@ export class GroupController {
   // ─── Group Learners ─────────────────────────────────────────────────────────
 
   @Get(':id/learners')
-  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])
   getGroupLearners(@Param('id') id: string) {
     return this.groupService.getGroupLearners(id);
   }

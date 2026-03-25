@@ -124,4 +124,10 @@ export const queryKeys = {
     studentWeek: (studentId: string, weekId: string) =>
       [...queryKeys.wirds.all, 'student-week', studentId, weekId] as const,
   },
+
+  // Learner self-recording queries
+  learnerWirds: {
+    all: ['learner-wirds'] as const,
+    overview: (groupId: string) => ['learner-wirds', 'overview', groupId] as const,
+  },
 } as const;

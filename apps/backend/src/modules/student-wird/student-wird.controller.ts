@@ -1,19 +1,26 @@
-import { Controller, Get, Param, Patch, Body } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { UserRole } from 'generated/prisma/client';
+import type { User as PrismaUser } from 'generated/prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
+import { User } from 'src/decorators/user.decorator';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
-import { updateStudentWirdsSchema } from '@wirdi/shared';
-import type {
-  GroupWirdTrackingDto,
-  WeekWithCurrentFlagDto,
-  StudentWeekWirdsDto,
-  UpdateStudentWirdsDto,
+import {
+  updateStudentWirdsSchema,
+  recordLearnerWirdSchema,
+  type GroupWirdTrackingDto,
+  type LearnerGroupOverviewDto,
+  type WeekWithCurrentFlagDto,
+  type StudentWeekWirdsDto,
+  type UpdateStudentWirdsDto,
+  type RecordLearnerWirdDto,
 } from '@wirdi/shared';
 import { StudentWirdService } from './student-wird.service';
 
 @Controller('student-wird')
 export class StudentWirdController {
   constructor(private readonly studentWirdService: StudentWirdService) {}
+
+  // ─── Admin / Moderator ───────────────────────────────────────────────────────
 
   @Get('group/:groupId/weeks')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
@@ -47,5 +54,25 @@ export class StudentWirdController {
     @Body(new ZodValidationPipe(updateStudentWirdsSchema('en'))) dto: UpdateStudentWirdsDto
   ): Promise<void> {
     return this.studentWirdService.updateStudentWeekWirds(studentId, weekId, dto);
+  }
+
+  // ─── Learner Self-Recording ──────────────────────────────────────────────────
+
+  @Get('my-group/:groupId/overview')
+  @Roles([UserRole.STUDENT])
+  getLearnerGroupOverview(
+    @Param('groupId') groupId: string,
+    @User() user: PrismaUser
+  ): Promise<LearnerGroupOverviewDto> {
+    return this.studentWirdService.getLearnerGroupOverview(groupId, user.id);
+  }
+
+  @Post('my-wird')
+  @Roles([UserRole.STUDENT])
+  recordLearnerWird(
+    @Body(new ZodValidationPipe(recordLearnerWirdSchema('en'))) dto: RecordLearnerWirdDto,
+    @User() user: PrismaUser
+  ): Promise<void> {
+    return this.studentWirdService.recordLearnerWird(user.id, dto);
   }
 }

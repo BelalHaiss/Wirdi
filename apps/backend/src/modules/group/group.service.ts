@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { FileService } from '../file/file.service';
 import {
@@ -49,15 +54,22 @@ export class GroupService {
     return groups.map((g) => this.toGroupDto(g));
   }
 
-  async getGroupById(id: string): Promise<GroupDto> {
+  async getGroupById(id: string, studentId?: string): Promise<GroupDto> {
     const group = await this.db.group.findUnique({
       where: { id },
       include: {
         moderator: { select: { name: true } },
         _count: { select: { members: true, weeks: true } },
+        ...(studentId && {
+          members: { where: { studentId }, select: { id: true }, take: 1 },
+        }),
       },
     });
     if (!group) throw new NotFoundException('المجموعة غير موجودة');
+    if (studentId) {
+      const g = group as typeof group & { members: { id: string }[] };
+      if (!g.members.length) throw new ForbiddenException('لا تملك صلاحية الوصول لهذه الحلقة');
+    }
     return this.toGroupDto(group);
   }
 
@@ -108,9 +120,13 @@ export class GroupService {
     const weeks = await this.db.week.findMany({
       where: { groupId },
       orderBy: { weekNumber: 'asc' },
-      include: { scheduleImages: { orderBy: { createdAt: 'asc' } } },
+      include: { scheduleImage: true },
     });
-    return weeks.map((w) => this.toWeekDto(w));
+    return weeks
+      .filter((w) => w.scheduleImage)
+      .map((w) =>
+        this.toWeekDto(w as typeof w & { scheduleImage: NonNullable<typeof w.scheduleImage> })
+      );
   }
 
   async createScheduleImage(
@@ -125,6 +141,7 @@ export class GroupService {
 
       let weekRecord = await tx.week.findUnique({
         where: { groupId_weekNumber: { groupId, weekNumber: resolved.weekNumber } },
+        include: { scheduleImage: true },
       });
 
       if (!weekRecord) {
@@ -135,20 +152,34 @@ export class GroupService {
             startDate: resolved.startDate,
             endDate: resolved.endDate,
           },
+          include: { scheduleImage: true },
         });
       }
 
-      await tx.scheduleImage.create({
-        data: { weekId: weekRecord.id, name: scheduleName, imageUrl, imagekitFileId },
-      });
+      // If week already has an image, delete old from ImageKit then replace
+      if (weekRecord.scheduleImage) {
+        await this.fileService
+          .deleteFileFromImageKit(weekRecord.scheduleImage.imagekitFileId)
+          .catch(() => null);
+        await tx.scheduleImage.update({
+          where: { weekId: weekRecord.id },
+          data: { name: scheduleName, imageUrl, imagekitFileId },
+        });
+      } else {
+        await tx.scheduleImage.create({
+          data: { weekId: weekRecord.id, name: scheduleName, imageUrl, imagekitFileId },
+        });
+      }
 
-      return tx.week.findUnique({
+      return tx.week.findUniqueOrThrow({
         where: { id: weekRecord.id },
-        include: { scheduleImages: { orderBy: { createdAt: 'asc' } } },
+        include: { scheduleImage: true },
       });
     });
 
-    return this.toWeekDto(week!);
+    return this.toWeekDto(
+      week as typeof week & { scheduleImage: NonNullable<typeof week.scheduleImage> }
+    );
   }
 
   async updateScheduleImage(
@@ -296,13 +327,13 @@ export class GroupService {
     startDate: Date;
     endDate: Date;
     createdAt: Date;
-    scheduleImages: {
+    scheduleImage: {
       id: string;
       weekId: string;
       name: string;
       imageUrl: string;
       createdAt: Date;
-    }[];
+    };
   }): WeekDto {
     return {
       id: w.id,
@@ -319,13 +350,13 @@ export class GroupService {
         timezone: 'utc',
       }) as ISODateOnlyString,
       createdAt: w.createdAt.toISOString() as WeekDto['createdAt'],
-      scheduleImages: w.scheduleImages.map((img) => ({
-        id: img.id,
-        weekId: img.weekId,
-        name: img.name,
-        imageUrl: img.imageUrl,
-        createdAt: img.createdAt.toISOString() as WeekDto['createdAt'],
-      })),
+      scheduleImage: {
+        id: w.scheduleImage.id,
+        weekId: w.scheduleImage.weekId,
+        name: w.scheduleImage.name,
+        imageUrl: w.scheduleImage.imageUrl,
+        createdAt: w.scheduleImage.createdAt.toISOString() as WeekDto['createdAt'],
+      },
     };
   }
 

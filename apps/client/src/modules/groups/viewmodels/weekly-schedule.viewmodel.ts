@@ -93,15 +93,15 @@ export function useWeeklyScheduleViewModel(groupId: string, isOpen: boolean) {
     });
   };
 
-  const openEditImage = (img: ScheduleImageDto, week: WeekDto) => {
+  const openEditImage = (week: WeekDto) => {
     setEditingCtx({
-      imageId: img.id,
-      imageName: img.name,
+      imageId: week.scheduleImage.id,
+      imageName: week.scheduleImage.name,
       weekNumber: week.weekNumber,
       weekStartDate: week.startDate,
     });
     setEditFile(null);
-    setEditName(img.name);
+    setEditName(week.scheduleImage.name);
     setShowUploadForm(false);
   };
 

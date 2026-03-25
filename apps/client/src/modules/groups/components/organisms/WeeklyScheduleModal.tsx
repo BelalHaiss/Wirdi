@@ -173,46 +173,42 @@ export function WeeklyScheduleModal({ open, onOpenChange, groupId }: WeeklySched
             </Alert>
           ) : (
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
-              {vm.weeks.map((week) =>
-                week.scheduleImages.length > 0
-                  ? week.scheduleImages.map((img) => (
-                      <Button
-                        key={img.id}
-                        type='button'
-                        variant='ghost'
-                        className='relative group p-0 rounded-xl overflow-hidden border aspect-3/4 bg-muted h-auto w-full block hover:bg-muted'
-                        onClick={() => vm.setSelectedImage(img.imageUrl)}
-                      >
-                        <img
-                          src={img.imageUrl}
-                          alt={`الأسبوع ${week.weekNumber}`}
-                          className='w-full h-full object-cover transition-transform group-hover:scale-105'
-                        />
-                        <div className='absolute bottom-0 inset-x-0 bg-foreground/60 px-2 py-1.5'>
-                          <Typography size='xs' className='text-white text-center'>
-                            {img.name}
-                          </Typography>
-                          <Typography size='xs' className='text-white/70 text-center'>
-                            {formatDateArabicNoWeekday(week.startDate)}
-                          </Typography>
-                        </div>
-                        <Button
-                          type='button'
-                          size='icon'
-                          variant='ghost'
-                          color='warning'
-                          className='absolute top-2 left-2 h-7 w-7 z-10'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            vm.openEditImage(img, week);
-                          }}
-                        >
-                          <Pencil className='h-3.5 w-3.5' />
-                        </Button>
-                      </Button>
-                    ))
-                  : null
-              )}
+              {vm.weeks.map((week) => (
+                <Button
+                  key={week.scheduleImage.id}
+                  type='button'
+                  variant='ghost'
+                  className='relative group p-0 rounded-xl overflow-hidden border aspect-3/4 bg-muted h-auto w-full block hover:bg-muted'
+                  onClick={() => vm.setSelectedImage(week.scheduleImage.imageUrl)}
+                >
+                  <img
+                    src={week.scheduleImage.imageUrl}
+                    alt={`الأسبوع ${week.weekNumber}`}
+                    className='w-full h-full object-cover transition-transform group-hover:scale-105'
+                  />
+                  <div className='absolute bottom-0 inset-x-0 bg-foreground/60 px-2 py-1.5'>
+                    <Typography size='xs' className='text-white text-center'>
+                      {week.scheduleImage.name}
+                    </Typography>
+                    <Typography size='xs' className='text-white/70 text-center'>
+                      {formatDateArabicNoWeekday(week.startDate)}
+                    </Typography>
+                  </div>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    color='warning'
+                    className='absolute top-2 left-2 h-7 w-7 z-10'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      vm.openEditImage(week);
+                    }}
+                  >
+                    <Pencil className='h-3.5 w-3.5' />
+                  </Button>
+                </Button>
+              ))}
             </div>
           )}
         </DialogContent>

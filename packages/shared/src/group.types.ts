@@ -70,7 +70,8 @@ export interface WeekDto {
   startDate: ISODateOnlyString;
   endDate: ISODateOnlyString;
   createdAt: ISODateString;
-  scheduleImages: ScheduleImageDto[];
+  /** Every week is created by uploading a schedule image — always present */
+  scheduleImage: ScheduleImageDto;
 }
 
 /** DTO for uploading a new week schedule image — groupId comes from the route param */
@@ -202,12 +203,16 @@ export interface GroupWirdTrackingDto {
   rows: GroupWirdTrackingRowDto[];
 }
 
-/** Week with flags set by the backend — no date math needed on the client */
-export interface WeekWithCurrentFlagDto extends WeekDto {
+/** Week with isCurrent/isUpcoming flags — used for learner views */
+export interface WeekStatusFlagsDto extends WeekDto {
   /** true when today falls within startDate..endDate (inclusive) */
   isCurrent: boolean;
   /** true when startDate > today — week has not started yet */
   isUpcoming: boolean;
+}
+
+/** Week with flags set by the backend — no date math needed on the client */
+export interface WeekWithCurrentFlagDto extends WeekStatusFlagsDto {
   /** true when this week is the recommended default tab (current week, or last past week if no current) */
   isDefault: boolean;
 }
@@ -241,4 +246,34 @@ export interface UpdateStudentWirdDayDto {
 /** Payload for PATCH /student-wird/student/:studentId/week/:weekId */
 export interface UpdateStudentWirdsDto {
   updates: UpdateStudentWirdDayDto[];
+}
+
+// ============================================================================
+// Learner Self-Recording DTOs
+// ============================================================================
+
+/**
+ * The day the learner is currently allowed to record.
+ * `available` — there is one recordable day within the allowed time window.
+ * `none` — all days are recorded, or no days are within the window yet.
+ */
+export type RecordableDayStatus =
+  | { status: 'available'; dayNumber: number; isLate: boolean }
+  | { status: 'none'; reason: 'all_recorded' | 'upcoming' };
+
+/** Response for GET /student-wird/my-group/:groupId/overview */
+export interface LearnerGroupOverviewDto {
+  week: WeekStatusFlagsDto;
+  myRow: GroupWirdTrackingRowDto;
+  myMembership: GroupMemberDto;
+  recordableDay: RecordableDayStatus;
+}
+
+/** Payload for POST /student-wird/my-wird */
+export interface RecordLearnerWirdDto {
+  groupId: string;
+  weekId: string;
+  dayNumber: number;
+  /** Mate the learner read upon. null = no mate. Omit to keep the default from GroupMember. */
+  mateId?: string | null;
 }
