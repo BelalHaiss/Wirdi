@@ -1,5 +1,5 @@
 import argon from 'argon2';
-import { prismaSeedClient } from './seed';
+import { prismaSeedClient } from './seed.util';
 
 async function bootstrapAdmin() {
   const hashedPassword = await argon.hash('12345678');

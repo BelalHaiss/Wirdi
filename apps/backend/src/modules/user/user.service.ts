@@ -216,12 +216,20 @@ export class UserService {
   }
 
   async createLearner(dto: CreateLearnerDto): Promise<LearnerDto> {
+    const existingUser = await this.prismaService.user.findUnique({
+      where: { username: dto.username },
+      select: { id: true },
+    });
+    if (existingUser) {
+      throw new ConflictException('Username already exists');
+    }
+
     const createdLearner = await this.prismaService.user.create({
       data: {
         name: dto.name,
+        username: dto.username,
         role: UserRole.STUDENT,
-        username: null,
-        password: null,
+        password: await argon.hash('12345678'),
         timezone: dto.timezone ?? DEFAULT_TIMEZONE,
         notes: dto.contact?.notes,
       },
@@ -255,6 +263,7 @@ export class UserService {
         },
         select: {
           id: true,
+          username: true,
           name: true,
           role: true,
           timezone: true,
@@ -299,6 +308,17 @@ export class UserService {
 
     if (dto.name !== undefined) {
       data.name = dto.name;
+    }
+
+    if (dto.username !== undefined && dto.username !== learner.username) {
+      const existingWithUsername = await this.prismaService.user.findUnique({
+        where: { username: dto.username },
+        select: { id: true },
+      });
+      if (existingWithUsername) {
+        throw new ConflictException('Username already exists');
+      }
+      data.username = dto.username;
     }
 
     if (dto.timezone !== undefined) {
@@ -380,17 +400,13 @@ export class UserService {
 
   private toAuthUserDto(user: {
     id: string;
-    username: string | null;
+    username: string;
     name: string;
     role: UserRole;
     timezone: string;
     createdAt: Date;
     updatedAt: Date;
   }): UserAuthType {
-    if (!user.username || !this.isStaffRole(user.role)) {
-      throw new NotFoundException('User not found');
-    }
-
     return {
       id: user.id,
       username: user.username,
@@ -404,6 +420,7 @@ export class UserService {
 
   private toLearnerDto(user: {
     id: string;
+    username: string | null;
     name: string;
     role: UserRole;
     timezone: string;
@@ -419,6 +436,7 @@ export class UserService {
 
     return {
       id: user.id,
+      username: user.username,
       name: user.name,
       role: 'STUDENT',
       timezone: user.timezone,

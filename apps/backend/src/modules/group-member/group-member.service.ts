@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import argon from 'argon2';
 import { DatabaseService } from '../database/database.service';
 import {
   AssignLearnersToGroupDto,
@@ -28,6 +29,17 @@ export class GroupMemberService {
     });
     if (!group) throw new NotFoundException('المجموعة غير موجودة');
 
+    const requestedUsernames = dto.learners.map((l) => l.username);
+    const existingUsernames = await this.db.user.findMany({
+      where: { username: { in: requestedUsernames } },
+      select: { username: true },
+    });
+    if (existingUsernames.length > 0) {
+      throw new ConflictException('بعض أسماء المستخدمين مستخدمة بالفعل');
+    }
+
+    const defaultPasswordHash = await argon.hash('12345678');
+
     const members = await this.db.$transaction(async (tx) => {
       const created: GroupMemberDto[] = [];
 
@@ -35,6 +47,8 @@ export class GroupMemberService {
         const student = await tx.user.create({
           data: {
             name: learnerData.name,
+            username: learnerData.username,
+            password: defaultPasswordHash,
             timezone: learnerData.timezone,
             role: UserRole.STUDENT,
             notes: learnerData.notes,
@@ -44,7 +58,7 @@ export class GroupMemberService {
         const member = await tx.groupMember.create({
           data: { groupId: dto.groupId, studentId: student.id },
           include: {
-            student: { select: { name: true, timezone: true, notes: true } },
+            student: { select: { name: true, username: true, timezone: true, notes: true } },
             mate: { select: { name: true } },
           },
         });
@@ -54,6 +68,7 @@ export class GroupMemberService {
           groupId: member.groupId,
           studentId: member.studentId,
           studentName: member.student.name,
+          studentUsername: member.student.username,
           studentTimezone: member.student.timezone,
           mateId: member.mateId ?? undefined,
           mateName: member.mate?.name ?? undefined,
@@ -102,7 +117,7 @@ export class GroupMemberService {
         this.db.groupMember.create({
           data: { groupId: dto.groupId, studentId },
           include: {
-            student: { select: { name: true, timezone: true, notes: true } },
+            student: { select: { name: true, username: true, timezone: true, notes: true } },
             mate: { select: { name: true } },
           },
         })
@@ -114,6 +129,7 @@ export class GroupMemberService {
       groupId: m.groupId,
       studentId: m.studentId,
       studentName: m.student.name,
+      studentUsername: m.student.username,
       studentTimezone: m.student.timezone,
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
@@ -150,7 +166,7 @@ export class GroupMemberService {
       where: { id: memberId },
       data: { mateId: dto.mateId },
       include: {
-        student: { select: { name: true, timezone: true, notes: true } },
+        student: { select: { name: true, username: true, timezone: true, notes: true } },
         mate: { select: { name: true } },
       },
     });
@@ -160,6 +176,7 @@ export class GroupMemberService {
       groupId: updated.groupId,
       studentId: updated.studentId,
       studentName: updated.student.name,
+      studentUsername: updated.student.username,
       studentTimezone: updated.student.timezone,
       mateId: updated.mateId ?? undefined,
       mateName: updated.mate?.name ?? undefined,
@@ -209,6 +226,7 @@ export class GroupMemberService {
 
     return learners.map((u) => ({
       id: u.id,
+      username: u.username,
       name: u.name,
       role: 'STUDENT' as const,
       timezone: u.timezone,

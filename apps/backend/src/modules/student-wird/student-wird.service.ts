@@ -333,6 +333,7 @@ export class StudentWirdService {
       groupId: member.groupId,
       studentId: member.studentId,
       studentName: member.student.name,
+      studentUsername: member.student.username,
       studentTimezone: member.student.timezone,
       mateId: member.mateId ?? undefined,
       mateName: member.mate?.name ?? undefined,

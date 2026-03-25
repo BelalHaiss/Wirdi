@@ -43,9 +43,9 @@ export class GroupController {
   }
 
   @Get()
-  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
-  queryGroups() {
-    return this.groupService.queryGroups();
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])
+  queryGroups(@User() user: PrismaUser) {
+    return this.groupService.queryGroups(user);
   }
 
   @Get(':id')

@@ -24,6 +24,7 @@ import {
   dateOnlyToUTC,
   formatDate,
 } from '@wirdi/shared';
+import type { User as PrismaUser } from 'generated/prisma/client';
 
 @Injectable()
 export class GroupService {
@@ -43,8 +44,16 @@ export class GroupService {
     return { groupsCount, learnersCount, moderatorsCount };
   }
 
-  async queryGroups(): Promise<QueryGroupsResponseDto> {
+  async queryGroups(actor: PrismaUser): Promise<QueryGroupsResponseDto> {
+    const where =
+      actor.role === 'ADMIN'
+        ? {}
+        : actor.role === 'MODERATOR'
+          ? { moderatorId: actor.id }
+          : { members: { some: { studentId: actor.id } } };
+
     const groups = await this.db.group.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         moderator: { select: { name: true } },
@@ -225,6 +234,7 @@ export class GroupService {
         student: {
           select: {
             name: true,
+            username: true,
             timezone: true,
             notes: true,
             excusesAsStudent: {
@@ -369,6 +379,7 @@ export class GroupService {
       joinedAt: Date;
       student: {
         name: string;
+        username: string;
         timezone: string;
         notes: string | null;
         excusesAsStudent?: { expiresAt: Date }[];
@@ -382,6 +393,7 @@ export class GroupService {
       groupId: m.groupId,
       studentId: m.studentId,
       studentName: m.student.name,
+      studentUsername: m.student.username,
       studentTimezone: m.student.timezone,
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,

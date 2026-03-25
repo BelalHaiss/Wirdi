@@ -29,6 +29,8 @@ export async function seedUsers(args: {
   totalModerators: number;
   totalLearners: number;
 }): Promise<{ students: { id: string }[] }> {
+  const defaultPassword = await argon.hash('12345678');
+
   const staffUsers = await Promise.all([
     seedAppUser('admin', 'ADMIN'),
     seedAppUser('moderator', 'MODERATOR'),
@@ -37,11 +39,11 @@ export async function seedUsers(args: {
     ),
   ]);
 
-  const learners = Array.from({ length: args.totalLearners }, () => ({
+  const learners = Array.from({ length: args.totalLearners }, (_, index) => ({
     name: fakerAR.person.fullName(),
     role: 'STUDENT' as const,
-    username: null,
-    password: null,
+    username: `student${index + 1}`,
+    password: defaultPassword,
     timezone: faker.helpers.arrayElement(seedTimezones),
     notes: faker.datatype.boolean(0.45) ? fakerAR.lorem.sentence() : null,
   }));

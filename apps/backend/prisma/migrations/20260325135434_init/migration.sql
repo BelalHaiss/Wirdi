@@ -1,9 +1,9 @@
 -- CreateTable
 CREATE TABLE `users` (
     `id` VARCHAR(191) NOT NULL,
-    `username` VARCHAR(50) NULL,
+    `username` VARCHAR(50) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
-    `password` VARCHAR(255) NULL,
+    `password` VARCHAR(255) NOT NULL,
     `role` ENUM('ADMIN', 'MODERATOR', 'STUDENT') NOT NULL,
     `timezone` VARCHAR(50) NOT NULL DEFAULT 'Africa/Cairo',
     `notes` TEXT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE `schedule_images` (
     `imagekit_file_id` VARCHAR(500) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `schedule_images_week_id_idx`(`week_id`),
+    UNIQUE INDEX `schedule_images_week_id_key`(`week_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -122,6 +122,19 @@ CREATE TABLE `excuses` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `alerts` (
+    `id` VARCHAR(191) NOT NULL,
+    `student_id` VARCHAR(191) NOT NULL,
+    `group_id` VARCHAR(191) NOT NULL,
+    `week_id` VARCHAR(191) NOT NULL,
+    `day_number` TINYINT NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `alerts_student_id_week_id_day_number_key`(`student_id`, `week_id`, `day_number`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `groups` ADD CONSTRAINT `groups_moderator_id_fkey` FOREIGN KEY (`moderator_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -169,3 +182,12 @@ ALTER TABLE `excuses` ADD CONSTRAINT `excuses_created_by_fkey` FOREIGN KEY (`cre
 
 -- AddForeignKey
 ALTER TABLE `excuses` ADD CONSTRAINT `excuses_request_id_fkey` FOREIGN KEY (`request_id`) REFERENCES `requests`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `alerts` ADD CONSTRAINT `alerts_student_id_fkey` FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `alerts` ADD CONSTRAINT `alerts_group_id_fkey` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `alerts` ADD CONSTRAINT `alerts_week_id_fkey` FOREIGN KEY (`week_id`) REFERENCES `weeks`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
