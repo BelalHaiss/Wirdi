@@ -24,11 +24,6 @@ export const TIMEZONES: TimezoneOption[] = [
     label: 'السعودية',
     country: 'SA',
   },
-  {
-    value: 'Asia/Makkah',
-    label: 'السعودية',
-    country: 'SA',
-  },
 
   // UAE
   {
@@ -308,7 +303,7 @@ export const isSupportedTimezone = (value: string): boolean => {
 /**
  * Default timezone for the application
  */
-export const DEFAULT_TIMEZONE = 'Africa/Cairo';
+export const DEFAULT_TIMEZONE = 'Asia/Riyadh';
 
 /**
  * Get timezone label by value

@@ -33,9 +33,9 @@ export interface AuthResponseDto {
 
 export type UserAuthType = {
   id: string;
-  username: string | null;
+  username: string;
   name: string;
-  role: UserAuthRole;
+  role: UserRole;
   createdAt: ISODateString;
   updatedAt: ISODateString;
   timezone: string;

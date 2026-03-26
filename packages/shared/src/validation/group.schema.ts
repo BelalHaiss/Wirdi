@@ -21,6 +21,7 @@ import {
   nameSchema,
   nonEmptyIdSchema,
   notesSchema,
+  usernameAccountSchema,
 } from './fields.schema';
 import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 
@@ -90,6 +91,7 @@ export const createAndAssignLearnersSchema = (locale: ValidationLocale = 'ar') =
       .array(
         z.object({
           name: nameSchema(locale),
+          username: usernameAccountSchema(locale),
           timezone: z.string().trim().min(1),
           notes: notesSchema(locale).optional(),
         })

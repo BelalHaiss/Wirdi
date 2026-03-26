@@ -28,7 +28,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       name: 'الحلقات',
       href: '/groups',
       icon: Users,
-      roles: ['ADMIN', 'MODERATOR', 'TUTOR'],
+      roles: ['ADMIN', 'MODERATOR', 'STUDENT'],
     },
     {
       name: 'المستخدمون',
@@ -40,7 +40,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       name: 'المتعلمون',
       href: '/learners',
       icon: GraduationCap,
-      roles: ['ADMIN', 'MODERATOR', 'STUDENT'],
+      roles: ['ADMIN', 'MODERATOR'],
     },
   ];
 

@@ -96,6 +96,7 @@ export interface GroupMemberDto {
   groupId: string;
   studentId: string;
   studentName: string;
+  studentUsername: string;
   studentTimezone: string;
   mateId?: string;
   mateName?: string;
@@ -116,6 +117,7 @@ export interface CreateAndAssignLearnersDto {
   groupId: string;
   learners: {
     name: string;
+    username: string;
     timezone: string;
     notes?: string;
   }[];

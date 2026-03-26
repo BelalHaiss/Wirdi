@@ -103,6 +103,7 @@ export function GroupLearnersTable({
                       learner={{
                         id: member.studentId,
                         name: member.studentName,
+                        username: member.studentUsername,
                         timezone: member.studentTimezone,
                         contact: { notes: member.notes },
                         groupCount: undefined,

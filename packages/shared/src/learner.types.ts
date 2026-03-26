@@ -11,6 +11,7 @@ export interface LearnerGroupSummaryDto {
 
 export interface LearnerDto {
   id: string;
+  username: string | null;
   name: string;
   role: 'STUDENT';
   timezone: string;
@@ -23,12 +24,14 @@ export interface LearnerDto {
 
 export interface CreateLearnerDto {
   name: string;
+  username: string;
   timezone: string;
   contact?: LearnerContactDto;
 }
 
 export interface UpdateLearnerDto {
   name?: string;
+  username?: string;
   timezone?: string;
   contact?: LearnerContactDto;
 }

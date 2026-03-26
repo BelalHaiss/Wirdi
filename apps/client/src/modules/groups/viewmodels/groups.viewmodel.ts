@@ -11,10 +11,12 @@ import type { CreateGroupDto, GroupDto, GroupStatsDto, StaffUserDto } from '@wir
 export function useGroupsViewModel() {
   const { user } = useApp();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const isStudent = user?.role === 'STUDENT';
 
   const statsQuery = useApiQuery<GroupStatsDto>({
     queryKey: queryKeys.groups.stats('groups-count'),
     queryFn: groupService.getStats,
+    enabled: !isStudent,
   });
 
   const groupsQuery = useApiQuery<GroupDto[]>({
@@ -25,7 +27,7 @@ export function useGroupsViewModel() {
   const staffQuery = useApiQuery<StaffUserDto[]>({
     queryKey: queryKeys.users.list({ scope: 'staff' }),
     queryFn: userService.getStaffUsers,
-    enabled: isCreateModalOpen,
+    enabled: isCreateModalOpen && !isStudent,
   });
 
   const createGroupMutation = useApiMutation<CreateGroupDto, GroupDto>({
@@ -58,6 +60,7 @@ export function useGroupsViewModel() {
 
     canManageGroups: user?.role === 'ADMIN' || user?.role === 'MODERATOR',
     isAdmin: user?.role === 'ADMIN',
+    isStudent,
 
     // Modal
     isCreateModalOpen,

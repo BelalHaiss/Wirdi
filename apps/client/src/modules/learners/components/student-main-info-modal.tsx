@@ -30,7 +30,7 @@ export type StudentMainInfoMode = 'view' | 'edit' | 'create';
 
 export type StudentMainInfoLearner = Pick<
   LearnerDto,
-  'id' | 'name' | 'timezone' | 'contact' | 'groupCount' | 'groups'
+  'id' | 'name' | 'username' | 'timezone' | 'contact' | 'groupCount' | 'groups'
 >;
 
 export type StudentMainInfoSubmitArgs =
@@ -76,6 +76,7 @@ export function StudentMainInfoModal({
   const defaultValues = useMemo<StudentMainInfoFormValues>(
     () => ({
       name: learner && !isCreateMode ? learner.name : '',
+      username: learner && !isCreateMode ? (learner.username ?? '') : '',
       timezone: learner && !isCreateMode ? learner.timezone || DEFAULT_TIMEZONE : DEFAULT_TIMEZONE,
       notes: learner && !isCreateMode ? learner.contact.notes || '' : '',
     }),
@@ -100,6 +101,7 @@ export function StudentMainInfoModal({
           addToGroupId,
           data: {
             name: values.name.trim(),
+            username: values.username.trim(),
             timezone: values.timezone,
             contact: values.notes.trim() ? { notes: values.notes.trim() } : undefined,
           },
@@ -109,6 +111,7 @@ export function StudentMainInfoModal({
           learnerId: learner?.id,
           data: {
             name: values.name.trim(),
+            username: values.username.trim(),
             timezone: values.timezone,
             contact: { notes: values.notes.trim() || undefined },
           },
@@ -155,7 +158,7 @@ export function StudentMainInfoModal({
           onOpenChange(nextOpen);
         }}
       >
-        <DialogContent className='w-full sm:max-w-lg'>
+        <DialogContent className='w-full sm:max-w-lg' onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
@@ -169,6 +172,16 @@ export function StudentMainInfoModal({
               label='الاسم'
               type='text'
               placeholder='اسم المتعلم'
+              disabled={isViewMode || isLoading}
+            />
+
+            <FormField
+              control={form.control}
+              name='username'
+              id='student-username'
+              label='اسم المستخدم'
+              type='text'
+              placeholder='اسم المستخدم لتسجيل الدخول'
               disabled={isViewMode || isLoading}
             />
 

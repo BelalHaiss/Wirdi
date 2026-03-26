@@ -5,6 +5,11 @@ import { LearnersView } from '@/modules/learners';
 import { GroupsView, GroupDetailView, GroupLearnersView } from '@/modules/groups';
 import { RouteErrorElement } from '@/modules/observability';
 import { ProtectedLayout } from '@/components/ProtectedLayout';
+import { withRole } from '@/hoc/withRole';
+
+const ProtectedUsersView = withRole(UsersView, ['ADMIN', 'MODERATOR']);
+const ProtectedLearnersView = withRole(LearnersView, ['ADMIN', 'MODERATOR']);
+const ProtectedGroupLearnersView = withRole(GroupLearnersView, ['ADMIN', 'MODERATOR']);
 
 export const router = createBrowserRouter([
   {
@@ -23,11 +28,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'users',
-        element: <UsersView />,
+        element: <ProtectedUsersView />,
       },
       {
         path: 'learners',
-        element: <LearnersView />,
+        element: <ProtectedLearnersView />,
       },
       {
         path: 'groups',
@@ -39,7 +44,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'groups/:id/learners',
-        element: <GroupLearnersView />,
+        element: <ProtectedGroupLearnersView />,
       },
       {
         path: 'profile',

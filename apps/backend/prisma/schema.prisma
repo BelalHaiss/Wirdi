@@ -41,7 +41,8 @@ model User {
   excusesCreated   Excuse[] @relation("ExcuseCreator")
 
   // Alert relations
-  alerts Alert[] @relation("AlertStudent")
+  alerts        Alert[]        @relation("AlertStudent")
+  notifications Notification[]
 
   @@index([role])
   @@map("users")
@@ -221,4 +222,24 @@ model Alert {
 
   @@unique([studentId, weekId, dayNumber])
   @@map("alerts")
+}
+
+model Notification {
+  id          String           @id @default(ulid())
+  recipientId String           @map("recipient_id")
+  type        NotificationType
+  payload     Json
+  readAt      DateTime?        @map("read_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+  @@index([recipientId, readAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  ALERT_ASSIGNED
+  LEARNER_DEACTIVATED
 }

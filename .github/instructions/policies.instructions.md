@@ -8,7 +8,7 @@ applyTo: '**'
 
 - **Same day:** until end of day (group timezone)
 - **Next day:** until 4:00 PM (group timezone)
-- **Thursday is special:** window extends to Saturday 4:00 PM (skips Friday — no school day)
+- **Thursday is special:** window extends to Saturday 4:00 PM (skips Friday off)
 
 ## UI — Checkbox States
 
@@ -30,6 +30,10 @@ applyTo: '**'
 
 - Notify the **learner** immediately when an alert is assigned
 - Notify the **admin / moderator** when a learner gets deactivated
+
+## Recording Order
+
+- Learner cannot record a new day if any previous day in the same week is unrecorded — unless they joined mid-week (i.e., their join date is after Saturday, the first day of the week).
 
 ## Special Cases
 

@@ -17,6 +17,7 @@ import { GroupModule } from './modules/group/group.module';
 import { FileModule } from './modules/file/file.module';
 import { ExcuseModule } from './modules/excuse/excuse.module';
 import { StudentWirdModule } from './modules/student-wird/student-wird.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { StudentWirdModule } from './modules/student-wird/student-wird.module';
     FileModule,
     ExcuseModule,
     StudentWirdModule,
+    NotificationModule,
   ],
   providers: [
     {

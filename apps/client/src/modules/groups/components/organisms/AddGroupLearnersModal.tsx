@@ -40,7 +40,9 @@ export function AddGroupLearnersModal({
 
   const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: zodResolver(createAndAssignLearnersSchema('ar').omit({ groupId: true })),
-    defaultValues: { learners: [{ name: '', timezone: DEFAULT_TIMEZONE, notes: '' }] },
+    defaultValues: {
+      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
+    },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'learners' });
@@ -56,6 +58,7 @@ export function AddGroupLearnersModal({
       groupId,
       learners: values.learners.map((l) => ({
         name: l.name,
+        username: l.username,
         timezone: l.timezone,
         notes: l.notes || undefined,
       })),
@@ -86,46 +89,67 @@ export function AddGroupLearnersModal({
                 {fields.map((field, index) => (
                   <div
                     key={field.id}
-                    className='flex gap-2 items-end border rounded-xl p-3 bg-muted/20'
+                    className='flex flex-row flex-wrap gap-2  items-baseline border rounded-xl p-3 bg-muted/20'
                   >
-                    <div className='flex gap-2 w-full'>
-                      <div className='flex-2'>
-                        <Field>
-                          <FieldLabel>الاسم</FieldLabel>
-                          <Controller
-                            control={control}
-                            name={`learners.${index}.name`}
-                            render={({ field: f, fieldState }) => (
-                              <>
-                                <Input
-                                  {...f}
-                                  placeholder='اسم المتعلم'
-                                  aria-invalid={!!fieldState.error}
-                                />
-                                {fieldState.error && (
-                                  <Typography size='xs' className='text-danger'>
-                                    {fieldState.error.message}
-                                  </Typography>
-                                )}
-                              </>
-                            )}
-                          />
-                        </Field>
-                      </div>
-                      <div className='flex-1'>
-                        <FormField
+                    <div className='flex-1 min-w-32'>
+                      <Field>
+                        <FieldLabel>الاسم</FieldLabel>
+                        <Controller
                           control={control}
-                          name={`learners.${index}.timezone`}
-                          id={`student-timezone-${index}`}
-                          label='المنطقة الزمنية'
-                          type='select'
-                          placeholder='اختر المنطقة الزمنية'
-                          options={TIMEZONES.map((tz) => ({
-                            value: tz.value,
-                            label: tz.label,
-                          }))}
+                          name={`learners.${index}.name`}
+                          render={({ field: f, fieldState }) => (
+                            <>
+                              <Input
+                                {...f}
+                                placeholder='اسم المتعلم'
+                                aria-invalid={!!fieldState.error}
+                              />
+                              {fieldState.error && (
+                                <Typography size='xs' className='text-danger'>
+                                  {fieldState.error.message}
+                                </Typography>
+                              )}
+                            </>
+                          )}
                         />
-                      </div>
+                      </Field>
+                    </div>
+                    <div className='flex-1 min-w-32'>
+                      <Field>
+                        <FieldLabel>اسم المستخدم</FieldLabel>
+                        <Controller
+                          control={control}
+                          name={`learners.${index}.username`}
+                          render={({ field: f, fieldState }) => (
+                            <>
+                              <Input
+                                {...f}
+                                placeholder='لتسجيل الدخول'
+                                aria-invalid={!!fieldState.error}
+                              />
+                              {fieldState.error && (
+                                <Typography size='xs' className='text-danger'>
+                                  {fieldState.error.message}
+                                </Typography>
+                              )}
+                            </>
+                          )}
+                        />
+                      </Field>
+                    </div>
+                    <div className='flex-1 min-w-36'>
+                      <FormField
+                        control={control}
+                        name={`learners.${index}.timezone`}
+                        id={`student-timezone-${index}`}
+                        label='المنطقة الزمنية'
+                        type='select'
+                        placeholder='اختر المنطقة الزمنية'
+                        options={TIMEZONES.map((tz) => ({
+                          value: tz.value,
+                          label: tz.label,
+                        }))}
+                      />
                     </div>
                     {fields.length > 1 && (
                       <Button
@@ -133,7 +157,7 @@ export function AddGroupLearnersModal({
                         variant='ghost'
                         color='danger'
                         size='icon'
-                        className='mb-0.5'
+                        className='  self-center  '
                         onClick={() => remove(index)}
                       >
                         <Trash2 className='h-4 w-4' />
@@ -148,7 +172,9 @@ export function AddGroupLearnersModal({
                 variant='outline'
                 size='sm'
                 className='gap-1.5 w-full'
-                onClick={() => append({ name: '', timezone: DEFAULT_TIMEZONE, notes: '' })}
+                onClick={() =>
+                  append({ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' })
+                }
               >
                 <Plus className='h-3.5 w-3.5' />
                 إضافة متعلم آخر

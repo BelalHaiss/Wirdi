@@ -3,6 +3,7 @@ export * from './types/client-error-log.types';
 export * from './user.types';
 export * from './learner.types';
 export * from './group.types';
+export * from './notification.types';
 export * from './validation/fields.constants';
 
 // Export utilities

@@ -1,4 +1,5 @@
-import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ type Props = { groupId: string };
 
 export default function LearnerGroupDetailView({ groupId }: Props) {
   const vm = useLearnerGroupViewModel(groupId);
+  const [scheduleExpanded, setScheduleExpanded] = useState(false);
 
   if (vm.isLoading) {
     return (
@@ -62,16 +64,48 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
 
       {/* Schedule image */}
       <Card>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-base'>جدول الأسبوع</CardTitle>
+        <CardHeader
+          className='cursor-pointer select-none pb-3'
+          onClick={() => setScheduleExpanded((v) => !v)}
+        >
+          <div className='flex items-center gap-3'>
+            <div className='w-14 h-14 rounded-lg overflow-hidden border shrink-0 bg-muted'>
+              <img
+                src={overview.week.scheduleImage.imageUrl}
+                alt={overview.week.scheduleImage.name}
+                className='w-full h-full object-cover'
+              />
+            </div>
+            <div className='flex-1 min-w-0'>
+              <CardTitle className='text-base'>جدول الأسبوع</CardTitle>
+              <Typography size='sm' className='text-muted-foreground mt-0.5'>
+                الأسبوع {overview.week.weekNumber} — {overview.week.scheduleImage.name}
+              </Typography>
+            </div>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='shrink-0 text-muted-foreground'
+              tabIndex={-1}
+            >
+              {scheduleExpanded ? (
+                <ChevronUp className='h-4 w-4' />
+              ) : (
+                <ChevronDown className='h-4 w-4' />
+              )}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          <img
-            src={overview.week.scheduleImage.imageUrl}
-            alt={overview.week.scheduleImage.name}
-            className='w-full max-w-md mx-auto rounded-xl border object-contain'
-          />
-        </CardContent>
+
+        {scheduleExpanded && (
+          <CardContent className='pt-0'>
+            <img
+              src={overview.week.scheduleImage.imageUrl}
+              alt={overview.week.scheduleImage.name}
+              className='w-full max-w-md mx-auto rounded-xl border object-contain'
+            />
+          </CardContent>
+        )}
       </Card>
 
       {/* Learner's own tracking row */}

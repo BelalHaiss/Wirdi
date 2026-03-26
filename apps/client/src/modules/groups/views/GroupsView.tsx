@@ -49,39 +49,41 @@ export default function GroupsView() {
   return (
     <div className='space-y-6'>
       {/* Stats summary */}
-      <section className='space-y-3 rounded-2xl border border-primary/20 bg-linear-to-l from-primary/5 via-background to-success/5 p-4'>
-        <div className='flex flex-wrap items-center justify-between gap-2'>
-          <Typography as='h2' size='lg' weight='semibold'>
-            ملخص الحلقات
-          </Typography>
-          <Typography as='div' size='xs' className='text-muted-foreground'>
-            إحصائيات مباشرة عن المتعلمين والحلقات
-          </Typography>
-        </div>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          <StatsCountCard
-            icon={GraduationCap}
-            data={{ count: vm.learnersCount, title: 'إجمالي المتعلمين' }}
-            isLoading={vm.isLoadingStats}
-            className='bg-linear-to-br from-primary/15 via-primary/5 to-background border-primary/30 ring-primary/20'
-            iconClassName='bg-primary/15 text-primary'
-          />
-          <StatsCountCard
-            icon={Users}
-            data={{ count: vm.moderatorsCount, title: 'إجمالي المشرفين' }}
-            isLoading={vm.isLoadingStats}
-            className='bg-linear-to-br from-success/15 via-success/5 to-background border-success/30 ring-success/20'
-            iconClassName='bg-success/15 text-success'
-          />
-          <StatsCountCard
-            icon={BookOpen}
-            data={{ count: vm.groupsCount, title: 'إجمالي الحلقات' }}
-            isLoading={vm.isLoadingStats}
-            className='bg-card border-border ring-border'
-            iconClassName='bg-muted/70 text-muted-foreground'
-          />
-        </div>
-      </section>
+      {!vm.isStudent ? (
+        <section className='space-y-3 rounded-2xl border border-primary/20 bg-linear-to-l from-primary/5 via-background to-success/5 p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <Typography as='h2' size='lg' weight='semibold'>
+              ملخص الحلقات
+            </Typography>
+            <Typography as='div' size='xs' className='text-muted-foreground'>
+              إحصائيات مباشرة عن المتعلمين والحلقات
+            </Typography>
+          </div>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            <StatsCountCard
+              icon={GraduationCap}
+              data={{ count: vm.learnersCount, title: 'إجمالي المتعلمين' }}
+              isLoading={vm.isLoadingStats}
+              className='bg-linear-to-br from-primary/15 via-primary/5 to-background border-primary/30 ring-primary/20'
+              iconClassName='bg-primary/15 text-primary'
+            />
+            <StatsCountCard
+              icon={Users}
+              data={{ count: vm.moderatorsCount, title: 'إجمالي المشرفين' }}
+              isLoading={vm.isLoadingStats}
+              className='bg-linear-to-br from-success/15 via-success/5 to-background border-success/30 ring-success/20'
+              iconClassName='bg-success/15 text-success'
+            />
+            <StatsCountCard
+              icon={BookOpen}
+              data={{ count: vm.groupsCount, title: 'إجمالي الحلقات' }}
+              isLoading={vm.isLoadingStats}
+              className='bg-card border-border ring-border'
+              iconClassName='bg-muted/70 text-muted-foreground'
+            />
+          </div>
+        </section>
+      ) : null}
 
       <PageHeader
         title='الحلقات'
