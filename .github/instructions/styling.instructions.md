@@ -31,13 +31,13 @@ applyTo: 'apps/client/**'
 
 Every interactive action must use its semantic color — never default to `primary` (blue) for actions:
 
-| Intent | Color token | Examples |
-|--------|-------------|----------|
-| **Edit / Update** | `warning` (yellow) | edit button, pencil icon button |
-| **Delete / Remove** | `danger` (red) | delete button, trash icon button |
-| **Save / Submit / Confirm / Create** | `success` (green) | save button, submit button, confirm dialog action |
-| **Navigation / Primary CTA** | `primary` (blue) | nav links, "add new" primary action |
-| **Cancel / Close** | `muted` | cancel button, close button |
+| Intent                               | Color token        | Examples                                          |
+| ------------------------------------ | ------------------ | ------------------------------------------------- |
+| **Edit / Update**                    | `warning` (yellow) | edit button, pencil icon button                   |
+| **Delete / Remove**                  | `danger` (red)     | delete button, trash icon button                  |
+| **Save / Submit / Confirm / Create** | `success` (green)  | save button, submit button, confirm dialog action |
+| **Navigation / Primary CTA**         | `primary` (blue)   | nav links, "add new" primary action               |
+| **Cancel / Close**                   | `muted`            | cancel button, close button                       |
 
 ### Rules
 

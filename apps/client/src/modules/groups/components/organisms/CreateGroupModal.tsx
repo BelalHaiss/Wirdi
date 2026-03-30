@@ -9,9 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/forms/form-field';
-import { createGroupSchema, DEFAULT_TIMEZONE } from '@wirdi/shared';
+import { createGroupSchema } from '@wirdi/shared';
 import type { CreateGroupDto, StaffUserDto } from '@wirdi/shared';
-import { AwradField, STATUS_OPTIONS, timezoneOptions } from './group-form-shared';
+import { AwradField, ModeratorSelectField, STATUS_OPTIONS } from './group-form-shared';
 
 type CreateGroupModalProps = {
   open: boolean;
@@ -39,15 +39,15 @@ export function CreateGroupModal({
     resolver: zodResolver(createGroupSchema('ar')),
     defaultValues: {
       name: '',
-      timezone: DEFAULT_TIMEZONE,
       status: 'ACTIVE',
       description: '',
       awrad: [],
-      moderatorId: '',
+      moderatorId: 'none',
     },
   });
 
   const awrad = watch('awrad');
+  const moderatorId = watch('moderatorId');
 
   const handleClose = () => {
     reset();
@@ -60,12 +60,8 @@ export function CreateGroupModal({
       moderatorId: data.moderatorId && data.moderatorId !== 'none' ? data.moderatorId : undefined,
       description: data.description?.trim() || undefined,
     });
+    reset();
   };
-
-  const moderatorOptions = [
-    { value: 'none', label: 'بدون مشرف' },
-    ...staffUsers.map((u) => ({ value: u.id, label: u.name })),
-  ];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -76,13 +72,6 @@ export function CreateGroupModal({
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4'>
           <FormField control={control} name='name' label='اسم الحلقة' type='text' />
-          <FormField
-            control={control}
-            name='timezone'
-            label='المنطقة الزمنية'
-            type='select'
-            options={timezoneOptions}
-          />
           <FormField
             control={control}
             name='status'
@@ -96,12 +85,11 @@ export function CreateGroupModal({
             onChange={(v) => setValue('awrad', v, { shouldDirty: true })}
             errorMessage={errors.awrad?.message}
           />
-          <FormField
-            control={control}
-            name='moderatorId'
-            label='المشرف'
-            type='select'
-            options={moderatorOptions}
+          <ModeratorSelectField
+            value={moderatorId ?? 'none'}
+            onChange={(v) => setValue('moderatorId', v, { shouldDirty: true })}
+            staffUsers={staffUsers}
+            errorMessage={errors.moderatorId?.message}
           />
 
           <DialogFooter>

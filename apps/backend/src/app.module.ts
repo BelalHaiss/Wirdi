@@ -18,6 +18,7 @@ import { FileModule } from './modules/file/file.module';
 import { ExcuseModule } from './modules/excuse/excuse.module';
 import { StudentWirdModule } from './modules/student-wird/student-wird.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { AlertModule } from './modules/alert/alert.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     ExcuseModule,
     StudentWirdModule,
     NotificationModule,
+    AlertModule,
   ],
   providers: [
     {

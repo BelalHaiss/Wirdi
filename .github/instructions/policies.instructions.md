@@ -12,19 +12,21 @@ applyTo: '**'
 
 ## UI — Checkbox States
 
-| State    | Color       | Meaning                                                             |
-| -------- | ----------- | ------------------------------------------------------------------- |
-| Empty    | Transparent | Day not yet come, or still within allowed window (not recorded yet) |
-| Recorded | Green       | Recorded within the allowed time window                             |
-| Late     | Yellow      | Recorded after the allowed window expired                           |
-| Missed   | Red         | Allowed window passed with no record                                |
-| Future   | Gray        | Future day — not reachable yet                                      |
+| State    | Color       | Meaning                                                                                   |
+| -------- | ----------- | ----------------------------------------------------------------------------------------- |
+| Empty    | Transparent | Day not yet come, or still within allowed window (not recorded yet)                       |
+| Recorded | Green       | Recorded within the allowed time window                                                   |
+| Late     | Yellow      | Recorded after the allowed window expired                                                 |
+| Missed   | Red         | Allowed window passed with no record which Stored In DB as Missed and created By Cron job |
+| Future   | Gray        | Future day — not reachable yet                                                            |
 
 ## Alert Policies
 
-- **1 alert in a week** → auto-deactivate the learner
-- **3 alerts total** (across all weeks) → auto-deactivate the learner
-- **Exception flag** → skip all blocking and deactivation logic entirely for that learner
+- **Cron runs daily at 4:00 PM (Asia/Riyadh)** — creates alerts for missed records from previous day
+- **Two deactivation thresholds with different timing**:
+  - **3 alerts in same week** → deactivate **immediately** when 3rd alert is created (any day)
+  - **1 alert in immediately previous week** → deactivate **next Saturday** after one-week grace period
+- **Exception via active excuse** — skip all alert creation and deactivation logic if learner has active excuse (`expiresAt > now` , same groupId )
 
 ## Alert Notifications
 

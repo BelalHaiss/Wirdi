@@ -23,7 +23,6 @@ import {
   notesSchema,
   usernameAccountSchema,
 } from './fields.schema';
-import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 
 const groupStatusSchema = z.enum(['ACTIVE', 'INACTIVE']) satisfies ZodType<GroupStatus>;
 const awradTypesSchema = (locale: ValidationLocale) => {
@@ -32,30 +31,24 @@ const awradTypesSchema = (locale: ValidationLocale) => {
 };
 
 export const createGroupSchema = (locale: ValidationLocale = 'ar') =>
-  z.intersection(
-    z.object({
-      name: nameSchema(locale),
-      status: groupStatusSchema.optional(),
-      description: descriptionSchema(locale).optional(),
-      awrad: awradTypesSchema(locale),
-      moderatorId: z.string().trim().optional(),
-    }),
-    timezoneFieldSchema(locale)
-  ) satisfies ZodType<CreateGroupDto>;
+  z.object({
+    name: nameSchema(locale),
+    status: groupStatusSchema.optional(),
+    description: descriptionSchema(locale).optional(),
+    awrad: awradTypesSchema(locale),
+    moderatorId: z.string().trim().optional(),
+  }) satisfies ZodType<CreateGroupDto>;
 
 export const updateGroupSchema = (locale: ValidationLocale = 'ar') => {
   const m = getMessages(locale);
   return z
-    .intersection(
-      z.object({
-        name: nameSchema(locale).optional(),
-        status: groupStatusSchema.optional(),
-        description: descriptionSchema(locale).optional(),
-        awrad: awradTypesSchema(locale).optional(),
-        moderatorId: z.string().trim().optional(),
-      }),
-      optionalTimezoneFieldSchema(locale)
-    )
+    .object({
+      name: nameSchema(locale).optional(),
+      status: groupStatusSchema.optional(),
+      description: descriptionSchema(locale).optional(),
+      awrad: awradTypesSchema(locale).optional(),
+      moderatorId: z.string().trim().optional(),
+    })
     .refine((value) => Object.keys(value).length > 0, {
       message: m.atLeastOneField,
     }) satisfies ZodType<UpdateGroupDto>;

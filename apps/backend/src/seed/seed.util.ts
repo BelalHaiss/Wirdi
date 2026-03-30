@@ -9,3 +9,11 @@ export const prismaSeedClient = new PrismaClient({
     DATABASE_PORT: process.env.DATABASE_PORT,
   }),
 });
+
+console.log('env variables loaded for seeding', {
+  DATABASE_HOST: process.env.DATABASE_HOST,
+  DATABASE_USER: process.env.DATABASE_USER,
+  DATABASE_PASSWORD: process.env.DATABASE_PASSWORD ? '***' : undefined,
+  DATABASE_NAME: process.env.DATABASE_NAME,
+  DATABASE_PORT: process.env.DATABASE_PORT,
+});

@@ -10,14 +10,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/forms/form-field';
 import { updateGroupSchema } from '@wirdi/shared';
-import type { GroupDto, UpdateGroupDto } from '@wirdi/shared';
-import { AwradField, STATUS_OPTIONS } from './group-form-shared';
+import type { GroupDto, UpdateGroupDto, StaffUserDto } from '@wirdi/shared';
+import { AwradField, ModeratorSelectField, STATUS_OPTIONS } from './group-form-shared';
 
 type EditGroupModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   group: GroupDto;
+  staffUsers: StaffUserDto[];
   isLoading: boolean;
+  isLoadingStaff: boolean;
   onSubmit: (data: UpdateGroupDto) => Promise<void>;
 };
 
@@ -25,7 +27,9 @@ export function EditGroupModal({
   open,
   onOpenChange,
   group,
+  staffUsers,
   isLoading,
+  isLoadingStaff,
   onSubmit,
 }: EditGroupModalProps) {
   const {
@@ -38,14 +42,15 @@ export function EditGroupModal({
     resolver: zodResolver(updateGroupSchema('ar')),
     defaultValues: {
       name: group.name,
-      timezone: group.timezone,
       status: group.status,
       description: group.description ?? '',
       awrad: group.awrad,
+      moderatorId: group.moderatorId ?? 'none',
     },
   });
 
   const awrad = watch('awrad') ?? [];
+  const moderatorId = watch('moderatorId');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,7 +59,16 @@ export function EditGroupModal({
           <DialogTitle>تعديل معلومات الحلقة</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+        <form
+          onSubmit={handleSubmit((data) =>
+            onSubmit({
+              ...data,
+              moderatorId:
+                data.moderatorId && data.moderatorId !== 'none' ? data.moderatorId : undefined,
+            })
+          )}
+          className='space-y-4'
+        >
           <FormField control={control} name='name' label='اسم الحلقة' type='text' />
           <FormField
             control={control}
@@ -68,6 +82,13 @@ export function EditGroupModal({
             value={awrad}
             onChange={(v) => setValue('awrad', v, { shouldDirty: true })}
             errorMessage={errors.awrad?.message}
+          />
+          <ModeratorSelectField
+            value={moderatorId ?? 'none'}
+            onChange={(v) => setValue('moderatorId', v, { shouldDirty: true })}
+            staffUsers={staffUsers}
+            errorMessage={errors.moderatorId?.message}
+            disabled={isLoadingStaff}
           />
 
           <DialogFooter>

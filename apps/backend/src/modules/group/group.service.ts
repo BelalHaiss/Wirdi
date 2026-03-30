@@ -86,7 +86,6 @@ export class GroupService {
     const group = await this.db.group.create({
       data: {
         name: dto.name,
-        timezone: dto.timezone,
         status: dto.status ?? 'ACTIVE',
         description: dto.description,
         awrad: dto.awrad,
@@ -105,7 +104,6 @@ export class GroupService {
       where: { id },
       data: {
         ...(dto.name && { name: dto.name }),
-        ...(dto.timezone && { timezone: dto.timezone }),
         ...(dto.status && { status: dto.status }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.awrad && { awrad: dto.awrad }),
@@ -376,6 +374,7 @@ export class GroupService {
       groupId: string;
       studentId: string;
       mateId: string | null;
+      status: string;
       joinedAt: Date;
       student: {
         name: string;
@@ -398,6 +397,7 @@ export class GroupService {
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
+      status: m.status as 'ACTIVE' | 'INACTIVE',
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       activeExcuseExpiresAt,
     };

@@ -2,14 +2,13 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { LoginView } from '@/modules/auth';
 import { UsersView, UserProfileView } from '@/modules/users';
 import { LearnersView } from '@/modules/learners';
-import { GroupsView, GroupDetailView, GroupLearnersView } from '@/modules/groups';
+import { GroupsView, GroupDetailView } from '@/modules/groups';
 import { RouteErrorElement } from '@/modules/observability';
 import { ProtectedLayout } from '@/components/ProtectedLayout';
 import { withRole } from '@/hoc/withRole';
 
 const ProtectedUsersView = withRole(UsersView, ['ADMIN', 'MODERATOR']);
 const ProtectedLearnersView = withRole(LearnersView, ['ADMIN', 'MODERATOR']);
-const ProtectedGroupLearnersView = withRole(GroupLearnersView, ['ADMIN', 'MODERATOR']);
 
 export const router = createBrowserRouter([
   {
@@ -41,10 +40,6 @@ export const router = createBrowserRouter([
       {
         path: 'groups/:id',
         element: <GroupDetailView />,
-      },
-      {
-        path: 'groups/:id/learners',
-        element: <ProtectedGroupLearnersView />,
       },
       {
         path: 'profile',

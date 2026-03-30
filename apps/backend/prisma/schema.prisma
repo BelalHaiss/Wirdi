@@ -51,7 +51,7 @@ model User {
 model Group {
   id          String      @id @default(ulid())
   name        String      @db.VarChar(100)
-  timezone    String      @db.VarChar(50)
+  timezone    String      @default("Asia/Riyadh") @db.VarChar(50)
   createdAt   DateTime    @default(now()) @map("created_at")
   awrad       Json // array ["wird1", "wird2", ...]
   moderatorId String?     @map("moderator_id")
@@ -71,11 +71,12 @@ model Group {
 }
 
 model GroupMember {
-  id        String   @id @default(ulid())
-  groupId   String   @map("group_id")
-  studentId String   @map("student_id")
-  mateId    String?  @map("mate_id")
-  joinedAt  DateTime @default(now()) @map("joined_at")
+  id        String            @id @default(ulid())
+  groupId   String            @map("group_id")
+  studentId String            @map("student_id")
+  mateId    String?           @map("mate_id")
+  status    GroupMemberStatus @default(ACTIVE)
+  joinedAt  DateTime          @default(now()) @map("joined_at")
 
   group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
   student User  @relation("GroupMemberStudent", fields: [studentId], references: [id], onDelete: Cascade)
@@ -187,6 +188,11 @@ enum UserRole {
 }
 
 enum GroupStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum GroupMemberStatus {
   ACTIVE
   INACTIVE
 }

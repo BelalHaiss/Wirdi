@@ -10,6 +10,21 @@ applyTo: 'apps/backend/**'
 - Generate new: `nest g res modules/[name] --no-spec`
 - Multi-domain workflows → dedicated Orchestrator module
 
+## Orchestrator Modules
+
+**When two services need cross-domain coordination, ALWAYS use a dedicated Orchestrator module.**
+
+### Rules
+
+1. **Never query another domain's tables directly** — Service B must never query tables owned by Service A
+   - Each service owns its domain's database tables
+   - Cross-domain reads go through the owning service or orchestrator
+2. **Always create an Orchestrator for cross-domain workflows**:
+   - Create dedicated `[DomainA]-[DomainB].orchestrator.ts` module
+   - Orchestrator imports both services
+   - Orchestrator coordinates cross-domain logic and transactions
+   - Both domains remain independent and testable
+
 ## Guards & Decorators
 
 - `AuthGuard` + `RolesGuard` are applied globally
@@ -21,14 +36,6 @@ applyTo: 'apps/backend/**'
 - `ZodValidationPipe` on route parameters only (`@Body(...)`, `@Param(...)`, `@Query(...)`)
 - Import schemas from `@wirdi/shared`, call inline with `'en'` locale
 - No validation logic in controllers or services — schemas + DB constraints only
-
-```ts
-// ✅ correct
-@Post()
-create(
-  @Body(new ZodValidationPipe(createGroupSchema('en'))) dto: CreateGroupDto,
-): Promise<GroupDto> { ... }
-```
 
 ## DTOs & Types
 
@@ -66,7 +73,9 @@ async uploadCover(
 ## Database
 
 - Always use 1 round trip per query — use Prisma `include` / `select` relations instead of separate follow-up queries
-- Prisma transactions for any multi-step / multi-table write don`t use Promise.all
+- Prisma transactions for any DB multi-step / For Loop / multi-table write don`t use Promise.all
 - Orchestrator modules wrap all related writes in a single `$transaction`
 - No raw SQL unless Prisma cannot express the query
 - **Never create `findXOrThrow` helpers** — let Prisma and the DB throw naturally (`update`/`delete` throw P2025 when record not found; use `findUniqueOrThrow` for explicit reads that require existence)
+- **Side effects (notifications)** — use `SideEffectsQueue` to defer execution until after transaction commits
+- Queue side effects during transaction, call `.executeAll()` after transaction completes

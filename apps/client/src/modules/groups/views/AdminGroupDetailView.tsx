@@ -1,22 +1,31 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { UserPlus } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Typography } from '@/components/ui/typography';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupInfoCard } from '../components/molecules/GroupInfoCard';
 import { EditGroupModal } from '../components/organisms/EditGroupModal';
 import { WeeklyScheduleModal } from '../components/organisms/WeeklyScheduleModal';
+import { AddGroupLearnersModal } from '../components/organisms/AddGroupLearnersModal';
+import { EditMateDialog } from '../components/organisms/EditMateDialog';
 import { WeekTabs } from '../components/molecules/WeekTabs';
 import { WirdTrackingTable } from '../components/organisms/WirdTrackingTable';
 import { useGroupDetailViewModel } from '../viewmodels/group-detail.viewmodel';
 import { useWirdTrackingViewModel } from '../viewmodels/wird-tracking.viewmodel';
+import { useGroupLearnersViewModel } from '../viewmodels/group-learners.viewmodel';
+import { StudentMainInfoModal } from '@/modules/learners/components/student-main-info-modal';
+import type { GroupWirdTrackingRowDto } from '@wirdi/shared';
 
 type Props = { groupId: string };
 
 export default function AdminGroupDetailView({ groupId }: Props) {
-  const navigate = useNavigate();
   const vm = useGroupDetailViewModel(groupId);
   const wirdVm = useWirdTrackingViewModel(groupId);
+  const learnersVm = useGroupLearnersViewModel(groupId);
+
+  const [editingLearnerId, setEditingLearnerId] = useState<string | null>(null);
 
   if (vm.isLoading) {
     return (
@@ -35,6 +44,25 @@ export default function AdminGroupDetailView({ groupId }: Props) {
     );
   }
 
+  const handleEditMate = (row: GroupWirdTrackingRowDto) => {
+    const member = learnersVm.members.find((m) => m.id === row.memberId);
+    if (member) {
+      learnersVm.setMemberPendingMateEdit(member);
+    }
+  };
+
+  const handleEditLearner = (studentId: string) => {
+    setEditingLearnerId(studentId);
+  };
+
+  const handleDeleteLearner = async (memberId: string) => {
+    await learnersVm.handleRemoveMember(memberId);
+  };
+
+  const learnerForEdit = editingLearnerId
+    ? learnersVm.members.find((m) => m.studentId === editingLearnerId)
+    : null;
+
   return (
     <div className='space-y-6'>
       <GroupInfoCard
@@ -42,13 +70,16 @@ export default function AdminGroupDetailView({ groupId }: Props) {
         isEditable={vm.isEditable}
         onEditGroup={vm.openEditModal}
         onOpenSchedule={vm.openScheduleModal}
-        onManageLearners={() => navigate(`/groups/${groupId}/learners`)}
       />
 
       {vm.isEditable && (
         <Card>
-          <CardHeader className='pb-3'>
+          <CardHeader className='pb-3 flex-row items-center justify-between space-y-0'>
             <CardTitle className='text-base'>سجل المتابعة اليومي</CardTitle>
+            <Button onClick={learnersVm.openAddModal} size='sm' className='gap-2'>
+              <UserPlus className='w-4 h-4' />
+              إضافة متعلم جديد
+            </Button>
           </CardHeader>
           <CardContent className='space-y-4'>
             <WeekTabs
@@ -63,6 +94,9 @@ export default function AdminGroupDetailView({ groupId }: Props) {
               groupId={groupId}
               userTimezone={vm.group.timezone}
               canManage={true}
+              onEditMate={handleEditMate}
+              onEditLearner={handleEditLearner}
+              onDeleteLearner={handleDeleteLearner}
             />
           </CardContent>
         </Card>
@@ -73,6 +107,8 @@ export default function AdminGroupDetailView({ groupId }: Props) {
           open={vm.isEditModalOpen}
           onOpenChange={vm.closeEditModal}
           group={vm.group}
+          staffUsers={vm.staffUsers}
+          isLoadingStaff={vm.isLoadingStaff}
           onSubmit={vm.handleUpdateGroup}
           isLoading={vm.isUpdating}
         />
@@ -83,6 +119,47 @@ export default function AdminGroupDetailView({ groupId }: Props) {
         onOpenChange={vm.closeScheduleModal}
         groupId={groupId}
       />
+
+      <AddGroupLearnersModal
+        open={learnersVm.isAddModalOpen}
+        onOpenChange={learnersVm.closeAddModal}
+        groupId={groupId}
+        onSubmit={learnersVm.handleAddLearners}
+        isLoading={learnersVm.isAdding}
+      />
+
+      <EditMateDialog
+        key={learnersVm.memberPendingMateEdit?.id}
+        open={!!learnersVm.memberPendingMateEdit}
+        onOpenChange={(open) => !open && learnersVm.setMemberPendingMateEdit(null)}
+        member={learnersVm.memberPendingMateEdit}
+        allMembers={learnersVm.members}
+        onConfirm={learnersVm.handleUpdateMate}
+        isLoading={learnersVm.isUpdatingMate}
+      />
+
+      {learnerForEdit && (
+        <StudentMainInfoModal
+          open={!!editingLearnerId}
+          onOpenChange={(open) => !open && setEditingLearnerId(null)}
+          mode='edit'
+          learner={{
+            id: learnerForEdit.studentId,
+            name: learnerForEdit.studentName,
+            username: learnerForEdit.studentUsername,
+            timezone: learnerForEdit.studentTimezone,
+            contact: { notes: learnerForEdit.notes },
+            groupCount: undefined,
+            groups: undefined,
+          }}
+          onSubmit={(args) => {
+            if (args.mode === 'edit') {
+              return learnersVm.handleUpdateLearner(editingLearnerId!, args.data);
+            }
+          }}
+          isLoading={learnersVm.isUpdatingLearner}
+        />
+      )}
     </div>
   );
 }

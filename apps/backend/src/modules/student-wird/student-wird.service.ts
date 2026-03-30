@@ -25,6 +25,7 @@ import {
   getStartAndEndOfDay,
 } from '@wirdi/shared';
 import { DatabaseService } from '../database/database.service';
+import { AlertService } from '../alert/alert.service';
 
 /** Arabic display order: Sat(6) → Sun(0) → Mon(1) → Tue(2) → Wed(3) → Thu(4) */
 const DISPLAY_DAY_ORDER = [6, 0, 1, 2, 3, 4] as const;
@@ -47,7 +48,10 @@ function toRecordedStatus(status: string): RecordedWirdStatus | null {
 
 @Injectable()
 export class StudentWirdService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly alertService: AlertService
+  ) {}
 
   // ─── Private Helpers ────────────────────────────────────────────────────────
 
@@ -83,27 +87,44 @@ export class StudentWirdService {
   }
 
   /**
-   * Finds the first EMPTY day the learner can still record, based on the allowed time window:
-   * - Same day until end-of-day (on time)
-   * - Next day until 4:00 PM in group timezone (late)
-   * - Thursday special: next day is Saturday (skips Friday)
+   * Finds the first EMPTY day the learner can still record, based on the allowed time window.
+   * Enforces recording order: learner cannot record a day if any previous day (after join date) is EMPTY.
    */
   private computeRecordableDay(
     days: DayWirdDto[],
     startStr: ISODateOnlyString,
     groupTimezone: string,
-    now: Date
+    now: Date,
+    joinedAt: Date
   ): RecordableDayStatus {
-    for (const day of days) {
+    const joinedAtStr = dateToISODateOnly(joinedAt);
+    const allowedDays = days.filter((day) => {
+      const dayDate = addDaysToDateStr(startStr, (day.dayNumber + 1) % 7);
+      return dayDate >= joinedAtStr;
+    });
+
+    for (let i = 0; i < allowedDays.length; i++) {
+      const day = allowedDays[i];
       if (day.wirdStatus !== 'EMPTY') continue;
 
-      const offset = (day.dayNumber + 1) % 7;
-      const dayDate = addDaysToDateStr(startStr, offset);
+      // Check for blocking previous EMPTY days
+      const blockingDay = allowedDays.slice(0, i).find((d) => d.wirdStatus === 'EMPTY');
+      if (blockingDay) {
+        return {
+          status: 'blocked',
+          reason: 'previous_day_unrecorded',
+          blockedByDay: blockingDay.dayNumber,
+        };
+      }
 
-      // Thu (dayNumber=4) → next day is Sat (+2); others → next day (+1)
-      const nextDayOffset = day.dayNumber === 4 ? 2 : 1;
-      const deadlineDateStr = addDaysToDateStr(dayDate, nextDayOffset);
-      const deadline = combineDateTime(deadlineDateStr, FOUR_PM, groupTimezone);
+      // Check if within allowed time window
+      const dayDate = addDaysToDateStr(startStr, (day.dayNumber + 1) % 7);
+      const nextDayOffset = day.dayNumber === 4 ? 2 : 1; // Thu → Sat (+2), others → next day (+1)
+      const deadline = combineDateTime(
+        addDaysToDateStr(dayDate, nextDayOffset),
+        FOUR_PM,
+        groupTimezone
+      );
 
       if (now.toISOString() <= deadline) {
         const { endAsJSDate } = getStartAndEndOfDay(groupTimezone, dayDate);
@@ -111,8 +132,10 @@ export class StudentWirdService {
       }
     }
 
-    const allFuture = days.every((d) => d.wirdStatus === 'FUTURE');
-    return { status: 'none', reason: allFuture ? 'upcoming' : 'all_recorded' };
+    return {
+      status: 'none',
+      reason: days.every((d) => d.wirdStatus === 'FUTURE') ? 'upcoming' : 'all_recorded',
+    };
   }
 
   // ─── Admin / Moderator Methods ───────────────────────────────────────────────
@@ -170,7 +193,7 @@ export class StudentWirdService {
         this.db.week.findUniqueOrThrow({ where: { id: weekId } }),
         this.db.groupMember.findMany({
           where: { groupId },
-          include: { student: true },
+          include: { student: true, mate: true },
           orderBy: { joinedAt: 'asc' },
         }),
         this.db.studentWird.findMany({
@@ -221,6 +244,10 @@ export class StudentWirdService {
         memberId: member.id,
         studentId: member.studentId,
         studentName: member.student.name,
+        studentStatus: member.status,
+        mateId: member.mateId ?? undefined,
+        mateName: member.mate?.name ?? undefined,
+        studentNotes: member.student.notes ?? undefined,
         days,
         weekAlertCount: weekAlertMap.get(member.studentId) ?? 0,
         totalAlertCount: totalAlertMap.get(member.studentId) ?? 0,
@@ -323,6 +350,10 @@ export class StudentWirdService {
       memberId: member.id,
       studentId: member.studentId,
       studentName: member.student.name,
+      studentStatus: member.status,
+      mateId: member.mateId ?? undefined,
+      mateName: member.mate?.name ?? undefined,
+      studentNotes: member.student.notes ?? undefined,
       days,
       weekAlertCount,
       totalAlertCount,
@@ -339,6 +370,7 @@ export class StudentWirdService {
       mateName: member.mate?.name ?? undefined,
       notes: member.student.notes ?? undefined,
       joinedAt: member.joinedAt.toISOString() as ISODateString,
+      status: member.status,
     };
 
     const isCurrent = todayUTC >= startStr && todayUTC <= endStr;
@@ -362,34 +394,56 @@ export class StudentWirdService {
       isUpcoming,
     };
 
-    const recordableDay = this.computeRecordableDay(days, startStr, week.group.timezone, now);
+    const recordableDay = this.computeRecordableDay(
+      days,
+      startStr,
+      week.group.timezone,
+      now,
+      member.joinedAt
+    );
 
     return { week: weekDto, myRow, myMembership, recordableDay };
   }
 
   async recordLearnerWird(studentId: string, dto: RecordLearnerWirdDto): Promise<void> {
     await this.db.$transaction(async (tx) => {
-      const member = await tx.groupMember.findFirst({
-        where: { groupId: dto.groupId, studentId },
-        select: { id: true },
-      });
+      const [member, group, week] = await Promise.all([
+        tx.groupMember.findFirst({
+          where: { groupId: dto.groupId, studentId },
+          select: { id: true, joinedAt: true },
+        }),
+        tx.group.findUniqueOrThrow({ where: { id: dto.groupId }, select: { timezone: true } }),
+        tx.week.findUniqueOrThrow({ where: { id: dto.weekId } }),
+      ]);
       if (!member) throw new ForbiddenException('لست عضواً في هذه الحلقة');
 
-      const group = await tx.group.findUniqueOrThrow({
-        where: { id: dto.groupId },
-        select: { timezone: true },
-      });
-
-      const week = await tx.week.findUniqueOrThrow({ where: { id: dto.weekId } });
-
       const startStr = dateToISODateOnly(week.startDate);
-      const offset = (dto.dayNumber + 1) % 7;
-      const dayDate = addDaysToDateStr(startStr, offset);
+      const joinedAtStr = dateToISODateOnly(member.joinedAt);
 
+      // Validate previous days are recorded (after join date, before current day)
+      const existingWirds = await tx.studentWird.findMany({
+        where: { studentId, weekId: dto.weekId },
+        select: { dayNumber: true },
+      });
+      const recordedDays = new Set(existingWirds.map((w) => w.dayNumber));
+
+      for (const dayNum of [0, 1, 2, 3, 4]) {
+        if (dayNum >= dto.dayNumber) break;
+        const dayDate = addDaysToDateStr(startStr, (dayNum + 1) % 7);
+        if (dayDate >= joinedAtStr && !recordedDays.has(dayNum)) {
+          throw new BadRequestException('يجب تسجيل الأيام السابقة أولاً');
+        }
+      }
+
+      // Validate deadline and determine status
+      const dayDate = addDaysToDateStr(startStr, (dto.dayNumber + 1) % 7);
       const now = new Date();
       const nextDayOffset = dto.dayNumber === 4 ? 2 : 1;
-      const deadlineDateStr = addDaysToDateStr(dayDate, nextDayOffset);
-      const deadline = combineDateTime(deadlineDateStr, FOUR_PM, group.timezone);
+      const deadline = combineDateTime(
+        addDaysToDateStr(dayDate, nextDayOffset),
+        FOUR_PM,
+        group.timezone
+      );
 
       if (now.toISOString() > deadline) {
         throw new BadRequestException('انتهت مدة تسجيل هذا اليوم');
@@ -410,16 +464,12 @@ export class StudentWirdService {
           readOnMateId: dto.mateId ?? null,
           recordedAt: now,
         },
-        update: {
-          status,
-          readOnMateId: dto.mateId ?? null,
-          recordedAt: now,
-        },
+        update: { status, readOnMateId: dto.mateId ?? null, recordedAt: now },
       });
 
-      // Policy: LATE recording cancels any existing missed alert for that week
+      // Policy: LATE recording cancels the specific day's alert (yellow cancels red)
       if (status === 'LATE') {
-        await tx.alert.deleteMany({ where: { studentId, weekId: dto.weekId } });
+        await this.alertService.deleteWeekDayAlert(studentId, dto.weekId, dto.dayNumber);
       }
     });
   }

@@ -4,8 +4,9 @@ import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { queryClient, queryKeys } from '@/lib/query-client';
 import { useApp } from '@/contexts/AppContext';
+import { userService } from '@/modules/users/services/user.service';
 import { groupService } from '../services/group.service';
-import type { GroupDto, UpdateGroupDto } from '@wirdi/shared';
+import type { GroupDto, UpdateGroupDto, StaffUserDto } from '@wirdi/shared';
 
 export function useGroupDetailViewModel(groupId: string) {
   const { user } = useApp();
@@ -17,6 +18,12 @@ export function useGroupDetailViewModel(groupId: string) {
   const groupQuery = useApiQuery<GroupDto>({
     queryKey: queryKeys.groups.detail(groupId),
     queryFn: () => groupService.getGroup(groupId),
+  });
+
+  const staffQuery = useApiQuery<StaffUserDto[]>({
+    queryKey: queryKeys.users.list({ scope: 'staff' }),
+    queryFn: userService.getStaffUsers,
+    enabled: isEditModalOpen && isEditable,
   });
 
   const updateGroupMutation = useApiMutation<UpdateGroupDto, GroupDto>({
@@ -40,6 +47,9 @@ export function useGroupDetailViewModel(groupId: string) {
     isEditable,
     isLoading: groupQuery.isLoading,
     queryError: groupQuery.error?.message ?? null,
+    // Staff
+    staffUsers: staffQuery.data?.data ?? [],
+    isLoadingStaff: staffQuery.isLoading,
     // Edit modal
     isEditModalOpen,
     openEditModal: () => setIsEditModalOpen(true),

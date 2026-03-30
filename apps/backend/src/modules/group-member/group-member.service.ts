@@ -74,6 +74,7 @@ export class GroupMemberService {
           mateName: member.mate?.name ?? undefined,
           notes: member.student.notes ?? undefined,
           joinedAt: member.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
+          status: member.status,
           activeExcuseExpiresAt: undefined,
         });
       }
@@ -135,6 +136,7 @@ export class GroupMemberService {
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
+      status: m.status,
       activeExcuseExpiresAt: undefined,
     }));
   }
@@ -182,6 +184,7 @@ export class GroupMemberService {
       mateName: updated.mate?.name ?? undefined,
       notes: updated.student.notes ?? undefined,
       joinedAt: updated.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
+      status: updated.status,
       activeExcuseExpiresAt: undefined,
     };
   }

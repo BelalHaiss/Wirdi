@@ -27,7 +27,6 @@ export interface GroupDto {
 
 export interface CreateGroupDto {
   name: string;
-  timezone: string;
   status?: GroupStatus;
   description?: string;
   awrad: AwradType[];
@@ -36,7 +35,6 @@ export interface CreateGroupDto {
 
 export interface UpdateGroupDto {
   name?: string;
-  timezone?: string;
   status?: GroupStatus;
   description?: string;
   awrad?: AwradType[];
@@ -101,6 +99,7 @@ export interface GroupMemberDto {
   mateId?: string;
   mateName?: string;
   notes?: string;
+  status: 'ACTIVE' | 'INACTIVE';
   joinedAt: ISODateString;
   /** ISO datetime of the active excuse expiry, undefined if no active excuse */
   activeExcuseExpiresAt?: ISODateString;
@@ -190,6 +189,10 @@ export interface GroupWirdTrackingRowDto {
   memberId: string;
   studentId: string;
   studentName: string;
+  studentStatus: 'ACTIVE' | 'INACTIVE';
+  mateId?: string;
+  mateName?: string;
+  studentNotes?: string;
   days: DayWirdDto[];
   /** Number of alerts for this student in the selected week */
   weekAlertCount: number;
@@ -257,10 +260,12 @@ export interface UpdateStudentWirdsDto {
 /**
  * The day the learner is currently allowed to record.
  * `available` — there is one recordable day within the allowed time window.
+ * `blocked` — cannot record because a previous day (after join date) is unrecorded.
  * `none` — all days are recorded, or no days are within the window yet.
  */
 export type RecordableDayStatus =
   | { status: 'available'; dayNumber: number; isLate: boolean }
+  | { status: 'blocked'; reason: 'previous_day_unrecorded'; blockedByDay: number }
   | { status: 'none'; reason: 'all_recorded' | 'upcoming' };
 
 /** Response for GET /student-wird/my-group/:groupId/overview */

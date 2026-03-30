@@ -11,7 +11,7 @@ type GroupInfoCardProps = {
   isEditable: boolean;
   onEditGroup: () => void;
   onOpenSchedule: () => void;
-  onManageLearners: () => void;
+  onManageLearners?: () => void;
 };
 
 export function GroupInfoCard({
@@ -83,16 +83,18 @@ export function GroupInfoCard({
             <CalendarDays className='h-3.5 w-3.5' />
             الجدول الأسبوعي
           </Button>
-          <Button
-            variant='soft'
-            color='success'
-            size='sm'
-            className='gap-1.5'
-            onClick={onManageLearners}
-          >
-            <GraduationCap className='h-3.5 w-3.5' />
-            إدارة المتعلمين
-          </Button>
+          {onManageLearners && (
+            <Button
+              variant='soft'
+              color='success'
+              size='sm'
+              className='gap-1.5'
+              onClick={onManageLearners}
+            >
+              <GraduationCap className='h-3.5 w-3.5' />
+              إدارة المتعلمين
+            </Button>
+          )}
         </div>
       )}
     </div>

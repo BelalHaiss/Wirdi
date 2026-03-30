@@ -39,6 +39,9 @@ type WirdTrackingTableProps = {
   groupId: string;
   userTimezone: string;
   canManage: boolean;
+  onEditMate?: (row: GroupWirdTrackingRowDto) => void;
+  onEditLearner?: (studentId: string) => void;
+  onDeleteLearner?: (memberId: string) => Promise<void>;
 };
 
 export function WirdTrackingTable({
@@ -48,6 +51,9 @@ export function WirdTrackingTable({
   groupId,
   userTimezone,
   canManage,
+  onEditMate,
+  onEditLearner,
+  onDeleteLearner,
 }: WirdTrackingTableProps) {
   return (
     <div className='space-y-3'>
@@ -66,6 +72,9 @@ export function WirdTrackingTable({
         <TableHeader className='bg-muted/40'>
           <TableRow>
             <TableHead className='px-4 py-3 text-right text-xs'>اسم المتعلم</TableHead>
+            {canManage && (
+              <TableHead className='px-3 py-3 text-right text-xs'>الزميل المسمع</TableHead>
+            )}
             {DISPLAY_DAY_ORDER.map((dayNum) => (
               <TableHead key={dayNum} className='px-3 py-3 text-center text-xs'>
                 {DAY_LABELS[dayNum]}
@@ -74,12 +83,13 @@ export function WirdTrackingTable({
             <TableHead className='px-3 py-3 text-center text-xs'>تنبيهات الأسبوع</TableHead>
             <TableHead className='px-3 py-3 text-center text-xs'>تنبيهات الكل</TableHead>
             <TableHead className='px-3 py-3 text-center text-xs'>العذر</TableHead>
+            {canManage && <TableHead className='px-3 py-3 text-left text-xs'>الإجراءات</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={10}>
+              <TableCell colSpan={canManage ? 12 : 10}>
                 <div className='flex items-center justify-center py-8 gap-2 text-muted-foreground'>
                   <Loader2 className='w-4 h-4 animate-spin' />
                   جاري التحميل...
@@ -88,7 +98,7 @@ export function WirdTrackingTable({
             </TableRow>
           ) : rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={10}>
+              <TableCell colSpan={canManage ? 12 : 10}>
                 <div className='flex flex-col items-center justify-center py-10 text-muted-foreground gap-2'>
                   <Users className='w-6 h-6 opacity-70' />
                   <Typography className='text-sm text-muted-foreground'>
@@ -106,6 +116,9 @@ export function WirdTrackingTable({
                 groupId={groupId}
                 userTimezone={userTimezone}
                 canManage={canManage}
+                onEditMate={onEditMate}
+                onEditLearner={onEditLearner}
+                onDeleteLearner={onDeleteLearner}
               />
             ))
           )}
