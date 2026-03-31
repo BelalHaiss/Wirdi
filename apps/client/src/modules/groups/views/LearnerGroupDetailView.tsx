@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, AlertTriangle, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronDown, ChevronUp, Loader2, AlertTriangle, FileText, ShieldCheck } from 'lucide-react';
+import { formatDate } from '@wirdi/shared';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,6 +56,7 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
 
   // Check if learner is inactive (blocked)
   const isInactive = overview.myMembership.status === 'INACTIVE';
+  const activeExcuseExpiresAt = overview.myMembership.activeExcuseExpiresAt;
 
   return (
     <div className='space-y-6'>
@@ -84,19 +87,40 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
               </div>
             </div>
             <div className='flex gap-2 flex-wrap'>
-              <Button
-                variant='outline'
-                color='danger'
-                size='sm'
-                className='gap-2'
-                onClick={() => {
-                  // TODO: Implement report/appeal functionality
-                  console.log('Report/Appeal clicked');
-                }}
-              >
-                <FileText className='h-4 w-4' />
-                تقديم طلب إعادة تفعيل
+              <Button asChild variant='outline' color='primary' size='sm' className='gap-2'>
+                <Link to='/requests'>
+                  <FileText className='h-4 w-4' />
+                  تقديم طلب إعادة تفعيل
+                </Link>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Active excuse notice */}
+      {activeExcuseExpiresAt && (
+        <Card className='border-warning/40 bg-warning/5'>
+          <CardContent className='pt-6'>
+            <div className='flex items-center gap-4'>
+              <div className='rounded-full bg-warning/10 p-3 shrink-0'>
+                <ShieldCheck className='h-6 w-6 text-warning' />
+              </div>
+              <div className='flex-1 space-y-1'>
+                <Typography as='h3' size='md' weight='semibold' className='text-warning'>
+                  لديك عذر نشط
+                </Typography>
+                <Typography as='div' size='sm' className='text-muted-foreground'>
+                  أنت معفى من التنبيهات حتى{' '}
+                  <span className='font-medium text-foreground'>
+                    {formatDate({
+                      date: activeExcuseExpiresAt,
+                      token: 'dd/MM/yyyy',
+                      timezone: overview.myMembership.studentTimezone,
+                    })}
+                  </span>
+                </Typography>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -9,7 +9,7 @@ applyTo: 'apps/backend/**'
 - Reuse existing modules when possible
 - Generate new: `nest g res modules/[name] --no-spec`
 - Multi-domain workflows → dedicated Orchestrator module
-- Don`t import database module its global
+- Don`t import database module in any other module because its already global and shared
 
 ## Orchestrator Modules
 

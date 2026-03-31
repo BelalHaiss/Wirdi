@@ -4,6 +4,7 @@ export * from './user.types';
 export * from './learner.types';
 export * from './group.types';
 export * from './notification.types';
+export * from './request.types';
 export * from './validation/fields.constants';
 
 // Export utilities
@@ -21,3 +22,4 @@ export * from './validation/auth.schema';
 export * from './validation/user.schema';
 export * from './validation/learner.schema';
 export * from './validation/group.schema';
+export * from './validation/request.schema';

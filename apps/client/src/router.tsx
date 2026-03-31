@@ -3,6 +3,7 @@ import { LoginView } from '@/modules/auth';
 import { UsersView, UserProfileView } from '@/modules/users';
 import { LearnersView } from '@/modules/learners';
 import { GroupsView, GroupDetailView } from '@/modules/groups';
+import { RequestsView } from '@/modules/requests/views/RequestsView';
 import { RouteErrorElement } from '@/modules/observability';
 import { ProtectedLayout } from '@/components/ProtectedLayout';
 import { withRole } from '@/hoc/withRole';
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
       {
         path: 'groups/:id',
         element: <GroupDetailView />,
+      },
+      {
+        path: 'requests',
+        element: <RequestsView />,
       },
       {
         path: 'profile',

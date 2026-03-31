@@ -1,7 +1,18 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User } from '@wirdi/shared';
-import { LogOut, GraduationCap, Menu, X, Moon, Sun, UserCog, Settings, Users } from 'lucide-react';
+import {
+  LogOut,
+  GraduationCap,
+  Menu,
+  X,
+  Moon,
+  Sun,
+  UserCog,
+  Settings,
+  Users,
+  ClipboardList,
+} from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 import { cn } from '@/lib/utils';
@@ -41,6 +52,12 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       href: '/learners',
       icon: GraduationCap,
       roles: ['ADMIN', 'MODERATOR'],
+    },
+    {
+      name: 'الطلبات',
+      href: '/requests',
+      icon: ClipboardList,
+      roles: ['ADMIN', 'MODERATOR', 'STUDENT'],
     },
   ];
 

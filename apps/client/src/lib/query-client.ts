@@ -42,6 +42,8 @@ export const queryKeys = {
     schedules: (id: string) => [...queryKeys.groups.all, 'schedules', id] as const,
     learners: (id: string) => [...queryKeys.groups.all, 'learners', id] as const,
     unassigned: (id: string) => [...queryKeys.groups.all, 'unassigned', id] as const,
+    eligibleForActivation: () => [...queryKeys.groups.all, 'eligible-for-activation'] as const,
+    myGroups: () => [...queryKeys.groups.all, 'my-groups'] as const,
   },
 
   // Sessions queries
@@ -129,5 +131,16 @@ export const queryKeys = {
   learnerWirds: {
     all: ['learner-wirds'] as const,
     overview: (groupId: string) => ['learner-wirds', 'overview', groupId] as const,
+  },
+
+  // Requests queries
+  requests: {
+    all: ['requests'] as const,
+    lists: () => [...queryKeys.requests.all, 'list'] as const,
+    list: (status?: string) => [...queryKeys.requests.lists(), status] as const,
+    myList: () => [...queryKeys.requests.all, 'my'] as const,
+    stats: () => [...queryKeys.requests.all, 'stats'] as const,
+    details: () => [...queryKeys.requests.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.requests.details(), id] as const,
   },
 } as const;

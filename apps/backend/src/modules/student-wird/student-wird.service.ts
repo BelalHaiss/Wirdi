@@ -333,18 +333,23 @@ export class StudentWirdService {
       throw new BadRequestException('لا يوجد أسبوع نشط لهذه الحلقة بعد');
     }
 
-    const [member, wirds, weekAlertCount, totalAlertCount] = await this.db.$transaction([
-      this.db.groupMember.findFirstOrThrow({
-        where: { groupId, studentId },
-        include: { student: true, mate: true },
-      }),
-      this.db.studentWird.findMany({
-        where: { studentId, weekId: week.id },
-        include: { readOnMate: true },
-      }),
-      this.db.alert.count({ where: { studentId, weekId: week.id } }),
-      this.db.alert.count({ where: { studentId, groupId } }),
-    ]);
+    const [member, wirds, weekAlertCount, totalAlertCount, activeExcuse] =
+      await this.db.$transaction([
+        this.db.groupMember.findFirstOrThrow({
+          where: { groupId, studentId },
+          include: { student: true, mate: true },
+        }),
+        this.db.studentWird.findMany({
+          where: { studentId, weekId: week.id },
+          include: { readOnMate: true },
+        }),
+        this.db.alert.count({ where: { studentId, weekId: week.id } }),
+        this.db.alert.count({ where: { studentId, groupId } }),
+        this.db.excuse.findFirst({
+          where: { studentId, groupId, expiresAt: { gt: now } },
+          orderBy: { expiresAt: 'desc' },
+        }),
+      ]);
 
     const startStr = dateToISODateOnly(week.startDate);
     const endStr = dateToISODateOnly(week.endDate);
@@ -362,6 +367,9 @@ export class StudentWirdService {
       days,
       weekAlertCount,
       totalAlertCount,
+      activeExcuseExpiresAt: activeExcuse
+        ? (activeExcuse.expiresAt.toISOString() as ISODateString)
+        : undefined,
     };
 
     const myMembership: GroupMemberDto = {

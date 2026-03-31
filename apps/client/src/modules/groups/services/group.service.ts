@@ -110,4 +110,10 @@ export const groupService = {
     await apiClient.delete<void>(`/group-member/${memberId}`);
     return { success: true, data: null };
   },
+
+  getEligibleActivationGroups: (): Promise<UnifiedApiResponse<GroupDto[]>> =>
+    apiClient.get<GroupDto[]>('/group/student/eligible-for-activation'),
+
+  getMyGroups: (): Promise<UnifiedApiResponse<GroupDto[]>> =>
+    apiClient.get<GroupDto[]>('/group/student/my-groups'),
 };

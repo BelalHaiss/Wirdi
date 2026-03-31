@@ -144,7 +144,7 @@ model Request {
   studentId  String        @map("student_id")
   groupId    String        @map("group_id")
   type       RequestType
-  reason     String?       @db.Text
+  payload    Json
   status     RequestStatus @default(PENDING)
   reviewedBy String?       @map("reviewed_by")
   createdAt  DateTime      @default(now()) @map("created_at")
@@ -158,6 +158,7 @@ model Request {
   @@index([studentId])
   @@index([groupId])
   @@index([status])
+  @@index([type])
   @@map("requests")
 }
 

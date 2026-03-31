@@ -245,6 +245,36 @@ export class GroupService {
     );
   }
 
+  async getStudentInactiveGroups(studentId: string): Promise<GroupDto[]> {
+    const memberships = await this.db.groupMember.findMany({
+      where: { studentId, status: 'INACTIVE' },
+      include: {
+        group: {
+          include: {
+            moderator: { select: { name: true } },
+            _count: { select: { members: true, weeks: true } },
+          },
+        },
+      },
+    });
+    return memberships.map((m) => this.toGroupDto(m.group));
+  }
+
+  async getStudentActiveGroups(studentId: string): Promise<GroupDto[]> {
+    const memberships = await this.db.groupMember.findMany({
+      where: { studentId, status: 'ACTIVE' },
+      include: {
+        group: {
+          include: {
+            moderator: { select: { name: true } },
+            _count: { select: { members: true, weeks: true } },
+          },
+        },
+      },
+    });
+    return memberships.map((m) => this.toGroupDto(m.group));
+  }
+
   // ─── Private helpers ────────────────────────────────────────────────────────
 
   /**

@@ -123,4 +123,16 @@ export class GroupController {
   getGroupLearners(@Param('id') id: string) {
     return this.groupService.getGroupLearners(id);
   }
+
+  @Get('student/eligible-for-activation')
+  @Roles([UserRole.STUDENT])
+  getEligibleActivationGroups(@User('id') studentId: string) {
+    return this.groupService.getStudentInactiveGroups(studentId);
+  }
+
+  @Get('student/my-groups')
+  @Roles([UserRole.STUDENT])
+  getMyGroups(@User('id') studentId: string) {
+    return this.groupService.getStudentActiveGroups(studentId);
+  }
 }
