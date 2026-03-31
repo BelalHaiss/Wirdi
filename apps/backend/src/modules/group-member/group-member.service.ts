@@ -12,6 +12,7 @@ import {
   GroupMemberDto,
   LearnerDto,
   UpdateMemberMateDto,
+  TimeZoneType,
 } from '@wirdi/shared';
 import { UserRole } from 'generated/prisma/client';
 
@@ -23,12 +24,6 @@ export class GroupMemberService {
    * Create multiple new learners and assign them all to a group in one transaction.
    */
   async createAndAssignLearners(dto: CreateAndAssignLearnersDto): Promise<GroupMemberDto[]> {
-    const group = await this.db.group.findUnique({
-      where: { id: dto.groupId },
-      select: { id: true },
-    });
-    if (!group) throw new NotFoundException('المجموعة غير موجودة');
-
     const requestedUsernames = dto.learners.map((l) => l.username);
     const existingUsernames = await this.db.user.findMany({
       where: { username: { in: requestedUsernames } },
@@ -69,7 +64,7 @@ export class GroupMemberService {
           studentId: member.studentId,
           studentName: member.student.name,
           studentUsername: member.student.username,
-          studentTimezone: member.student.timezone,
+          studentTimezone: member.student.timezone as TimeZoneType,
           mateId: member.mateId ?? undefined,
           mateName: member.mate?.name ?? undefined,
           notes: member.student.notes ?? undefined,
@@ -89,12 +84,6 @@ export class GroupMemberService {
    * Assign existing learners to a group in one transaction.
    */
   async assignLearnersToGroup(dto: AssignLearnersToGroupDto): Promise<GroupMemberDto[]> {
-    const group = await this.db.group.findUnique({
-      where: { id: dto.groupId },
-      select: { id: true },
-    });
-    if (!group) throw new NotFoundException('المجموعة غير موجودة');
-
     // Validate all students exist
     const students = await this.db.user.findMany({
       where: { id: { in: dto.studentIds }, role: UserRole.STUDENT },
@@ -131,7 +120,7 @@ export class GroupMemberService {
       studentId: m.studentId,
       studentName: m.student.name,
       studentUsername: m.student.username,
-      studentTimezone: m.student.timezone,
+      studentTimezone: m.student.timezone as TimeZoneType,
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
@@ -145,12 +134,11 @@ export class GroupMemberService {
    * Update the mate (زميل) for a group member.
    */
   async updateMate(memberId: string, dto: UpdateMemberMateDto): Promise<GroupMemberDto> {
-    const member = await this.db.groupMember.findUnique({
+    // First get member to validate mate assignment and check business rules
+    const member = await this.db.groupMember.findUniqueOrThrow({
       where: { id: memberId },
       select: { id: true, groupId: true, studentId: true },
     });
-
-    if (!member) throw new NotFoundException('عضو الحلقة غير موجود');
 
     if (dto.mateId !== null) {
       if (dto.mateId === member.studentId) {
@@ -179,7 +167,7 @@ export class GroupMemberService {
       studentId: updated.studentId,
       studentName: updated.student.name,
       studentUsername: updated.student.username,
-      studentTimezone: updated.student.timezone,
+      studentTimezone: updated.student.timezone as TimeZoneType,
       mateId: updated.mateId ?? undefined,
       mateName: updated.mate?.name ?? undefined,
       notes: updated.student.notes ?? undefined,
@@ -232,7 +220,7 @@ export class GroupMemberService {
       username: u.username,
       name: u.name,
       role: 'STUDENT' as const,
-      timezone: u.timezone,
+      timezone: u.timezone as TimeZoneType,
       contact: { notes: u.notes ?? undefined },
       createdAt: u.createdAt.toISOString() as LearnerDto['createdAt'],
       updatedAt: u.updatedAt.toISOString() as LearnerDto['updatedAt'],

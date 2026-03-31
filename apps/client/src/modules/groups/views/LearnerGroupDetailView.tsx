@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, AlertTriangle, FileText } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,9 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
 
   const { group, overview } = vm;
 
+  // Check if learner is inactive (blocked)
+  const isInactive = overview.myMembership.status === 'INACTIVE';
+
   return (
     <div className='space-y-6'>
       <GroupInfoCard
@@ -61,6 +64,43 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
         onOpenSchedule={() => {}}
         onManageLearners={() => {}}
       />
+
+      {/* Blocked UI for inactive members */}
+      {isInactive && (
+        <Card className='border-danger/40 bg-danger/5'>
+          <CardContent className='pt-6 space-y-4'>
+            <div className='flex items-start gap-4'>
+              <div className='rounded-full bg-danger/10 p-3 shrink-0'>
+                <AlertTriangle className='h-6 w-6 text-danger' />
+              </div>
+              <div className='flex-1 space-y-2'>
+                <Typography as='h3' size='lg' weight='semibold' className='text-danger'>
+                  تم إيقاف عضويتك في هذه الحلقة
+                </Typography>
+                <Typography as='div' size='sm' className='text-muted-foreground leading-relaxed'>
+                  لقد تم إيقاف تفعيل عضويتك في هذه الحلقة. لا يمكنك تسجيل الورد حاليًا. إذا كنت ترغب
+                  في العودة أو لديك استفسار، يرجى التواصل مع المشرف.
+                </Typography>
+              </div>
+            </div>
+            <div className='flex gap-2 flex-wrap'>
+              <Button
+                variant='outline'
+                color='danger'
+                size='sm'
+                className='gap-2'
+                onClick={() => {
+                  // TODO: Implement report/appeal functionality
+                  console.log('Report/Appeal clicked');
+                }}
+              >
+                <FileText className='h-4 w-4' />
+                تقديم طلب إعادة تفعيل
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Schedule image */}
       <Card>
@@ -125,8 +165,8 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
         </CardContent>
       </Card>
 
-      {/* Record wird — only shown when there's a recordable day */}
-      {overview.recordableDay.status === 'available' && (
+      {/* Record wird — only shown when active AND there's a recordable day */}
+      {!isInactive && overview.recordableDay.status === 'available' && (
         <Card>
           <CardHeader className='pb-3'>
             <div className='flex items-center gap-2 flex-wrap'>
@@ -213,6 +253,39 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
           </CardContent>
         </Card>
       )}
+
+      {/* Blocked by previous day message — only for active members */}
+      {!isInactive && overview.recordableDay.status === 'blocked' && (
+        <Card className='border-warning/40 bg-warning/5'>
+          <CardContent className='pt-6'>
+            <div className='flex items-start gap-3'>
+              <AlertTriangle className='h-5 w-5 text-warning shrink-0 mt-0.5' />
+              <div>
+                <Typography as='div' size='sm' weight='medium'>
+                  لا يمكن تسجيل الورد حاليًا
+                </Typography>
+                <Typography as='div' size='xs' className='text-muted-foreground mt-1'>
+                  يجب تسجيل يوم {DAY_LABELS[overview.recordableDay.blockedByDay]} أولاً قبل
+                  المتابعة.
+                </Typography>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* All recorded message — only for active members */}
+      {!isInactive &&
+        overview.recordableDay.status === 'none' &&
+        overview.recordableDay.reason === 'all_recorded' && (
+          <Card className='border-success/40 bg-success/5'>
+            <CardContent className='pt-6 text-center'>
+              <Typography as='div' size='sm' className='text-success font-medium'>
+                أحسنت! تم تسجيل جميع أيام الأسبوع ✓
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }

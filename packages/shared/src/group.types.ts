@@ -1,4 +1,4 @@
-import type { ISODateOnlyString, ISODateString } from './types/api.types';
+import type { ISODateOnlyString, ISODateString, TimeZoneType } from './types/api.types';
 
 // ============================================================================
 // Enums
@@ -14,7 +14,7 @@ export type AwradType = string;
 export interface GroupDto {
   id: string;
   name: string;
-  timezone: string;
+  timezone: TimeZoneType;
   status: GroupStatus;
   description?: string;
   awrad: AwradType[];
@@ -95,7 +95,7 @@ export interface GroupMemberDto {
   studentId: string;
   studentName: string;
   studentUsername: string;
-  studentTimezone: string;
+  studentTimezone: TimeZoneType;
   mateId?: string;
   mateName?: string;
   notes?: string;
@@ -117,7 +117,7 @@ export interface CreateAndAssignLearnersDto {
   learners: {
     name: string;
     username: string;
-    timezone: string;
+    timezone: TimeZoneType;
     notes?: string;
   }[];
 }

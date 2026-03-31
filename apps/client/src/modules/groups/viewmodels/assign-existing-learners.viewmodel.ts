@@ -42,6 +42,8 @@ export function useAssignExistingLearnersViewModel(groupId: string, isActive: bo
     onSuccess: async () => {
       toast.success('تمت إضافة المتعلمين بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
+      await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
       setSelected(new Set());
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),

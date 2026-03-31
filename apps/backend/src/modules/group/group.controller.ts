@@ -36,12 +36,6 @@ export class GroupController {
 
   // ─── Groups CRUD ─────────────────────────────────────────────────────────
 
-  @Get('stats')
-  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
-  getStats() {
-    return this.groupService.getStats();
-  }
-
   @Get()
   @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])
   queryGroups(@User() user: PrismaUser) {

@@ -55,6 +55,15 @@ export function GroupInfoCard({
         )}
       </div>
 
+      {/* Description section */}
+      {group.description && (
+        <div className='mt-3 rounded-lg bg-muted/50 px-4 py-3 border-s-2 border-primary/40'>
+          <Typography as='p' size='sm' className='text-muted-foreground italic leading-relaxed'>
+            {group.description}
+          </Typography>
+        </div>
+      )}
+
       {/* Metadata row: timezone + stat badges */}
       <div className='mt-3 flex flex-wrap items-center gap-x-4 gap-y-2'>
         <TimezoneDisplay timezone={group.timezone} />

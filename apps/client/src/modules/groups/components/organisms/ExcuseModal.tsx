@@ -16,7 +16,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Typography } from '@/components/ui/typography';
 import { formatDate } from '@wirdi/shared';
-import type { ISODateString, ISODateOnlyString } from '@wirdi/shared';
+import type { ISODateString, ISODateOnlyString, TimeZoneType } from '@wirdi/shared';
 import { useExcuseModalViewModel } from '../../viewmodels/excuse-modal.viewmodel';
 
 type ExcuseModalProps = {
@@ -24,7 +24,7 @@ type ExcuseModalProps = {
   studentName: string;
   groupId: string;
   weekId?: string;
-  userTimezone: string;
+  userTimezone: TimeZoneType;
   activeExcuseExpiresAt?: ISODateString | null;
   /** When true, renders the cell display only — no dialog trigger */
   showOnly?: boolean;

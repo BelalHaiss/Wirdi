@@ -104,6 +104,9 @@ export interface LoadingState {
 // Calendar date in ISO-like format, e.g. "2026-02-15" (YYYY-MM-DD).
 export type ISODateOnlyString = string & { __isoDateOnlyBrand: true };
 
+// IANA timezone identifier, validated against supported timezones (e.g. "Asia/Riyadh")
+export type TimeZoneType = string & { __timezoneBrand: true };
+
 // Time as minutes from midnight (0-1439), interpreted in group/user timezone - used for data/DTOs
 export type TimeMinutes = number & { __timeMinutesBrand: true };
 

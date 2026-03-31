@@ -10,7 +10,7 @@ import {
 import { Typography } from '@/components/ui/typography';
 import { WirdStatusCell } from '../atoms/WirdStatusCell';
 import { StudentWirdRow } from '../atoms/StudentWirdRow';
-import type { GroupWirdTrackingRowDto, WirdStatus } from '@wirdi/shared';
+import type { GroupWirdTrackingRowDto, WirdStatus, TimeZoneType } from '@wirdi/shared';
 
 /** Arabic display order: Sat(6) → Sun(0) → Mon(1) → Tue(2) → Wed(3) → Thu(4) */
 const DAY_LABELS: Record<number, string> = {
@@ -37,8 +37,9 @@ type WirdTrackingTableProps = {
   isLoading: boolean;
   weekId: string;
   groupId: string;
-  userTimezone: string;
+  userTimezone: TimeZoneType;
   canManage: boolean;
+  isUpcomingWeek?: boolean;
   onEditMate?: (row: GroupWirdTrackingRowDto) => void;
   onEditLearner?: (studentId: string) => void;
   onDeleteLearner?: (memberId: string) => Promise<void>;
@@ -51,6 +52,7 @@ export function WirdTrackingTable({
   groupId,
   userTimezone,
   canManage,
+  isUpcomingWeek,
   onEditMate,
   onEditLearner,
   onDeleteLearner,
@@ -75,6 +77,9 @@ export function WirdTrackingTable({
             {canManage && (
               <TableHead className='px-3 py-3 text-right text-xs'>الزميل المسمع</TableHead>
             )}
+            {canManage && (
+              <TableHead className='px-3 py-3 text-center text-xs'>تعديل يدوي</TableHead>
+            )}
             {DISPLAY_DAY_ORDER.map((dayNum) => (
               <TableHead key={dayNum} className='px-3 py-3 text-center text-xs'>
                 {DAY_LABELS[dayNum]}
@@ -89,7 +94,7 @@ export function WirdTrackingTable({
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={canManage ? 12 : 10}>
+              <TableCell colSpan={canManage ? 13 : 10}>
                 <div className='flex items-center justify-center py-8 gap-2 text-muted-foreground'>
                   <Loader2 className='w-4 h-4 animate-spin' />
                   جاري التحميل...
@@ -98,7 +103,7 @@ export function WirdTrackingTable({
             </TableRow>
           ) : rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={canManage ? 12 : 10}>
+              <TableCell colSpan={canManage ? 13 : 10}>
                 <div className='flex flex-col items-center justify-center py-10 text-muted-foreground gap-2'>
                   <Users className='w-6 h-6 opacity-70' />
                   <Typography className='text-sm text-muted-foreground'>
@@ -116,6 +121,7 @@ export function WirdTrackingTable({
                 groupId={groupId}
                 userTimezone={userTimezone}
                 canManage={canManage}
+                isUpcomingWeek={isUpcomingWeek}
                 onEditMate={onEditMate}
                 onEditLearner={onEditLearner}
                 onDeleteLearner={onDeleteLearner}

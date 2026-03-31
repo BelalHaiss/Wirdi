@@ -1,10 +1,15 @@
 import z from 'zod';
 import { isSupportedTimezone } from '../utils/timezones.util';
 import { getMessages, ValidationLocale } from './messages';
+import type { TimeZoneType } from '../types/api.types';
 
 const baseTimezone = (locale: ValidationLocale = 'ar') => {
   const m = getMessages(locale);
-  return z.string().trim().refine(isSupportedTimezone, { message: m.invalidTimezone });
+  return z
+    .string()
+    .trim()
+    .refine(isSupportedTimezone, { message: m.invalidTimezone })
+    .transform((v) => v as TimeZoneType);
 };
 
 export const timezoneSchema = (locale: ValidationLocale = 'ar') => baseTimezone(locale);

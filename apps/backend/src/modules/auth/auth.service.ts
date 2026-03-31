@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from 'generated/prisma/client';
 import { UserService } from '../user/user.service';
 import { JWT_PAYLOAD } from './types/user-auth.type';
-import { DatesAsObjects, LoginCredentialsDto, removeFields, UserAuthType } from '@wirdi/shared';
+import { ISODateString, LoginCredentialsDto, TimeZoneType } from '@wirdi/shared';
 
 @Injectable()
 export class AuthService {
@@ -20,18 +20,25 @@ export class AuthService {
     if (!foundUser) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const isPasswordValid = await this.verifyPassword(loginDTO.password, foundUser.password!);
+    const isPasswordValid = await this.verifyPassword(loginDTO.password, foundUser.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const accessToken = this.generateJwtToken(foundUser.id);
-    const userWithoutPassword = removeFields(foundUser, ['password']);
 
     return {
       accessToken,
-      user: userWithoutPassword as DatesAsObjects<UserAuthType>,
+      user: {
+        id: foundUser.id,
+        username: foundUser.username,
+        name: foundUser.name,
+        role: foundUser.role,
+        timezone: foundUser.timezone as TimeZoneType,
+        createdAt: foundUser.createdAt.toISOString() as ISODateString,
+        updatedAt: foundUser.updatedAt.toISOString() as ISODateString,
+      },
     };
   }
 

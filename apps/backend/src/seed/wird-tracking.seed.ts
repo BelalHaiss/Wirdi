@@ -7,12 +7,22 @@ import { addDaysToDateStr, dateToISODateOnly } from '@wirdi/shared';
 export async function seedWirdTracking(prisma: PrismaClient) {
   console.log('🌱 Seeding wird tracking data...');
 
-  // Get admin, moderator, and students explicitly by role
-  const [admin, moderator, students] = await Promise.all([
+  // Get admin, moderator, and specific students (student1-student10)
+  const studentUsernames = Array.from({ length: 10 }, (_, i) => `student${i + 1}`);
+
+  const [admin, moderator, studentsRaw] = await Promise.all([
     prisma.user.findFirst({ where: { role: 'ADMIN' } }),
     prisma.user.findFirst({ where: { role: 'MODERATOR' } }),
-    prisma.user.findMany({ where: { role: 'STUDENT' }, take: 10 }),
+    prisma.user.findMany({
+      where: { username: { in: studentUsernames } },
+    }),
   ]);
+
+  // Sort by numeric part of username to ensure correct order (student1, student2, ... student10)
+  const students = studentsRaw.sort((a, b) => {
+    const getNum = (username: string) => parseInt(username.replace('student', ''));
+    return getNum(a.username) - getNum(b.username);
+  });
 
   if (!admin || !moderator || students.length < 10) {
     throw new Error('Not enough users. Run main seed first.');
@@ -81,33 +91,56 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   });
 
   // Assign students to group with different scenarios
-  const memberData = [
+  const memberData: Array<{
+    studentId: string;
+    mateId: string | null;
+    scenario: string;
+    status: 'ACTIVE' | 'INACTIVE';
+  }> = [
     // Student 1: Perfect attendance (all ATTENDED)
-    { studentId: students[0].id, mateId: students[1].id, scenario: 'perfect' },
+    { studentId: students[0].id, mateId: students[1].id, scenario: 'perfect', status: 'ACTIVE' },
 
     // Student 2: Has 1 LATE record with existing alert (yellow cancels red)
-    { studentId: students[1].id, mateId: students[0].id, scenario: 'late_cancels_alert' },
+    {
+      studentId: students[1].id,
+      mateId: students[0].id,
+      scenario: 'late_cancels_alert',
+      status: 'ACTIVE',
+    },
 
     // Student 3: Will miss Sunday (cron will create MISSED + alert)
-    { studentId: students[2].id, mateId: null, scenario: 'will_miss_sunday' },
+    {
+      studentId: students[2].id,
+      mateId: null,
+      scenario: 'will_miss_sunday',
+      status: 'ACTIVE',
+    },
 
     // Student 4: Has active excuse (should skip alert creation)
-    { studentId: students[3].id, mateId: null, scenario: 'has_excuse' },
+    { studentId: students[3].id, mateId: null, scenario: 'has_excuse', status: 'ACTIVE' },
 
     // Student 5: 2 alerts this week (will get 3rd and deactivate immediately)
-    { studentId: students[4].id, mateId: null, scenario: 'three_alerts' },
+    { studentId: students[4].id, mateId: null, scenario: 'three_alerts', status: 'ACTIVE' },
 
     // Student 6: 1 alert in previous week (grace period deactivation on Saturday)
-    { studentId: students[5].id, mateId: null, scenario: 'grace_period' },
+    { studentId: students[5].id, mateId: null, scenario: 'grace_period', status: 'ACTIVE' },
 
     // Student 7: Mid-week join (joined Monday, no need to record Saturday/Sunday)
-    { studentId: students[6].id, mateId: null, scenario: 'mid_week_join' },
+    { studentId: students[6].id, mateId: null, scenario: 'mid_week_join', status: 'ACTIVE' },
 
     // Student 8: Mixed status (ATTENDED, LATE, will have MISSED)
-    { studentId: students[7].id, mateId: students[8].id, scenario: 'mixed' },
+    { studentId: students[7].id, mateId: students[8].id, scenario: 'mixed', status: 'ACTIVE' },
 
     // Student 9: Thursday special case (can record late until Saturday 4 PM)
-    { studentId: students[8].id, mateId: null, scenario: 'thursday_special' },
+    {
+      studentId: students[8].id,
+      mateId: null,
+      scenario: 'thursday_special',
+      status: 'ACTIVE',
+    },
+
+    // Student 10: INACTIVE member (deactivated, should show blocked UI)
+    { studentId: students[9].id, mateId: null, scenario: 'inactive', status: 'INACTIVE' },
   ];
 
   // Create group members
@@ -123,7 +156,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
         groupId: group.id,
         studentId: member.studentId,
         mateId: member.mateId,
-        status: 'ACTIVE',
+        status: member.status,
         joinedAt,
       },
     });
@@ -390,8 +423,54 @@ export async function seedWirdTracking(prisma: PrismaClient) {
     ],
   });
 
+  // Student 10: INACTIVE member - has some past records but is now deactivated
+  // Has wird records + excuse + inactive status (should show blocked UI with excuse info)
+  await prisma.studentWird.createMany({
+    data: [
+      {
+        studentId: students[9].id,
+        weekId: week.id,
+        dayNumber: 6,
+        status: 'ATTENDED',
+        recordedAt: now,
+      },
+      {
+        studentId: students[9].id,
+        weekId: week.id,
+        dayNumber: 0,
+        status: 'ATTENDED',
+        recordedAt: now,
+      },
+      // Was deactivated after day 0, so no more records
+    ],
+  });
+  // Create excuse for student 10 (even though inactive, shows they had excuse before deactivation)
+  const student10ExcuseExpiry = new Date();
+  student10ExcuseExpiry.setDate(student10ExcuseExpiry.getDate() + 3); // 3 days from now
+  await prisma.excuse.create({
+    data: {
+      studentId: students[9].id,
+      groupId: group.id,
+      createdBy: admin.id,
+      expiresAt: student10ExcuseExpiry,
+    },
+  });
+
   console.log('✅ Wird tracking data seeded!');
   console.log(`📊 Group: ${group.name} (ID: ${group.id})`);
   console.log(`📅 Current Week: ${week.weekNumber} (${saturdayStr} to ${fridayStr})`);
   console.log(`👥 Assigned ${memberData.length} students with different scenarios`);
+  console.log('\n🔑 Test Credentials (password: 12345678):');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('✅ ACTIVE Learner:');
+  console.log('   Username: student1');
+  console.log('   Status: Perfect attendance (all days recorded)');
+  console.log('   Can record wird and view all features');
+  console.log('');
+  console.log('❌ INACTIVE Learner:');
+  console.log('   Username: student10');
+  console.log('   Status: INACTIVE (blocked UI)');
+  console.log('   Has: Wird records (Sat+Sun) + Active excuse');
+  console.log('   Result: Cannot record wird, sees blocked message');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }

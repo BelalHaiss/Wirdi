@@ -23,6 +23,7 @@ import {
   notesSchema,
   usernameAccountSchema,
 } from './fields.schema';
+import { timezoneSchema } from './timezone.schema';
 
 const groupStatusSchema = z.enum(['ACTIVE', 'INACTIVE']) satisfies ZodType<GroupStatus>;
 const awradTypesSchema = (locale: ValidationLocale) => {
@@ -85,7 +86,7 @@ export const createAndAssignLearnersSchema = (locale: ValidationLocale = 'ar') =
         z.object({
           name: nameSchema(locale),
           username: usernameAccountSchema(locale),
-          timezone: z.string().trim().min(1),
+          timezone: timezoneSchema(locale),
           notes: notesSchema(locale).optional(),
         })
       )

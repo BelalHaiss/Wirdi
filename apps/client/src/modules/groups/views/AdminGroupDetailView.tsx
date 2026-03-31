@@ -63,6 +63,10 @@ export default function AdminGroupDetailView({ groupId }: Props) {
     ? learnersVm.members.find((m) => m.studentId === editingLearnerId)
     : null;
 
+  // Determine if the selected week is upcoming to disable manual editing
+  const selectedWeek = wirdVm.weeks.find((w) => w.id === wirdVm.selectedWeekId);
+  const isSelectedWeekUpcoming = selectedWeek?.isUpcoming ?? false;
+
   return (
     <div className='space-y-6'>
       <GroupInfoCard
@@ -94,6 +98,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
               groupId={groupId}
               userTimezone={vm.group.timezone}
               canManage={true}
+              isUpcomingWeek={isSelectedWeekUpcoming}
               onEditMate={handleEditMate}
               onEditLearner={handleEditLearner}
               onDeleteLearner={handleDeleteLearner}

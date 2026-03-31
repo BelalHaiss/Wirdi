@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateExcuseDto, ExcuseDto } from '@wirdi/shared';
 
@@ -43,8 +38,7 @@ export class ExcuseService {
   }
 
   async disableExcuse(id: string): Promise<ExcuseDto> {
-    const excuse = await this.db.excuse.findUnique({ where: { id } });
-    if (!excuse) throw new NotFoundException('العذر غير موجود');
+    const excuse = await this.db.excuse.findUniqueOrThrow({ where: { id } });
 
     const now = new Date();
     if (excuse.expiresAt <= now) {

@@ -2,7 +2,7 @@
 // DTOs (Public Types)
 // ============================================================================
 
-import { ISODateString } from './types/api.types';
+import { ISODateString, TimeZoneType } from './types/api.types';
 
 export type UserRole = 'ADMIN' | 'MODERATOR' | 'STUDENT';
 export type UserAuthRole = Exclude<UserRole, 'STUDENT'>;
@@ -20,7 +20,7 @@ export interface User {
   name: string;
   email?: string;
   role: UserRole;
-  timezone: string;
+  timezone: TimeZoneType;
   createdAt: ISODateString;
   updatedAt: ISODateString;
   profile?: UserProfile;
@@ -38,7 +38,7 @@ export type UserAuthType = {
   role: UserRole;
   createdAt: ISODateString;
   updatedAt: ISODateString;
-  timezone: string;
+  timezone: TimeZoneType;
 };
 
 export interface LoginCredentialsDto {
@@ -51,7 +51,7 @@ export interface CreateUserDto {
   name: string;
   email?: string;
   role: UserRole;
-  timezone: string;
+  timezone: TimeZoneType;
   password: string;
   profile?: {
     phone?: string;
@@ -67,7 +67,7 @@ export interface UpdateUserDto {
   name?: string;
   email?: string;
   role?: UserRole;
-  timezone?: string;
+  timezone?: TimeZoneType;
   password?: string;
 }
 
@@ -76,7 +76,7 @@ export interface StaffUserDto {
   username: string;
   name: string;
   role: UserAuthRole;
-  timezone: string;
+  timezone: TimeZoneType;
   createdAt: ISODateString;
   updatedAt: ISODateString;
 }

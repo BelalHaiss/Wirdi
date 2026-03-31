@@ -10,10 +10,10 @@ import {
   CreateGroupDto,
   GroupDto,
   GroupMemberDto,
-  GroupStatsDto,
   ISODateOnlyString,
   QueryGroupsResponseDto,
   ScheduleImageDto,
+  TimeZoneType,
   UpdateGroupDto,
   WeekDto,
   AwradType,
@@ -34,15 +34,6 @@ export class GroupService {
   ) {}
 
   // ─── Groups CRUD ────────────────────────────────────────────────────────────
-
-  async getStats(): Promise<GroupStatsDto> {
-    const [groupsCount, learnersCount, moderatorsCount] = await Promise.all([
-      this.db.group.count(),
-      this.db.user.count({ where: { role: 'STUDENT' } }),
-      this.db.user.count({ where: { role: 'MODERATOR' } }),
-    ]);
-    return { groupsCount, learnersCount, moderatorsCount };
-  }
 
   async queryGroups(actor: PrismaUser): Promise<QueryGroupsResponseDto> {
     const where =
@@ -196,9 +187,8 @@ export class GroupService {
     name?: string
   ): Promise<ScheduleImageDto> {
     const existing = await this.db.scheduleImage.findUnique({ where: { id: imageId } });
-    if (!existing) throw new NotFoundException('الصورة غير موجودة');
 
-    if (newImageUrl && existing.imagekitFileId) {
+    if (newImageUrl && existing?.imagekitFileId) {
       await this.fileService.deleteFileFromImageKit(existing.imagekitFileId).catch(() => null);
     }
 
@@ -316,7 +306,7 @@ export class GroupService {
     return {
       id: g.id,
       name: g.name,
-      timezone: g.timezone,
+      timezone: g.timezone as TimeZoneType,
       status: g.status as GroupDto['status'],
       description: g.description ?? undefined,
       awrad: (g.awrad as AwradType[]) ?? [],
@@ -393,7 +383,7 @@ export class GroupService {
       studentId: m.studentId,
       studentName: m.student.name,
       studentUsername: m.student.username,
-      studentTimezone: m.student.timezone,
+      studentTimezone: m.student.timezone as TimeZoneType,
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,

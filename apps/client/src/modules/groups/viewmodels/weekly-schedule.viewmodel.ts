@@ -46,6 +46,7 @@ export function useWeeklyScheduleViewModel(groupId: string, isOpen: boolean) {
     onSuccess: async () => {
       toast.success('تم رفع صورة الجدول بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.schedules(groupId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.wirds.weeks(groupId) });
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ أثناء رفع الصورة'),
   });

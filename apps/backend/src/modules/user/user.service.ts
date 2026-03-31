@@ -23,6 +23,7 @@ import {
   UserAuthRole,
   UserAuthType,
   UpdateLearnerDto,
+  TimeZoneType,
 } from '@wirdi/shared';
 import { Prisma, User, UserRole } from 'generated/prisma/client';
 
@@ -392,7 +393,7 @@ export class UserService {
       username: user.username,
       name: user.name,
       role: user.role,
-      timezone: user.timezone,
+      timezone: user.timezone as TimeZoneType,
       createdAt: user.createdAt.toISOString() as ISODateString,
       updatedAt: user.updatedAt.toISOString() as ISODateString,
     };
@@ -412,7 +413,7 @@ export class UserService {
       username: user.username,
       name: user.name,
       role: user.role,
-      timezone: user.timezone,
+      timezone: user.timezone as TimeZoneType,
       createdAt: user.createdAt.toISOString() as ISODateString,
       updatedAt: user.updatedAt.toISOString() as ISODateString,
     };
@@ -439,7 +440,7 @@ export class UserService {
       username: user.username,
       name: user.name,
       role: 'STUDENT',
-      timezone: user.timezone,
+      timezone: user.timezone as TimeZoneType,
       contact: {
         notes: user.notes ?? undefined,
       },

@@ -1,4 +1,9 @@
-import { ISODateString, PaginationQueryType, PaginationResponseMeta } from './types/api.types';
+import {
+  ISODateString,
+  PaginationQueryType,
+  PaginationResponseMeta,
+  TimeZoneType,
+} from './types/api.types';
 
 export interface LearnerContactDto {
   notes?: string;
@@ -14,7 +19,7 @@ export interface LearnerDto {
   username: string | null;
   name: string;
   role: 'STUDENT';
-  timezone: string;
+  timezone: TimeZoneType;
   contact: LearnerContactDto;
   groupCount?: number;
   groups?: LearnerGroupSummaryDto[];
@@ -25,14 +30,14 @@ export interface LearnerDto {
 export interface CreateLearnerDto {
   name: string;
   username: string;
-  timezone: string;
+  timezone: TimeZoneType;
   contact?: LearnerContactDto;
 }
 
 export interface UpdateLearnerDto {
   name?: string;
   username?: string;
-  timezone?: string;
+  timezone?: TimeZoneType;
   contact?: LearnerContactDto;
 }
 

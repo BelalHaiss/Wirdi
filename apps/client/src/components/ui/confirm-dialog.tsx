@@ -26,8 +26,8 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText = 'تاكيد',
+  cancelText = 'إلغاء',
   onConfirm,
   intent = 'default',
 }: ConfirmDialogProps) {
@@ -56,7 +56,7 @@ export function ConfirmDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>{cancelText}</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm} disabled={isLoading} intent={intent}>
-            {isLoading ? 'Processing...' : confirmText}
+            {isLoading ? 'جارٍ المعالجة...' : confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

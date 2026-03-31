@@ -83,6 +83,7 @@ export function useLearnerGroupViewModel(groupId: string) {
   const canSubmit =
     !!group &&
     !!overview &&
+    overview.myMembership.status === 'ACTIVE' && // Must be active
     overview.recordableDay.status === 'available' &&
     checkedAwrad.size === group.awrad.length &&
     (mateChecked ? true : !!selectedMateId);

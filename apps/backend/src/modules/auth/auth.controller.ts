@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { loginSchema } from '@wirdi/shared';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import { IsPublic } from 'src/decorators/public.decorator';
-import type { DatesAsObjects, LoginCredentialsDto, AuthResponseDto } from '@wirdi/shared';
+import type { LoginCredentialsDto, AuthResponseDto } from '@wirdi/shared';
 
 @Controller('auth')
 @IsPublic()
@@ -16,7 +16,7 @@ export class AuthController {
   @Post('login')
   async login(
     @Body(new ZodValidationPipe(loginSchema('en'))) loginDTO: LoginCredentialsDto
-  ): Promise<DatesAsObjects<AuthResponseDto>> {
+  ): Promise<AuthResponseDto> {
     return this.authService.login(loginDTO);
   }
 }

@@ -31,6 +31,7 @@ export function useGroupLearnersViewModel(groupId: string) {
     onSuccess: async () => {
       toast.success('تمت إضافة المتعلمين بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+      await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
       setIsAddModalOpen(false);
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),
@@ -52,6 +53,7 @@ export function useGroupLearnersViewModel(groupId: string) {
       toast.success('تم إزالة المتعلم من الحلقة');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+      await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),
   });
@@ -64,6 +66,7 @@ export function useGroupLearnersViewModel(groupId: string) {
     onSuccess: async () => {
       toast.success('تم تحديث الزميل بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
+      await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
       setMemberPendingMateEdit(null);
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),

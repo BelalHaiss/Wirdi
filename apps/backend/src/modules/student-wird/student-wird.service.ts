@@ -16,6 +16,7 @@ import type {
   StudentDayWird,
   UpdateStudentWirdsDto,
   TimeMinutes,
+  TimeZoneType,
 } from '@wirdi/shared';
 import {
   getNowAsUTC,
@@ -26,6 +27,7 @@ import {
 } from '@wirdi/shared';
 import { DatabaseService } from '../database/database.service';
 import { AlertService } from '../alert/alert.service';
+import { SideEffectsQueue } from '../../utils/side-effects.util';
 
 /** Arabic display order: Sat(6) → Sun(0) → Mon(1) → Tue(2) → Wed(3) → Thu(4) */
 const DISPLAY_DAY_ORDER = [6, 0, 1, 2, 3, 4] as const;
@@ -178,8 +180,11 @@ export class StudentWirdService {
         };
       });
 
+    // Default priority: current week → first upcoming week → last week overall
     const defaultWeek =
-      mapped.find((w) => w.isCurrent) ?? [...mapped].reverse().find((w) => !w.isUpcoming);
+      mapped.find((w) => w.isCurrent) ??
+      mapped.find((w) => w.isUpcoming) ??
+      mapped[mapped.length - 1];
     if (defaultWeek) defaultWeek.isDefault = true;
 
     return mapped;
@@ -365,7 +370,7 @@ export class StudentWirdService {
       studentId: member.studentId,
       studentName: member.student.name,
       studentUsername: member.student.username,
-      studentTimezone: member.student.timezone,
+      studentTimezone: member.student.timezone as TimeZoneType,
       mateId: member.mateId ?? undefined,
       mateName: member.mate?.name ?? undefined,
       notes: member.student.notes ?? undefined,
@@ -406,16 +411,22 @@ export class StudentWirdService {
   }
 
   async recordLearnerWird(studentId: string, dto: RecordLearnerWirdDto): Promise<void> {
+    const sideEffects = new SideEffectsQueue();
+
     await this.db.$transaction(async (tx) => {
-      const [member, group, week] = await Promise.all([
-        tx.groupMember.findFirst({
-          where: { groupId: dto.groupId, studentId },
-          select: { id: true, joinedAt: true },
-        }),
-        tx.group.findUniqueOrThrow({ where: { id: dto.groupId }, select: { timezone: true } }),
-        tx.week.findUniqueOrThrow({ where: { id: dto.weekId } }),
-      ]);
+      // Sequential reads instead of Promise.all to comply with transaction best practices
+      const member = await tx.groupMember.findFirst({
+        where: { groupId: dto.groupId, studentId },
+        select: { id: true, joinedAt: true },
+      });
       if (!member) throw new ForbiddenException('لست عضواً في هذه الحلقة');
+
+      const group = await tx.group.findUniqueOrThrow({
+        where: { id: dto.groupId },
+        select: { timezone: true },
+      });
+
+      const week = await tx.week.findUniqueOrThrow({ where: { id: dto.weekId } });
 
       const startStr = dateToISODateOnly(week.startDate);
       const joinedAtStr = dateToISODateOnly(member.joinedAt);
@@ -469,8 +480,13 @@ export class StudentWirdService {
 
       // Policy: LATE recording cancels the specific day's alert (yellow cancels red)
       if (status === 'LATE') {
-        await this.alertService.deleteWeekDayAlert(studentId, dto.weekId, dto.dayNumber);
+        sideEffects.add(() =>
+          this.alertService.deleteWeekDayAlert(studentId, dto.weekId, dto.dayNumber)
+        );
       }
     });
+
+    // Execute side effects after transaction commits
+    await sideEffects.executeAll();
   }
 }

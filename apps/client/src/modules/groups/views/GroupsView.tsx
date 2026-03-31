@@ -117,10 +117,10 @@ export default function GroupsView() {
                 <Link
                   key={group.id}
                   to={`/groups/${group.id}`}
-                  className='block transition-shadow hover:shadow-md'
+                  className='block transition-shadow hover:shadow-md h-full'
                 >
-                  <Card>
-                    <CardContent className='space-y-3 p-4'>
+                  <Card className='h-full flex flex-col'>
+                    <CardContent className='space-y-3 p-4 flex-1 flex flex-col'>
                       <div className='flex items-start justify-between'>
                         <div className='rounded-lg bg-primary/10 p-2'>
                           <Users className='h-5 w-5 text-primary' />
@@ -128,11 +128,23 @@ export default function GroupsView() {
                         <GroupStatusBadge status={group.status} />
                       </div>
 
-                      <Typography as='h3' size='lg' weight='semibold'>
+                      <Typography as='h3' size='lg' weight='semibold' className='line-clamp-1'>
                         {group.name}
                       </Typography>
 
-                      <div className='space-y-1.5'>
+                      {group.description && (
+                        <div className='rounded-md bg-muted/50 px-3 py-2 border-s-2 border-primary/30 min-h-14'>
+                          <Typography
+                            as='p'
+                            size='xs'
+                            className='text-muted-foreground italic leading-relaxed line-clamp-2'
+                          >
+                            {group.description}
+                          </Typography>
+                        </div>
+                      )}
+
+                      <div className='space-y-1.5 flex-1'>
                         <div className='flex items-center justify-between'>
                           <Typography as='div' size='xs' className='text-muted-foreground'>
                             المتعلمون

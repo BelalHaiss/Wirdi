@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ClipboardEdit, Pencil, Trash2 } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,14 +7,15 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { WirdStatusCell } from './WirdStatusCell';
 import { ExcuseModal } from '../organisms/ExcuseModal';
 import { EditAttendanceModal } from '../organisms/EditAttendanceModal';
-import type { GroupWirdTrackingRowDto } from '@wirdi/shared';
+import type { GroupWirdTrackingRowDto, TimeZoneType } from '@wirdi/shared';
 
 type StudentWirdRowProps = {
   row: GroupWirdTrackingRowDto;
   weekId: string;
   groupId: string;
-  userTimezone: string;
+  userTimezone: TimeZoneType;
   canManage: boolean;
+  isUpcomingWeek?: boolean;
   onEditMate?: (row: GroupWirdTrackingRowDto) => void;
   onEditLearner?: (studentId: string) => void;
   onDeleteLearner?: (memberId: string) => Promise<void>;
@@ -26,6 +27,7 @@ export function StudentWirdRow({
   groupId,
   userTimezone,
   canManage,
+  isUpcomingWeek,
   onEditMate,
   onEditLearner,
   onDeleteLearner,
@@ -43,7 +45,7 @@ export function StudentWirdRow({
   return (
     <>
       <TableRow>
-        {/* Name + optional edit button */}
+        {/* Name */}
         <TableCell className='px-4 py-3 font-medium text-right'>
           <div className='flex items-center gap-2'>
             <span>{row.studentName}</span>
@@ -51,17 +53,6 @@ export function StudentWirdRow({
               <Badge variant='soft' color='muted' className='text-xs'>
                 متوقف
               </Badge>
-            )}
-            {canManage && (
-              <Button
-                variant='ghost'
-                size='icon'
-                color='warning'
-                className='h-6 w-6 shrink-0'
-                onClick={() => setEditOpen(true)}
-              >
-                <Pencil className='h-3 w-3' />
-              </Button>
             )}
           </div>
         </TableCell>
@@ -83,6 +74,26 @@ export function StudentWirdRow({
                 </Button>
               )}
             </div>
+          </TableCell>
+        )}
+
+        {/* Manual edit column (only for admins, disabled for upcoming weeks) */}
+        {canManage && (
+          <TableCell className='px-3 py-3 text-center'>
+            {!isUpcomingWeek ? (
+              <Button
+                variant='ghost'
+                size='icon'
+                color='warning'
+                className='h-7 w-7'
+                onClick={() => setEditOpen(true)}
+                title='تعديل الحضور يدوياً'
+              >
+                <ClipboardEdit className='h-3.5 w-3.5' />
+              </Button>
+            ) : (
+              <span className='text-xs text-muted-foreground'>—</span>
+            )}
           </TableCell>
         )}
 
