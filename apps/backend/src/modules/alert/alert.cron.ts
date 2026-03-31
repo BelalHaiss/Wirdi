@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { AlertService } from './alert.service';
 import { DatabaseService } from '../database/database.service';
-import { SideEffectsQueue } from '../../utils/side-effects.util';
 import { dateToISODateOnly, addDaysToDateStr } from '@wirdi/shared';
 import type { ISODateOnlyString } from '@wirdi/shared';
 import type { Prisma } from 'generated/prisma/client';
@@ -28,7 +27,6 @@ export class AlertCron {
   })
   async processAlerts(): Promise<void> {
     this.logger.log('Starting alert processing cron job');
-    const sideEffects = new SideEffectsQueue();
 
     try {
       await this.db.$transaction(async (tx) => {
@@ -57,14 +55,11 @@ export class AlertCron {
             group.name,
             checkDateStr,
             checkDayNumber,
-            isSaturday,
-            sideEffects
+            isSaturday
           );
         }
       });
 
-      // Execute all queued notifications after transaction
-      await sideEffects.executeAll();
       this.logger.log('Alert processing completed successfully');
     } catch (error) {
       this.logger.error('Alert processing failed', error);
@@ -118,8 +113,7 @@ export class AlertCron {
     groupName: string,
     checkDateStr: ISODateOnlyString,
     checkDayNumber: number,
-    isSaturday: boolean,
-    sideEffects: SideEffectsQueue
+    isSaturday: boolean
   ): Promise<void> {
     // Find the week that contains checkDate
     const week = await tx.week.findFirst({
@@ -163,14 +157,13 @@ export class AlertCron {
         checkDayNumber,
         isSaturday,
         checkDateStr,
-        now,
-        sideEffects
+        now
       );
     }
 
     // If Saturday, check grace period for previous week
     if (isSaturday) {
-      await this.processGracePeriodDeactivations(tx, groupId, week.startDate, sideEffects);
+      await this.processGracePeriodDeactivations(tx, groupId, week.startDate);
     }
   }
 
@@ -187,8 +180,7 @@ export class AlertCron {
     checkDayNumber: number,
     isSaturday: boolean,
     checkDateStr: ISODateOnlyString,
-    now: Date,
-    sideEffects: SideEffectsQueue
+    now: Date
   ): Promise<void> {
     try {
       // Check if student has active excuse
@@ -222,22 +214,14 @@ export class AlertCron {
       });
 
       // Create alert
-      await this.alertService.createAlert(
-        tx,
-        studentId,
-        groupId,
-        weekId,
-        checkDayNumber,
-        sideEffects
-      );
+      await this.alertService.createAlert(tx, studentId, groupId, weekId, checkDayNumber);
 
       // Check immediate deactivation threshold (>= 3 alerts in current week)
       const wasDeactivated = await this.alertService.checkImmediateDeactivation(
         tx,
         studentId,
         groupId,
-        weekId,
-        sideEffects
+        weekId
       );
 
       if (wasDeactivated) {
@@ -261,8 +245,7 @@ export class AlertCron {
   private async processGracePeriodDeactivations(
     tx: Prisma.TransactionClient,
     groupId: string,
-    currentWeekStartDate: Date,
-    sideEffects: SideEffectsQueue
+    currentWeekStartDate: Date
   ): Promise<void> {
     // Find the immediately previous week (before current Saturday)
     const previousWeek = await tx.week.findFirst({
@@ -289,8 +272,7 @@ export class AlertCron {
         tx,
         member.studentId,
         groupId,
-        previousWeek.id,
-        sideEffects
+        previousWeek.id
       );
 
       if (wasDeactivated) {

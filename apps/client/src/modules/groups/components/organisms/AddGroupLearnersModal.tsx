@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFieldArray, useForm, Controller } from 'react-hook-form';
+import { useFieldArray, useForm, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, UserPlus } from 'lucide-react';
 import {
@@ -39,7 +39,9 @@ export function AddGroupLearnersModal({
   const [tab, setTab] = useState<'new' | 'existing'>('new');
 
   const { control, handleSubmit, reset } = useForm<FormValues>({
-    resolver: zodResolver(createAndAssignLearnersSchema('ar').omit({ groupId: true })),
+    resolver: zodResolver(
+      createAndAssignLearnersSchema('ar').omit({ groupId: true })
+    ) as unknown as Resolver<FormValues>,
     defaultValues: {
       learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
     },

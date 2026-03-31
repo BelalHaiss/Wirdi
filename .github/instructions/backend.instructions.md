@@ -78,5 +78,5 @@ async uploadCover(
 - Orchestrator modules wrap all related writes in a single `$transaction`
 - No raw SQL unless Prisma cannot express the query
 - **Never create `findXOrThrow` helpers** — let Prisma and the DB throw naturally (`update`/`delete` throw P2025 when record not found; use `findUniqueOrThrow` for explicit reads that require existence)
-- **Side effects (notifications)** — use `SideEffectsQueue` to defer execution until after transaction commits
-- Queue side effects during transaction, call `.executeAll()` after transaction completes
+- **Side effects (notifications)** — use `EventEmitter2` from `@nestjs/event-emitter` to emit events (e.g., `NOTIFICATION_EVENTS.SEND`) after DB writes
+- Emit events directly after the write — `NotificationService` handles them via `@OnEvent` decorator (saves to DB + pushes to SSE)

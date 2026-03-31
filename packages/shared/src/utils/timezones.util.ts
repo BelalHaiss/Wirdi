@@ -1,5 +1,7 @@
 // src/constants/timezones.ts
 
+import type { TimeZoneType } from '../types/api.types';
+
 export interface TimezoneOption {
   value: string; // IANA timezone identifier
   label: string; // Arabic label
@@ -303,7 +305,7 @@ export const isSupportedTimezone = (value: string): boolean => {
 /**
  * Default timezone for the application
  */
-export const DEFAULT_TIMEZONE = 'Asia/Riyadh';
+export const DEFAULT_TIMEZONE = 'Asia/Riyadh' as TimeZoneType;
 
 /**
  * Get timezone label by value

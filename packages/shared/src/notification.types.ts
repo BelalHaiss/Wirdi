@@ -1,3 +1,5 @@
+import type { RequestType, RequestStatus } from './request.types';
+
 // ── Payload map — single source of truth ──────────────────────────
 export type NotificationPayloadMap = {
   ALERT_ASSIGNED: {
@@ -13,6 +15,20 @@ export type NotificationPayloadMap = {
     groupId: string;
     groupName: string;
   };
+  REQUEST_CREATED: {
+    requestId: string;
+    requestType: RequestType;
+    studentName: string;
+    groupName: string;
+    groupId: string;
+  };
+  REQUEST_UPDATED: {
+    requestId: string;
+    requestType: RequestType;
+    groupName: string;
+    groupId: string;
+    status: RequestStatus;
+  };
 };
 
 export type NotificationType = keyof NotificationPayloadMap;
@@ -25,9 +41,8 @@ export const NOTIFICATION_CHANNEL_CONFIG: Record<NotificationType, readonly Noti
   {
     ALERT_ASSIGNED: ['IN_APP'],
     LEARNER_DEACTIVATED: ['IN_APP'],
-    // future examples:
-    // REQUEST_APPROVED: ['IN_APP', 'PUSH'],
-    // WEEKLY_REPORT: ['EMAIL'],
+    REQUEST_CREATED: ['IN_APP'],
+    REQUEST_UPDATED: ['IN_APP'],
   } as const;
 
 // ── Send contract used by every caller ────────────────────────────

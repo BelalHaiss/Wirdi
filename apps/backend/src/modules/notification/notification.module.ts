@@ -1,32 +1,36 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
 import { InAppNotificationChannel } from './channels/in-app.channel';
+import { TypedEventEmitter } from './typed-event-emitter.service';
 import {
   INotificationChannel,
   NotificationChannelRegistry,
   NOTIFICATION_CHANNEL_REGISTRY,
 } from './notification-channel.interface';
 
+/**
+ * Global notification module
+ * Provides TypedEventEmitter for type-safe event dispatch across the app
+ * Import once in AppModule, inject TypedEventEmitter anywhere
+ */
+@Global()
 @Module({
+  imports: [EventEmitterModule.forRoot()],
   controllers: [NotificationController],
   providers: [
+    TypedEventEmitter,
     InAppNotificationChannel,
-    // PushNotificationChannel,   ← add here when ready
-    // EmailNotificationChannel,  ← add here when ready
     {
       provide: NOTIFICATION_CHANNEL_REGISTRY,
       useFactory: (...channels: INotificationChannel[]): NotificationChannelRegistry => {
-        return new Map<string, INotificationChannel>([
-          ['IN_APP', channels[0]],
-          // ['PUSH',   channels[1]],
-          // ['EMAIL',  channels[2]],
-        ]);
+        return new Map<string, INotificationChannel>([['IN_APP', channels[0]]]);
       },
       inject: [InAppNotificationChannel],
     },
     NotificationService,
   ],
-  exports: [NotificationService],
+  exports: [TypedEventEmitter, NotificationService],
 })
 export class NotificationModule {}

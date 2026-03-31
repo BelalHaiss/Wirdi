@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Typography } from '@/components/ui/typography';
 import { UserBadge } from '@/modules/users';
+import { NotificationBell } from '@/modules/notifications';
 
 interface LayoutProps {
   user: User;
@@ -133,9 +134,12 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
               </div>
             </div>
 
-            <Link to='/profile' className='p-1 rounded-md hover:bg-muted transition'>
-              <Settings className='w-4 h-4 text-muted-foreground' />
-            </Link>
+            <div className='flex items-center gap-1'>
+              <NotificationBell isAuthenticated />
+              <Link to='/profile' className='p-1 rounded-md hover:bg-muted transition'>
+                <Settings className='w-4 h-4 text-muted-foreground' />
+              </Link>
+            </div>
           </div>
 
           {/* Navigation */}

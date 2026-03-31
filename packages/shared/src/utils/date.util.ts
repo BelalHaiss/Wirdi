@@ -192,3 +192,27 @@ export function isDateTodayOrFuture(dateStr: ISODateOnlyString): boolean {
 export function dateToISODateOnly(date: Date): ISODateOnlyString {
   return DateTime.fromJSDate(date, { zone: 'utc' }).toFormat('yyyy-MM-dd') as ISODateOnlyString;
 }
+
+/** Format relative time in Arabic (e.g., "منذ 5 د", "منذ 3 س", "منذ 2 ي") */
+export function formatRelativeTime(isoString: ISODateString): string {
+  const now = DateTime.utc();
+  const then = DateTime.fromISO(isoString, { zone: 'utc' });
+  const diff = now.diff(then, ['years', 'months', 'days', 'hours', 'minutes']).toObject();
+
+  if (diff.years && diff.years >= 1) {
+    return `منذ ${Math.floor(diff.years)} ي`;
+  }
+  if (diff.months && diff.months >= 1) {
+    return `منذ ${Math.floor(diff.months)} ش`;
+  }
+  if (diff.days && diff.days >= 1) {
+    return `منذ ${Math.floor(diff.days)} ي`;
+  }
+  if (diff.hours && diff.hours >= 1) {
+    return `منذ ${Math.floor(diff.hours)} س`;
+  }
+  if (diff.minutes && diff.minutes >= 1) {
+    return `منذ ${Math.floor(diff.minutes)} د`;
+  }
+  return 'الآن';
+}

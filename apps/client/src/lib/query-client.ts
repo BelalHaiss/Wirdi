@@ -143,4 +143,11 @@ export const queryKeys = {
     details: () => [...queryKeys.requests.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.requests.details(), id] as const,
   },
+
+  // Notifications queries
+  notifications: {
+    all: ['notifications'] as const,
+    list: (cursor?: string) => [...queryKeys.notifications.all, 'list', cursor] as const,
+    unreadCount: () => [...queryKeys.notifications.all, 'unread-count'] as const,
+  },
 } as const;

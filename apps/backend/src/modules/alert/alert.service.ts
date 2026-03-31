@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import { NotificationService } from '../notification/notification.service';
-import { SideEffectsQueue } from '../../utils/side-effects.util';
+import { TypedEventEmitter } from '../notification/typed-event-emitter.service';
 import type { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class AlertService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly notificationService: NotificationService
+    private readonly typedEmitter: TypedEventEmitter
   ) {}
 
   /**
@@ -20,8 +19,7 @@ export class AlertService {
     studentId: string,
     groupId: string,
     weekId: string,
-    dayNumber: number,
-    sideEffects: SideEffectsQueue
+    dayNumber: number
   ): Promise<void> {
     await tx.alert.create({
       data: { studentId, groupId, weekId, dayNumber },
@@ -33,21 +31,18 @@ export class AlertService {
       tx.week.findUnique({ where: { id: weekId }, select: { weekNumber: true } }),
     ]);
 
-    // Queue notification (sent after transaction)
     if (group && week) {
-      sideEffects.add(() =>
-        this.notificationService.send({
-          type: 'ALERT_ASSIGNED',
-          recipientId: studentId,
-          payload: {
-            groupId,
-            groupName: group.name,
-            weekId,
-            weekNumber: week.weekNumber,
-            dayNumber,
-          },
-        })
-      );
+      this.typedEmitter.emit('notification.send', {
+        type: 'ALERT_ASSIGNED',
+        recipientId: studentId,
+        payload: {
+          groupId,
+          groupName: group.name,
+          weekId,
+          weekNumber: week.weekNumber,
+          dayNumber,
+        },
+      });
     }
   }
 
@@ -90,8 +85,7 @@ export class AlertService {
     tx: Prisma.TransactionClient,
     studentId: string,
     groupId: string,
-    weekId: string,
-    sideEffects: SideEffectsQueue
+    weekId: string
   ): Promise<boolean> {
     const now = new Date();
     const activeExcuse = await tx.excuse.findFirst({
@@ -108,8 +102,7 @@ export class AlertService {
         data: { status: 'INACTIVE' },
       });
 
-      // Queue deactivation notifications (sent after transaction)
-      await this.queueDeactivationNotifications(studentId, groupId, sideEffects, tx);
+      await this.emitDeactivationNotifications(studentId, groupId, tx);
       return true;
     }
 
@@ -125,8 +118,7 @@ export class AlertService {
     tx: Prisma.TransactionClient,
     studentId: string,
     groupId: string,
-    previousWeekId: string,
-    sideEffects: SideEffectsQueue
+    previousWeekId: string
   ): Promise<boolean> {
     const now = new Date();
     const activeExcuse = await tx.excuse.findFirst({
@@ -145,8 +137,7 @@ export class AlertService {
         data: { status: 'INACTIVE' },
       });
 
-      // Queue deactivation notifications (sent after transaction)
-      await this.queueDeactivationNotifications(studentId, groupId, sideEffects, tx);
+      await this.emitDeactivationNotifications(studentId, groupId, tx);
       return true;
     }
 
@@ -156,10 +147,9 @@ export class AlertService {
   /**
    * Queue deactivation notifications to all admins and the group moderator.
    */
-  private async queueDeactivationNotifications(
+  private async emitDeactivationNotifications(
     studentId: string,
     groupId: string,
-    sideEffects: SideEffectsQueue,
     tx: Prisma.TransactionClient
   ): Promise<void> {
     const [student, group, admins] = await Promise.all([
@@ -170,15 +160,20 @@ export class AlertService {
 
     if (!student || !group) return;
 
-    const payload = { studentId, studentName: student.name, groupId, groupName: group.name };
     const recipientIds = new Set<string>(admins.map((a) => a.id));
     if (group.moderatorId) recipientIds.add(group.moderatorId);
 
-    // Queue notifications (sent after transaction)
+    // Only send notifications if there are recipients
+    if (recipientIds.size === 0) return;
+
+    const payload = { studentId, studentName: student.name, groupId, groupName: group.name };
+
     for (const recipientId of recipientIds) {
-      sideEffects.add(() =>
-        this.notificationService.send({ type: 'LEARNER_DEACTIVATED', recipientId, payload })
-      );
+      this.typedEmitter.emit('notification.send', {
+        type: 'LEARNER_DEACTIVATED',
+        recipientId,
+        payload,
+      });
     }
   }
 }

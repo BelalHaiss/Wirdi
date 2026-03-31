@@ -1,17 +1,22 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
-import type { RequestDto, RequestType } from '@wirdi/shared';
+import { TypedEventEmitter } from '../notification/typed-event-emitter.service';
+import type { RequestDto, RequestType, RequestPayloadMap } from '@wirdi/shared';
 import type { ISODateString } from '@wirdi/shared';
+import type { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class RequestOrchestrator {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly typedEmitter: TypedEventEmitter
+  ) {}
 
   async acceptRequest<T extends RequestType>(
     requestId: string,
     reviewerId: string
   ): Promise<RequestDto<T>> {
-    return this.db.$transaction(async (tx) => {
+    const result = await this.db.$transaction(async (tx) => {
       // Fetch request
       const request = await tx.request.findUniqueOrThrow({
         where: { id: requestId },
@@ -27,7 +32,7 @@ export class RequestOrchestrator {
 
       // Execute action based on type
       if (request.type === 'EXCUSE') {
-        const payload = request.payload as any;
+        const payload = request.payload as RequestPayloadMap['EXCUSE'];
 
         // Check for active excuse
         const now = new Date();
@@ -54,7 +59,7 @@ export class RequestOrchestrator {
           },
         });
       } else if (request.type === 'ACTIVATION') {
-        const payload = request.payload as any;
+        const payload = request.payload as RequestPayloadMap['ACTIVATION'];
 
         // Update group member status
         await tx.groupMember.update({
@@ -85,6 +90,20 @@ export class RequestOrchestrator {
 
       return this.toDto(updated) as RequestDto<T>;
     });
+
+    this.typedEmitter.emit('notification.send', {
+      type: 'REQUEST_UPDATED',
+      recipientId: result.studentId,
+      payload: {
+        requestId: result.id,
+        requestType: result.type,
+        groupName: result.groupName,
+        groupId: result.groupId,
+        status: 'ACCEPTED',
+      },
+    });
+
+    return result;
   }
 
   async rejectRequest(requestId: string, reviewerId: string): Promise<RequestDto> {
@@ -108,7 +127,21 @@ export class RequestOrchestrator {
       },
     });
 
-    return this.toDto(updated);
+    const result = this.toDto(updated);
+
+    this.typedEmitter.emit('notification.send', {
+      type: 'REQUEST_UPDATED',
+      recipientId: result.studentId,
+      payload: {
+        requestId: result.id,
+        requestType: result.type,
+        groupName: result.groupName,
+        groupId: result.groupId,
+        status: 'REJECTED',
+      },
+    });
+
+    return result;
   }
 
   private toDto(r: {
@@ -116,7 +149,7 @@ export class RequestOrchestrator {
     studentId: string;
     groupId: string;
     type: string;
-    payload: any;
+    payload: Prisma.JsonValue;
     status: string;
     reviewedBy: string | null;
     createdAt: Date;
@@ -132,7 +165,7 @@ export class RequestOrchestrator {
       groupId: r.groupId,
       groupName: r.group.name,
       type: r.type as RequestType,
-      payload: r.payload,
+      payload: r.payload as RequestPayloadMap[RequestType],
       status: r.status as RequestDto['status'],
       reviewedBy: r.reviewedBy ?? undefined,
       reviewerName: r.reviewer?.name,

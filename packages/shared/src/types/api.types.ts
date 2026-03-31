@@ -78,6 +78,22 @@ export type PaginatedResult<T> = {
   data: T;
 } & PaginationResponseMeta;
 
+// ── Cursor-based pagination ────────────────────────────────────────
+export type CursorPaginationQuery = {
+  cursor?: string;
+  limit?: number;
+};
+
+export type CursorPaginationMeta = {
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export type CursorPaginatedResult<T> = {
+  data: T;
+  meta: CursorPaginationMeta;
+};
+
 type ApiSuccessResponse<T> = {
   success: true;
   data: T;

@@ -62,7 +62,7 @@ export default defineConfig(
           ...tanstackRestriction,
           patterns: [
             {
-              group: ['@/modules/*', '!@/modules/users'],
+              group: ['@/modules/*', '!@/modules/users', '!@/modules/notifications'],
               message:
                 'Shared layers (components/lib/services/contexts/hoc) must not import module internals directly.',
             },

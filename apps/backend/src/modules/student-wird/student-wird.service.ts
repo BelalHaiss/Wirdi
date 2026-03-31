@@ -27,7 +27,6 @@ import {
 } from '@wirdi/shared';
 import { DatabaseService } from '../database/database.service';
 import { AlertService } from '../alert/alert.service';
-import { SideEffectsQueue } from '../../utils/side-effects.util';
 
 /** Arabic display order: Sat(6) → Sun(0) → Mon(1) → Tue(2) → Wed(3) → Thu(4) */
 const DISPLAY_DAY_ORDER = [6, 0, 1, 2, 3, 4] as const;
@@ -419,7 +418,9 @@ export class StudentWirdService {
   }
 
   async recordLearnerWird(studentId: string, dto: RecordLearnerWirdDto): Promise<void> {
-    const sideEffects = new SideEffectsQueue();
+    let shouldDeleteAlert = false;
+    let alertWeekId = '';
+    let alertDayNumber = 0;
 
     await this.db.$transaction(async (tx) => {
       // Sequential reads instead of Promise.all to comply with transaction best practices
@@ -488,13 +489,14 @@ export class StudentWirdService {
 
       // Policy: LATE recording cancels the specific day's alert (yellow cancels red)
       if (status === 'LATE') {
-        sideEffects.add(() =>
-          this.alertService.deleteWeekDayAlert(studentId, dto.weekId, dto.dayNumber)
-        );
+        shouldDeleteAlert = true;
+        alertWeekId = dto.weekId;
+        alertDayNumber = dto.dayNumber;
       }
     });
 
-    // Execute side effects after transaction commits
-    await sideEffects.executeAll();
+    if (shouldDeleteAlert) {
+      await this.alertService.deleteWeekDayAlert(studentId, alertWeekId, alertDayNumber);
+    }
   }
 }

@@ -158,7 +158,6 @@ model Request {
   @@index([studentId])
   @@index([groupId])
   @@index([status])
-  @@index([type])
   @@map("requests")
 }
 
@@ -249,4 +248,6 @@ model Notification {
 enum NotificationType {
   ALERT_ASSIGNED
   LEARNER_DEACTIVATED
+  REQUEST_CREATED
+  REQUEST_UPDATED
 }

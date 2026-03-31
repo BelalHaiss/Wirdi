@@ -20,6 +20,7 @@ applyTo: '**'
 - Use **only** `date.util` (Luxon-based) from `@wirdi/shared` for all date logic
 - Use **only** `timezone.util` from `@wirdi/shared` for timezone operations
 - Do **not** install or import any date library (`dayjs`, `date-fns`, `moment`) in `apps/client` or `apps/backend`
+- create new utility functions in `@wirdi/shared` if needed — no local date logic in client or backend
 
 ## types
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CreateLearnerDto,
@@ -84,7 +84,9 @@ export function StudentMainInfoModal({
   );
 
   const form = useForm<StudentMainInfoFormValues>({
-    resolver: zodResolver(studentMainInfoFormSchema),
+    resolver: zodResolver(
+      studentMainInfoFormSchema
+    ) as unknown as Resolver<StudentMainInfoFormValues>,
     values: defaultValues,
     mode: 'onTouched',
   });

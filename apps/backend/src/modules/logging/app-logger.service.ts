@@ -23,7 +23,7 @@ export class AppLogger extends ConsoleLogger {
     this.fileLogger = this.createFileLogger();
   }
 
-  override warn(message: any, context?: string): void {
+  override warn(message: unknown, context?: string): void {
     super.warn(message, context);
     this.write('warn', {
       source: 'system',
@@ -33,7 +33,7 @@ export class AppLogger extends ConsoleLogger {
     });
   }
 
-  override error(message: any, stack?: string, context?: string): void {
+  override error(message: unknown, stack?: string, context?: string): void {
     super.error(message, stack, context);
     this.write('error', {
       source: 'system',
