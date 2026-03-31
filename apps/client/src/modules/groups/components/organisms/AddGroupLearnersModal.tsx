@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import { useFieldArray, useForm, Controller, type Resolver } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, UserPlus } from 'lucide-react';
 import {
   Dialog,
@@ -11,15 +8,11 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Typography } from '@/components/ui/typography';
-import { createAndAssignLearnersSchema, DEFAULT_TIMEZONE, TIMEZONES } from '@wirdi/shared';
-import type { CreateAndAssignLearnersDto } from '@wirdi/shared';
 import { FormField } from '@/components/forms/form-field';
+import { TIMEZONES } from '@wirdi/shared';
+import type { CreateAndAssignLearnersDto } from '@wirdi/shared';
 import { AssignExistingLearnersTab } from './AssignExistingLearnersTab';
-
-type FormValues = Pick<CreateAndAssignLearnersDto, 'learners'>;
+import { useAddGroupLearnersModal } from '../../viewmodels/add-group-learners-modal.viewmodel';
 
 type AddGroupLearnersModalProps = {
   open: boolean;
@@ -36,46 +29,20 @@ export function AddGroupLearnersModal({
   onSubmit,
   isLoading,
 }: AddGroupLearnersModalProps) {
-  const [tab, setTab] = useState<'new' | 'existing'>('new');
-
-  const { control, handleSubmit, reset } = useForm<FormValues>({
-    resolver: zodResolver(
-      createAndAssignLearnersSchema('ar').omit({ groupId: true })
-    ) as unknown as Resolver<FormValues>,
-    defaultValues: {
-      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
-    },
+  const vm = useAddGroupLearnersModal({
+    groupId,
+    onSubmit,
+    onClose: () => onOpenChange(false),
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'learners' });
-
-  const handleClose = () => {
-    reset();
-    setTab('new');
-    onOpenChange(false);
-  };
-
-  const submit = async (values: FormValues) => {
-    await onSubmit({
-      groupId,
-      learners: values.learners.map((l) => ({
-        name: l.name,
-        username: l.username,
-        timezone: l.timezone,
-        notes: l.notes || undefined,
-      })),
-    });
-    reset();
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={vm.handleClose}>
       <DialogContent className='min-w-3/4 max-h-[85vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>إضافة متعلمين للحلقة</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as 'new' | 'existing')}>
+        <Tabs value={vm.tab} onValueChange={(v) => vm.setTab(v as 'new' | 'existing')}>
           <TabsList className='w-full'>
             <TabsTrigger value='new' className='flex-1'>
               متعلمون جدد
@@ -86,62 +53,34 @@ export function AddGroupLearnersModal({
           </TabsList>
 
           <TabsContent value='new' className='mt-4 space-y-4'>
-            <form onSubmit={handleSubmit(submit)} className='space-y-4'>
+            <form onSubmit={vm.handleSubmit} className='space-y-4'>
               <div className='space-y-3'>
-                {fields.map((field, index) => (
+                {vm.fields.map((field, index) => (
                   <div
                     key={field.id}
-                    className='flex flex-row flex-wrap gap-2  items-baseline border rounded-xl p-3 bg-muted/20'
+                    className='flex flex-row flex-wrap gap-2 items-baseline border rounded-xl p-3 bg-muted/20'
                   >
                     <div className='flex-1 min-w-32'>
-                      <Field>
-                        <FieldLabel>الاسم</FieldLabel>
-                        <Controller
-                          control={control}
-                          name={`learners.${index}.name`}
-                          render={({ field: f, fieldState }) => (
-                            <>
-                              <Input
-                                {...f}
-                                placeholder='اسم المتعلم'
-                                aria-invalid={!!fieldState.error}
-                              />
-                              {fieldState.error && (
-                                <Typography size='xs' className='text-danger'>
-                                  {fieldState.error.message}
-                                </Typography>
-                              )}
-                            </>
-                          )}
-                        />
-                      </Field>
+                      <FormField
+                        control={vm.control}
+                        name={`learners.${index}.name`}
+                        label='الاسم'
+                        type='text'
+                        placeholder='اسم المتعلم'
+                      />
                     </div>
                     <div className='flex-1 min-w-32'>
-                      <Field>
-                        <FieldLabel>اسم المستخدم</FieldLabel>
-                        <Controller
-                          control={control}
-                          name={`learners.${index}.username`}
-                          render={({ field: f, fieldState }) => (
-                            <>
-                              <Input
-                                {...f}
-                                placeholder='لتسجيل الدخول'
-                                aria-invalid={!!fieldState.error}
-                              />
-                              {fieldState.error && (
-                                <Typography size='xs' className='text-danger'>
-                                  {fieldState.error.message}
-                                </Typography>
-                              )}
-                            </>
-                          )}
-                        />
-                      </Field>
+                      <FormField
+                        control={vm.control}
+                        name={`learners.${index}.username`}
+                        label='اسم المستخدم'
+                        type='text'
+                        placeholder='لتسجيل الدخول'
+                      />
                     </div>
                     <div className='flex-1 min-w-36'>
                       <FormField
-                        control={control}
+                        control={vm.control}
                         name={`learners.${index}.timezone`}
                         id={`student-timezone-${index}`}
                         label='المنطقة الزمنية'
@@ -153,14 +92,14 @@ export function AddGroupLearnersModal({
                         }))}
                       />
                     </div>
-                    {fields.length > 1 && (
+                    {vm.fields.length > 1 && (
                       <Button
                         type='button'
                         variant='ghost'
                         color='danger'
                         size='icon'
-                        className='  self-center  '
-                        onClick={() => remove(index)}
+                        className='self-center'
+                        onClick={() => vm.removeLearner(index)}
                       >
                         <Trash2 className='h-4 w-4' />
                       </Button>
@@ -174,21 +113,19 @@ export function AddGroupLearnersModal({
                 variant='outline'
                 size='sm'
                 className='gap-1.5 w-full'
-                onClick={() =>
-                  append({ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' })
-                }
+                onClick={vm.addLearner}
               >
                 <Plus className='h-3.5 w-3.5' />
                 إضافة متعلم آخر
               </Button>
 
               <DialogFooter>
-                <Button type='button' variant='outline' color='muted' onClick={handleClose}>
+                <Button type='button' variant='outline' color='muted' onClick={vm.handleClose}>
                   إلغاء
                 </Button>
                 <Button type='submit' color='success' disabled={isLoading} className='gap-1.5'>
                   <UserPlus className='h-4 w-4' />
-                  {isLoading ? 'جاري الإضافة...' : `إضافة ${fields.length} متعلم`}
+                  {isLoading ? 'جاري الإضافة...' : `إضافة ${vm.learnersCount} متعلم`}
                 </Button>
               </DialogFooter>
             </form>
@@ -197,8 +134,8 @@ export function AddGroupLearnersModal({
           <TabsContent value='existing' className='mt-4'>
             <AssignExistingLearnersTab
               groupId={groupId}
-              isActive={tab === 'existing'}
-              onSuccess={handleClose}
+              isActive={vm.tab === 'existing'}
+              onSuccess={vm.handleClose}
             />
           </TabsContent>
         </Tabs>

@@ -56,14 +56,12 @@ export class RequestService {
     // For EXCUSE: check no active excuse and no pending excuse request
     if (type === 'EXCUSE') {
       const now = new Date();
-      const [activeExcuse, pendingExcuseRequest] = await Promise.all([
-        this.db.excuse.findFirst({
-          where: { studentId, groupId, expiresAt: { gt: now } },
-        }),
-        this.db.request.findFirst({
-          where: { studentId, groupId, type: 'EXCUSE', status: 'PENDING' },
-        }),
-      ]);
+      const activeExcuse = await this.db.excuse.findFirst({
+        where: { studentId, groupId, expiresAt: { gt: now } },
+      });
+      const pendingExcuseRequest = await this.db.request.findFirst({
+        where: { studentId, groupId, type: 'EXCUSE', status: 'PENDING' },
+      });
 
       if (activeExcuse) {
         throw new BadRequestException('لديك عذر نشط بالفعل لهذه المجموعة');
@@ -159,20 +157,18 @@ export class RequestService {
     const { skip, take, page } = this.db.handleQueryPagination(query);
     const limit = take;
 
-    const [requests, count] = await Promise.all([
-      this.db.request.findMany({
-        where,
-        include: {
-          student: { select: { name: true } },
-          group: { select: { name: true } },
-          reviewer: { select: { name: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take,
-      }),
-      this.db.request.count({ where }),
-    ]);
+    const requests = await this.db.request.findMany({
+      where,
+      include: {
+        student: { select: { name: true } },
+        group: { select: { name: true } },
+        reviewer: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    });
+    const count = await this.db.request.count({ where });
 
     const { meta } = this.db.formatPaginationResponse({ page, count, limit });
     return { data: requests.map((r) => this.toDto(r)), meta };
@@ -182,12 +178,10 @@ export class RequestService {
     const where: Prisma.RequestWhereInput =
       actor.role === 'MODERATOR' ? { group: { moderatorId: actor.id } } : {};
 
-    const [pending, accepted, rejected, total] = await Promise.all([
-      this.db.request.count({ where: { ...where, status: 'PENDING' } }),
-      this.db.request.count({ where: { ...where, status: 'ACCEPTED' } }),
-      this.db.request.count({ where: { ...where, status: 'REJECTED' } }),
-      this.db.request.count({ where }),
-    ]);
+    const pending = await this.db.request.count({ where: { ...where, status: 'PENDING' } });
+    const accepted = await this.db.request.count({ where: { ...where, status: 'ACCEPTED' } });
+    const rejected = await this.db.request.count({ where: { ...where, status: 'REJECTED' } });
+    const total = await this.db.request.count({ where });
 
     return { pending, accepted, rejected, total };
   }

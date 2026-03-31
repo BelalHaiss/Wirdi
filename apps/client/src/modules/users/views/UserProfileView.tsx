@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -11,8 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { User, Lock, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { ChangeOwnPasswordDto, TIMEZONES, UpdateOwnProfileDto } from '@wirdi/shared';
-import { changeOwnPasswordSchema, updateOwnProfileSchema } from '@wirdi/shared';
+import { TIMEZONES } from '@wirdi/shared';
 import { FormField } from '@/components/forms/form-field';
 import { TimezoneDisplay } from '@/components/ui/timezone-display';
 import { UserBadge } from '../components/UserBadge';
@@ -22,33 +19,7 @@ export function UserProfileView() {
   const { user, setUser } = useApp();
   const [activeTab, setActiveTab] = useState('profile');
 
-  // Profile form
-  const profileForm = useForm<UpdateOwnProfileDto>({
-    resolver: zodResolver(updateOwnProfileSchema()),
-    defaultValues: {
-      name: user?.name || '',
-      username: user?.username || '',
-      timezone: user?.timezone || 'Africa/Cairo',
-    },
-    mode: 'onTouched',
-  });
-
-  // Password form
-  const passwordForm = useForm<ChangeOwnPasswordDto>({
-    resolver: zodResolver(changeOwnPasswordSchema()),
-    defaultValues: {
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    },
-    mode: 'onTouched',
-  });
-
-  const vm = useUserProfileViewModel({
-    user,
-    setUser,
-    resetPasswordForm: () => passwordForm.reset(),
-  });
+  const vm = useUserProfileViewModel({ user, setUser });
 
   if (!user) return null;
 
@@ -104,11 +75,11 @@ export function UserProfileView() {
             </CardHeader>
             <CardContent>
               <form
-                onSubmit={profileForm.handleSubmit(vm.requestProfileUpdate)}
+                onSubmit={vm.profileForm.handleSubmit(vm.requestProfileUpdate)}
                 className='space-y-4'
               >
                 <FormField
-                  control={profileForm.control}
+                  control={vm.profileForm.control}
                   name='name'
                   label='الاسم'
                   type='text'
@@ -116,9 +87,8 @@ export function UserProfileView() {
                   disabled={vm.isUpdatingProfile}
                 />
 
-                {/* Username */}
                 <FormField
-                  control={profileForm.control}
+                  control={vm.profileForm.control}
                   name='username'
                   label='اسم المستخدم'
                   type='text'
@@ -128,7 +98,7 @@ export function UserProfileView() {
                 />
 
                 <FormField
-                  control={profileForm.control}
+                  control={vm.profileForm.control}
                   name='timezone'
                   label='المنطقة الزمنية'
                   type='select'
@@ -141,8 +111,8 @@ export function UserProfileView() {
                   className='w-full bg-emerald-600 hover:bg-emerald-700'
                   disabled={
                     vm.isUpdatingProfile ||
-                    !profileForm.formState.isDirty ||
-                    !profileForm.formState.isValid
+                    !vm.profileForm.formState.isDirty ||
+                    !vm.profileForm.formState.isValid
                   }
                 >
                   {vm.isUpdatingProfile ? 'جاري الحفظ...' : 'حفظ التغييرات'}
@@ -170,12 +140,11 @@ export function UserProfileView() {
               </Alert>
 
               <form
-                onSubmit={passwordForm.handleSubmit(vm.requestPasswordChange)}
+                onSubmit={vm.passwordForm.handleSubmit(vm.requestPasswordChange)}
                 className='space-y-4'
               >
-                {/* Current Password */}
                 <FormField
-                  control={passwordForm.control}
+                  control={vm.passwordForm.control}
                   name='currentPassword'
                   label='كلمة المرور الحالية'
                   type='password'
@@ -183,9 +152,8 @@ export function UserProfileView() {
                   disabled={vm.isChangingPassword}
                 />
 
-                {/* New Password */}
                 <FormField
-                  control={passwordForm.control}
+                  control={vm.passwordForm.control}
                   name='newPassword'
                   label='كلمة المرور الجديدة'
                   type='password'
@@ -193,9 +161,8 @@ export function UserProfileView() {
                   disabled={vm.isChangingPassword}
                 />
 
-                {/* Confirm Password */}
                 <FormField
-                  control={passwordForm.control}
+                  control={vm.passwordForm.control}
                   name='confirmPassword'
                   label='تأكيد كلمة المرور الجديدة'
                   type='password'
@@ -209,8 +176,8 @@ export function UserProfileView() {
                     className='w-full bg-emerald-600 hover:bg-emerald-700'
                     disabled={
                       vm.isChangingPassword ||
-                      !passwordForm.formState.isDirty ||
-                      !passwordForm.formState.isValid
+                      !vm.passwordForm.formState.isDirty ||
+                      !vm.passwordForm.formState.isValid
                     }
                   >
                     {vm.isChangingPassword ? 'جاري التحديث...' : 'تحديث كلمة المرور'}

@@ -1,8 +1,5 @@
-import { useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
 import { BookMarked, Loader2, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { LoginCredentialsDto } from '@wirdi/shared';
 import { useApp } from '@/contexts/AppContext';
 import { AppLogo } from '@/components/AppLogo';
 import { FormError } from '@/components/forms/form-error';
@@ -11,12 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Typography } from '@/components/ui/typography';
-import { loginSchema } from '@wirdi/shared';
 import { useAuthViewModel } from '../viewmodels/auth.viewmodel';
 
 export const LoginView = () => {
   const { user } = useApp();
-  const { login, isLoading, error, isError } = useAuthViewModel();
+  const { loginForm, onLoginSubmit, canSubmit, isLoading, error, isError } = useAuthViewModel();
 
   const highlights = [
     {
@@ -40,22 +36,6 @@ export const LoginView = () => {
     return <Navigate to='/' replace />;
   }
 
-  const {
-    control,
-    handleSubmit,
-    formState: { isDirty, isValid },
-  } = useForm<LoginCredentialsDto>({
-    resolver: zodResolver(loginSchema()),
-    defaultValues: {
-      username: '',
-      password: '',
-    },
-    mode: 'onTouched',
-  });
-
-  const onSubmit = (data: LoginCredentialsDto) => login(data);
-  const canSubmit = isDirty && isValid;
-
   return (
     <div className='min-h-screen bg-muted/30 p-4 sm:p-6'>
       <div className='mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-6 lg:flex-row'>
@@ -74,11 +54,11 @@ export const LoginView = () => {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
+            <form onSubmit={onLoginSubmit} className='space-y-5'>
               {isError && error ? <FormError error={{ message: error.message }} /> : null}
               <div className='space-y-4 rounded-xl border border-border bg-background/80 p-4'>
                 <FormField
-                  control={control}
+                  control={loginForm.control}
                   name='username'
                   label='اسم المستخدم'
                   type='text'
@@ -89,7 +69,7 @@ export const LoginView = () => {
                 />
 
                 <FormField
-                  control={control}
+                  control={loginForm.control}
                   name='password'
                   label='كلمة المرور'
                   type='password'

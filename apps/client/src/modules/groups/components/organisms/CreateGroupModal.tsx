@@ -1,5 +1,3 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
@@ -9,9 +7,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/forms/form-field';
-import { createGroupSchema } from '@wirdi/shared';
 import type { CreateGroupDto, StaffUserDto } from '@wirdi/shared';
 import { AwradField, ModeratorSelectField, STATUS_OPTIONS } from './group-form-shared';
+import { useCreateGroupModal } from '../../viewmodels/create-group-modal.viewmodel';
 
 type CreateGroupModalProps = {
   open: boolean;
@@ -28,72 +26,45 @@ export function CreateGroupModal({
   isLoading,
   onSubmit,
 }: CreateGroupModalProps) {
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<CreateGroupDto>({
-    resolver: zodResolver(createGroupSchema('ar')),
-    defaultValues: {
-      name: '',
-      status: 'ACTIVE',
-      description: '',
-      awrad: [],
-      moderatorId: 'none',
-    },
-  });
-
-  const awrad = watch('awrad');
-  const moderatorId = watch('moderatorId');
-
-  const handleClose = () => {
-    reset();
-    onOpenChange(false);
-  };
-
-  const handleFormSubmit = async (data: CreateGroupDto) => {
-    await onSubmit({
-      ...data,
-      moderatorId: data.moderatorId && data.moderatorId !== 'none' ? data.moderatorId : undefined,
-      description: data.description?.trim() || undefined,
-    });
-    reset();
-  };
+  const vm = useCreateGroupModal({ onSubmit, onClose: () => onOpenChange(false) });
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={vm.handleClose}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
           <DialogTitle>إنشاء حلقة جديدة</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4'>
-          <FormField control={control} name='name' label='اسم الحلقة' type='text' />
+        <form onSubmit={vm.handleSubmit} className='space-y-4'>
+          <FormField control={vm.control} name='name' label='اسم الحلقة' type='text' />
           <FormField
-            control={control}
+            control={vm.control}
             name='status'
             label='الحالة'
             type='select'
             options={STATUS_OPTIONS}
           />
-          <FormField control={control} name='description' label='الوصف' type='textarea' rows={3} />
+          <FormField
+            control={vm.control}
+            name='description'
+            label='الوصف'
+            type='textarea'
+            rows={3}
+          />
           <AwradField
-            value={awrad}
-            onChange={(v) => setValue('awrad', v, { shouldDirty: true })}
-            errorMessage={errors.awrad?.message}
+            value={vm.watch('awrad')}
+            onChange={(v) => vm.setValue('awrad', v, { shouldDirty: true })}
+            errorMessage={vm.errors.awrad?.message}
           />
           <ModeratorSelectField
-            value={moderatorId ?? 'none'}
-            onChange={(v) => setValue('moderatorId', v, { shouldDirty: true })}
+            value={vm.watch('moderatorId') ?? 'none'}
+            onChange={(v) => vm.setValue('moderatorId', v, { shouldDirty: true })}
             staffUsers={staffUsers}
-            errorMessage={errors.moderatorId?.message}
+            errorMessage={vm.errors.moderatorId?.message}
           />
 
           <DialogFooter>
-            <Button type='button' variant='outline' color='muted' onClick={handleClose}>
+            <Button type='button' variant='outline' color='muted' onClick={vm.handleClose}>
               إلغاء
             </Button>
             <Button type='submit' color='success' disabled={isLoading}>

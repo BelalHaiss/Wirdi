@@ -1,4 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { attendanceFormSchema, type AttendanceFormValues } from '../../utils/groups.validation';
 import { Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -25,8 +27,6 @@ const DAY_LABELS: Record<number, string> = {
 /** Arabic display order: Sat(6) → Sun(0) → Mon(1) → Tue(2) → Wed(3) → Thu(4) */
 const DISPLAY_DAY_ORDER = [6, 0, 1, 2, 3, 4] as const;
 
-type AttendanceFormValues = Partial<Record<`day_${number}`, boolean>>;
-
 // ─── Inner form ────────────────────────────────────────────────────────────────
 // Rendered only when data is available; remounts via `key` — form always gets
 // fresh defaultValues without needing useEffect.
@@ -43,7 +43,10 @@ function AttendanceFormContent({ days, isSaving, onSave, onCancel }: AttendanceF
     days.map((d) => [`day_${d.dayNumber}`, d.recordedStatus === 'ATTENDED'])
   ) as AttendanceFormValues;
 
-  const form = useForm<AttendanceFormValues>({ defaultValues });
+  const form = useForm<AttendanceFormValues>({
+    resolver: zodResolver(attendanceFormSchema),
+    defaultValues,
+  });
   const dayMap = new Map(days.map((d) => [d.dayNumber, d]));
 
   function onSubmit(values: AttendanceFormValues) {

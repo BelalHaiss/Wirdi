@@ -9,7 +9,7 @@ import type {
 export const notificationService = {
   getNotifications: (
     cursor?: string,
-    limit = 3
+    limit = 15
   ): Promise<UnifiedApiResponse<CursorPaginatedResult<NotificationDto[]>>> => {
     const params = new URLSearchParams({ limit: String(limit) });
     if (cursor) params.set('cursor', cursor);

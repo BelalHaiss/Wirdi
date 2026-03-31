@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { ChangeOwnPasswordDto, UpdateOwnProfileDto, User, UserAuthType } from '@wirdi/shared';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  ChangeOwnPasswordDto,
+  UpdateOwnProfileDto,
+  User,
+  UserAuthType,
+  changeOwnPasswordSchema,
+  updateOwnProfileSchema,
+  DEFAULT_TIMEZONE,
+} from '@wirdi/shared';
 import { toast } from 'sonner';
 import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { userProfileService } from '../services/user-profile.service';
@@ -7,18 +17,33 @@ import { userProfileService } from '../services/user-profile.service';
 type UseUserProfileViewModelArgs = {
   user: User | null;
   setUser: (nextUser: User | null) => void;
-  resetPasswordForm: () => void;
 };
 
-export const useUserProfileViewModel = ({
-  user,
-  setUser,
-  resetPasswordForm,
-}: UseUserProfileViewModelArgs) => {
+export const useUserProfileViewModel = ({ user, setUser }: UseUserProfileViewModelArgs) => {
   const [pendingProfileData, setPendingProfileData] = useState<UpdateOwnProfileDto | null>(null);
   const [pendingPasswordData, setPendingPasswordData] = useState<ChangeOwnPasswordDto | null>(null);
   const [confirmProfileOpen, setConfirmProfileOpen] = useState(false);
   const [confirmPasswordOpen, setConfirmPasswordOpen] = useState(false);
+
+  const profileForm = useForm<UpdateOwnProfileDto>({
+    resolver: zodResolver(updateOwnProfileSchema()),
+    defaultValues: {
+      name: user?.name || '',
+      username: user?.username || '',
+      timezone: user?.timezone || DEFAULT_TIMEZONE,
+    },
+    mode: 'onTouched',
+  });
+
+  const passwordForm = useForm<ChangeOwnPasswordDto>({
+    resolver: zodResolver(changeOwnPasswordSchema()),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    mode: 'onTouched',
+  });
 
   const updateProfileMutation = useApiMutation<UpdateOwnProfileDto, UserAuthType>({
     mutationFn: async (data) => {
@@ -59,7 +84,7 @@ export const useUserProfileViewModel = ({
     },
     onSuccess: () => {
       toast.success('تم تغيير كلمة المرور بنجاح');
-      resetPasswordForm();
+      passwordForm.reset();
       setConfirmPasswordOpen(false);
       setPendingPasswordData(null);
     },
@@ -95,6 +120,8 @@ export const useUserProfileViewModel = ({
   };
 
   return {
+    profileForm,
+    passwordForm,
     confirmProfileOpen,
     setConfirmProfileOpen,
     confirmPasswordOpen,

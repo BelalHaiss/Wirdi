@@ -1,13 +1,4 @@
-import { useMemo, useState } from 'react';
-import { useForm, type Resolver } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  CreateLearnerDto,
-  DEFAULT_TIMEZONE,
-  LearnerDto,
-  TIMEZONES,
-  UpdateLearnerDto,
-} from '@wirdi/shared';
+import { TIMEZONES } from '@wirdi/shared';
 import { FormField } from '@/components/forms/form-field';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -20,30 +11,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Typography } from '@/components/ui/typography';
-import {
-  studentMainInfoFormSchema,
-  type StudentMainInfoFormValues,
-} from '../utils/learner.validation';
 import { LearnerGroupsReadonlyPanel } from './LearnerGroupsReadonlyPanel';
+import {
+  useStudentMainInfoModal,
+  type StudentMainInfoLearner,
+  type StudentMainInfoMode,
+  type StudentMainInfoSubmitArgs,
+} from '../viewmodels/student-main-info-modal.viewmodel';
 
-export type StudentMainInfoMode = 'view' | 'edit' | 'create';
-
-export type StudentMainInfoLearner = Pick<
-  LearnerDto,
-  'id' | 'name' | 'username' | 'timezone' | 'contact' | 'groupCount' | 'groups'
->;
-
-export type StudentMainInfoSubmitArgs =
-  | {
-      mode: 'create';
-      addToGroupId?: string;
-      data: CreateLearnerDto;
-    }
-  | {
-      mode: 'edit';
-      learnerId?: string;
-      data: UpdateLearnerDto;
-    };
+export type { StudentMainInfoMode, StudentMainInfoLearner, StudentMainInfoSubmitArgs };
 
 type StudentMainInfoModalProps = {
   open: boolean;
@@ -64,80 +40,13 @@ export function StudentMainInfoModal({
   onSubmit,
   isLoading = false,
 }: StudentMainInfoModalProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [pendingSubmitArgs, setPendingSubmitArgs] = useState<StudentMainInfoSubmitArgs | null>(
-    null
-  );
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const isViewMode = mode === 'view';
-  const isCreateMode = mode === 'create';
-
-  const defaultValues = useMemo<StudentMainInfoFormValues>(
-    () => ({
-      name: learner && !isCreateMode ? learner.name : '',
-      username: learner && !isCreateMode ? (learner.username ?? '') : '',
-      timezone: learner && !isCreateMode ? learner.timezone || DEFAULT_TIMEZONE : DEFAULT_TIMEZONE,
-      notes: learner && !isCreateMode ? learner.contact.notes || '' : '',
-    }),
-    [learner, isCreateMode]
-  );
-
-  const form = useForm<StudentMainInfoFormValues>({
-    resolver: zodResolver(
-      studentMainInfoFormSchema
-    ) as unknown as Resolver<StudentMainInfoFormValues>,
-    values: defaultValues,
-    mode: 'onTouched',
+  const vm = useStudentMainInfoModal({
+    mode,
+    learner,
+    addToGroupId,
+    onSubmit,
+    onClose: () => onOpenChange(false),
   });
-
-  const handleFormSubmit = (values: StudentMainInfoFormValues) => {
-    if (isViewMode || !onSubmit) {
-      onOpenChange(false);
-      return;
-    }
-
-    const submitData: StudentMainInfoSubmitArgs = isCreateMode
-      ? {
-          mode: 'create',
-          addToGroupId,
-          data: {
-            name: values.name.trim(),
-            username: values.username.trim(),
-            timezone: values.timezone,
-            contact: values.notes.trim() ? { notes: values.notes.trim() } : undefined,
-          },
-        }
-      : {
-          mode: 'edit',
-          learnerId: learner?.id,
-          data: {
-            name: values.name.trim(),
-            username: values.username.trim(),
-            timezone: values.timezone,
-            contact: { notes: values.notes.trim() || undefined },
-          },
-        };
-
-    setPendingSubmitArgs(submitData);
-    setConfirmOpen(true);
-  };
-
-  const confirmSubmit = async () => {
-    if (!pendingSubmitArgs || !onSubmit) {
-      return;
-    }
-
-    setErrorMessage(null);
-
-    try {
-      await onSubmit(pendingSubmitArgs);
-      setConfirmOpen(false);
-      onOpenChange(false);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'تعذر حفظ بيانات المتعلم');
-    }
-  };
 
   const title =
     mode === 'create' ? 'إضافة متعلم' : mode === 'edit' ? 'تعديل بيانات المتعلم' : 'بيانات المتعلم';
@@ -151,50 +60,42 @@ export function StudentMainInfoModal({
 
   return (
     <>
-      <Dialog
-        open={open}
-        onOpenChange={(nextOpen) => {
-          setErrorMessage(null);
-          setConfirmOpen(false);
-          setPendingSubmitArgs(null);
-          onOpenChange(nextOpen);
-        }}
-      >
+      <Dialog open={open} onOpenChange={vm.handleOpenChange}>
         <DialogContent className='w-full sm:max-w-lg' onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className='space-y-4'>
+          <form onSubmit={vm.handleFormSubmit} className='space-y-4'>
             <FormField
-              control={form.control}
+              control={vm.form.control}
               name='name'
               id='student-name'
               label='الاسم'
               type='text'
               placeholder='اسم المتعلم'
-              disabled={isViewMode || isLoading}
+              disabled={vm.isViewMode || isLoading}
             />
 
             <FormField
-              control={form.control}
+              control={vm.form.control}
               name='username'
               id='student-username'
               label='اسم المستخدم'
               type='text'
               placeholder='اسم المستخدم لتسجيل الدخول'
-              disabled={isViewMode || isLoading}
+              disabled={vm.isViewMode || isLoading}
             />
 
             <FormField
-              control={form.control}
+              control={vm.form.control}
               name='timezone'
               id='student-timezone'
               label='المنطقة الزمنية'
               type='select'
               placeholder='اختر المنطقة الزمنية'
-              disabled={isViewMode || isLoading}
+              disabled={vm.isViewMode || isLoading}
               options={TIMEZONES.map((tz) => ({
                 value: tz.value,
                 label: tz.label,
@@ -202,26 +103,26 @@ export function StudentMainInfoModal({
             />
 
             <FormField
-              control={form.control}
+              control={vm.form.control}
               name='notes'
               id='student-notes'
               label='ملاحظات'
               type='textarea'
               placeholder='ملاحظات عن المتعلم'
-              disabled={isViewMode || isLoading}
+              disabled={vm.isViewMode || isLoading}
               rows={4}
             />
 
-            {isViewMode ? (
+            {vm.isViewMode ? (
               <LearnerGroupsReadonlyPanel
                 groups={learner?.groups}
                 groupCount={learner?.groupCount}
               />
             ) : null}
 
-            {errorMessage ? (
+            {vm.errorMessage ? (
               <Typography as='div' size='sm' className='text-danger' role='alert'>
-                {errorMessage}
+                {vm.errorMessage}
               </Typography>
             ) : null}
 
@@ -236,11 +137,11 @@ export function StudentMainInfoModal({
                 إغلاق
               </Button>
 
-              {!isViewMode ? (
+              {!vm.isViewMode ? (
                 <Button
                   type='submit'
                   color='success'
-                  disabled={isLoading || !form.formState.isDirty || !form.formState.isValid}
+                  disabled={isLoading || !vm.form.formState.isDirty || !vm.form.formState.isValid}
                 >
                   {isLoading ? 'جاري الحفظ...' : 'حفظ'}
                 </Button>
@@ -251,15 +152,15 @@ export function StudentMainInfoModal({
       </Dialog>
 
       <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={isCreateMode ? 'تأكيد إضافة متعلم' : 'تأكيد تعديل المتعلم'}
+        open={vm.confirmOpen}
+        onOpenChange={vm.setConfirmOpen}
+        title={vm.isCreateMode ? 'تأكيد إضافة متعلم' : 'تأكيد تعديل المتعلم'}
         description={
-          isCreateMode ? 'هل أنت متأكد من إضافة هذا المتعلم؟' : 'هل أنت متأكد من حفظ التعديلات؟'
+          vm.isCreateMode ? 'هل أنت متأكد من إضافة هذا المتعلم؟' : 'هل أنت متأكد من حفظ التعديلات؟'
         }
-        confirmText={isCreateMode ? 'إضافة' : 'حفظ'}
+        confirmText={vm.isCreateMode ? 'إضافة' : 'حفظ'}
         cancelText='إلغاء'
-        onConfirm={confirmSubmit}
+        onConfirm={vm.confirmSubmit}
       />
     </>
   );

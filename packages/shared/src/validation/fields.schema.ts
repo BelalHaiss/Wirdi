@@ -1,5 +1,4 @@
 import z from 'zod';
-import { DATE_ONLY_FORMAT_REGEX } from '../utils/date.constants';
 import { ISODateOnlyString, TimeMinutes } from '../types/api.types';
 import {
   ATTENDANCE_NOTES_MAX_LENGTH,
@@ -91,10 +90,7 @@ export const durationMinutesSchema = (locale: ValidationLocale = 'ar') => {
 
 export const isoDateOnlySchema = (locale: ValidationLocale = 'ar') => {
   const m = getMessages(locale);
-  return z
-    .string()
-    .regex(DATE_ONLY_FORMAT_REGEX, m.invalidDate)
-    .transform((v) => v as ISODateOnlyString);
+  return z.iso.date(m.invalidDate).transform((v) => v as ISODateOnlyString);
 };
 
 export const timeMinutesSchema = (locale: ValidationLocale = 'ar') => {

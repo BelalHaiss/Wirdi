@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import argon from 'argon2';
 import { DatabaseService } from '../database/database.service';
 import {
@@ -24,15 +19,6 @@ export class GroupMemberService {
    * Create multiple new learners and assign them all to a group in one transaction.
    */
   async createAndAssignLearners(dto: CreateAndAssignLearnersDto): Promise<GroupMemberDto[]> {
-    const requestedUsernames = dto.learners.map((l) => l.username);
-    const existingUsernames = await this.db.user.findMany({
-      where: { username: { in: requestedUsernames } },
-      select: { username: true },
-    });
-    if (existingUsernames.length > 0) {
-      throw new ConflictException('بعض أسماء المستخدمين مستخدمة بالفعل');
-    }
-
     const defaultPasswordHash = await argon.hash('12345678');
 
     const members = await this.db.$transaction(async (tx) => {
@@ -84,24 +70,6 @@ export class GroupMemberService {
    * Assign existing learners to a group in one transaction.
    */
   async assignLearnersToGroup(dto: AssignLearnersToGroupDto): Promise<GroupMemberDto[]> {
-    // Validate all students exist
-    const students = await this.db.user.findMany({
-      where: { id: { in: dto.studentIds }, role: UserRole.STUDENT },
-      select: { id: true },
-    });
-    if (students.length !== dto.studentIds.length) {
-      throw new NotFoundException('بعض المتعلمين غير موجودين');
-    }
-
-    // Check for existing memberships
-    const existing = await this.db.groupMember.findMany({
-      where: { groupId: dto.groupId, studentId: { in: dto.studentIds } },
-      select: { studentId: true },
-    });
-    if (existing.length > 0) {
-      throw new ConflictException('بعض المتعلمين منتسبون بالفعل إلى هذه المجموعة');
-    }
-
     const members = await this.db.$transaction(
       dto.studentIds.map((studentId) =>
         this.db.groupMember.create({
@@ -145,11 +113,10 @@ export class GroupMemberService {
         throw new BadRequestException('لا يمكن للمتعلم أن يكون زميله الخاص');
       }
 
-      const mate = await this.db.user.findFirst({
+      await this.db.user.findFirstOrThrow({
         where: { id: dto.mateId, role: UserRole.STUDENT },
         select: { id: true },
       });
-      if (!mate) throw new NotFoundException('الزميل المختار غير موجود');
     }
 
     const updated = await this.db.groupMember.update({
@@ -182,12 +149,10 @@ export class GroupMemberService {
    * Also clears mateId for any member in the same group who had this learner as their mate.
    */
   async removeMember(memberId: string): Promise<void> {
-    const member = await this.db.groupMember.findUnique({
+    const member = await this.db.groupMember.findUniqueOrThrow({
       where: { id: memberId },
       select: { id: true, groupId: true, studentId: true },
     });
-
-    if (!member) throw new NotFoundException('عضو الحلقة غير موجود');
 
     await this.db.$transaction([
       this.db.groupMember.updateMany({

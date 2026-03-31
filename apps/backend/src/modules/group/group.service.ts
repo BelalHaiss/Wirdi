@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { FileService } from '../file/file.service';
 import {
@@ -55,7 +50,7 @@ export class GroupService {
   }
 
   async getGroupById(id: string, studentId?: string): Promise<GroupDto> {
-    const group = await this.db.group.findUnique({
+    const group = await this.db.group.findUniqueOrThrow({
       where: { id },
       include: {
         moderator: { select: { name: true } },
@@ -65,7 +60,6 @@ export class GroupService {
         }),
       },
     });
-    if (!group) throw new NotFoundException('المجموعة غير موجودة');
     if (studentId) {
       const g = group as typeof group & { members: { id: string }[] };
       if (!g.members.length) throw new ForbiddenException('لا تملك صلاحية الوصول لهذه الحلقة');

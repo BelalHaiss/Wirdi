@@ -107,27 +107,28 @@ export class RequestOrchestrator {
   }
 
   async rejectRequest(requestId: string, reviewerId: string): Promise<RequestDto> {
-    // Check status first
-    const existing = await this.db.request.findUniqueOrThrow({ where: { id: requestId } });
-    if (existing.status !== 'PENDING') {
-      throw new BadRequestException('الطلب تمت مراجعته بالفعل');
-    }
+    const result = await this.db.$transaction(async (tx) => {
+      const existing = await tx.request.findUniqueOrThrow({ where: { id: requestId } });
+      if (existing.status !== 'PENDING') {
+        throw new BadRequestException('الطلب تمت مراجعته بالفعل');
+      }
 
-    const updated = await this.db.request.update({
-      where: { id: requestId },
-      data: {
-        status: 'REJECTED',
-        reviewedBy: reviewerId,
-        reviewedAt: new Date(),
-      },
-      include: {
-        student: { select: { name: true } },
-        group: { select: { name: true } },
-        reviewer: { select: { name: true } },
-      },
+      const updated = await tx.request.update({
+        where: { id: requestId },
+        data: {
+          status: 'REJECTED',
+          reviewedBy: reviewerId,
+          reviewedAt: new Date(),
+        },
+        include: {
+          student: { select: { name: true } },
+          group: { select: { name: true } },
+          reviewer: { select: { name: true } },
+        },
+      });
+
+      return this.toDto(updated);
     });
-
-    const result = this.toDto(updated);
 
     this.typedEmitter.emit('notification.send', {
       type: 'REQUEST_UPDATED',

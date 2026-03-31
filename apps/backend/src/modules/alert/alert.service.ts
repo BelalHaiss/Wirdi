@@ -26,10 +26,8 @@ export class AlertService {
     });
 
     // Fetch group and week details for notification payload
-    const [group, week] = await Promise.all([
-      tx.group.findUnique({ where: { id: groupId }, select: { name: true } }),
-      tx.week.findUnique({ where: { id: weekId }, select: { weekNumber: true } }),
-    ]);
+    const group = await tx.group.findUnique({ where: { id: groupId }, select: { name: true } });
+    const week = await tx.week.findUnique({ where: { id: weekId }, select: { weekNumber: true } });
 
     if (group && week) {
       this.typedEmitter.emit('notification.send', {
@@ -152,11 +150,12 @@ export class AlertService {
     groupId: string,
     tx: Prisma.TransactionClient
   ): Promise<void> {
-    const [student, group, admins] = await Promise.all([
-      tx.user.findUnique({ where: { id: studentId }, select: { name: true } }),
-      tx.group.findUnique({ where: { id: groupId }, select: { name: true, moderatorId: true } }),
-      tx.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } }),
-    ]);
+    const student = await tx.user.findUnique({ where: { id: studentId }, select: { name: true } });
+    const group = await tx.group.findUnique({
+      where: { id: groupId },
+      select: { name: true, moderatorId: true },
+    });
+    const admins = await tx.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } });
 
     if (!student || !group) return;
 
