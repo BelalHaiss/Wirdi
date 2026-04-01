@@ -65,9 +65,6 @@ importers:
       '@prisma/client':
         specifier: ^7.3.0
         version: 7.3.0(prisma@7.3.0(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3)
-      '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.1
       '@wirdi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -77,9 +74,6 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
-      luxon:
-        specifier: ^3.7.2
-        version: 3.7.2
       prisma:
         specifier: ^7.3.0
         version: 7.3.0(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
