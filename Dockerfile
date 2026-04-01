@@ -67,4 +67,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 
 USER node
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node dist/src/seed/bootstrap-admin.js && node dist/src/main.js"]
+CMD ["sh", "-c", "set -e && echo '[Init] Running migrations...' && ./node_modules/.bin/prisma migrate deploy && echo '[Init] Migrations done' && node dist/src/seed/bootstrap-admin.js && node dist/src/main.js"]
