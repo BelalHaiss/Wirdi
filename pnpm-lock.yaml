@@ -291,9 +291,6 @@ importers:
       lucide-react:
         specifier: ^0.469.0
         version: 0.469.0(react@19.2.3)
-      luxon:
-        specifier: ^3.7.2
-        version: 3.7.2
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -343,9 +340,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.1.18(vite@6.4.1(@types/node@22.19.7)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
-      '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.1
       '@types/node':
         specifier: ^22.10.6
         version: 22.19.7
