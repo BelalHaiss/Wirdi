@@ -17,7 +17,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { User } from 'src/decorators/user.decorator';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import { FileCleanupInterceptor } from 'src/modules/file/cleanup-file.interceptor';
-import { FolderInterceptor } from 'src/modules/file/folder.interceptor';
+import { FolderInterceptor, groupFolder } from 'src/modules/file/folder.interceptor';
 import type { User as PrismaUser } from 'generated/prisma/client';
 import {
   createGroupSchema,
@@ -58,7 +58,7 @@ export class GroupController {
   @Patch(':id/schedule-image/:imageId')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
   @UseInterceptors(
-    FolderInterceptor((req) => `wirdi-assets/groups/${req.params['id'] as string}`),
+    FolderInterceptor((req) => groupFolder(req.params['id'] as string)),
     FileInterceptor('image'),
     FileCleanupInterceptor
   )
@@ -97,7 +97,7 @@ export class GroupController {
   @Post(':id/schedule')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
   @UseInterceptors(
-    FolderInterceptor((req) => `wirdi-assets/groups/${req.params['id'] as string}`),
+    FolderInterceptor((req) => groupFolder(req.params['id'] as string)),
     FileInterceptor('image'),
     FileCleanupInterceptor
   )

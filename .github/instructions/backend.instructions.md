@@ -49,7 +49,7 @@ applyTo: 'apps/backend/**'
 
 **Required interceptor order:**
 
-1. `FolderInterceptor(folder)` — sets `req.folder` for storage
+1. `FolderInterceptor(folder)` — sets `req.folder` for storage + you must use groupFolder helper to generate the folder name
 2. `FileInterceptor('field')` — handles upload via `imageKitMulterStorage` it registerd automatically no need to pass option
 3. Cleanup interceptor — removes file on error
 

@@ -26,7 +26,7 @@ import { RequestModule } from './modules/request/request.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      ignoreEnvFile: process.env.NODE_ENV === 'production',
+      ignoreEnvFile: process.env.NODE_ENV !== 'development',
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
     ServeStaticModule.forRoot({
