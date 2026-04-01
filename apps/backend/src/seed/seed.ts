@@ -4,6 +4,7 @@ import { cleanUpDatabase } from './cleanup.seed';
 import { SEED_NUMBER, TOTAL_MODERATORS, TOTAL_LEARNERS } from './seed.constants';
 import { seedUsers } from './user.seed';
 import { prismaSeedClient } from './seed.util';
+import { seedWirdTracking } from './wird-tracking.seed';
 
 export const seedData = async () => {
   try {
@@ -17,6 +18,8 @@ export const seedData = async () => {
       totalModerators: TOTAL_MODERATORS,
       totalLearners: TOTAL_LEARNERS,
     });
+
+    await seedWirdTracking(prismaSeedClient);
 
     console.log('Data seeded successfully');
   } catch (error) {
