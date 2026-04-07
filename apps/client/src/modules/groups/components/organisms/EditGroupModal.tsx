@@ -36,11 +36,11 @@ export function EditGroupModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>تعديل معلومات الحلقة</DialogTitle>
+          <DialogTitle>تعديل معلومات المجموعة</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={vm.handleSubmit} className='space-y-4'>
-          <FormField control={vm.control} name='name' label='اسم الحلقة' type='text' />
+          <FormField control={vm.control} name='name' label='اسم المجموعة' type='text' />
           <FormField
             control={vm.control}
             name='status'

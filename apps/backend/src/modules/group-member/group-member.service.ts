@@ -164,7 +164,7 @@ export class GroupMemberService {
   }
 
   /**
-   * Get all STUDENT users who are NOT members of the given group.
+   * Get all users who are NOT members of the given group.
    */
   async getUnassignedLearners(groupId: string): Promise<LearnerDto[]> {
     await this.db.group.findUniqueOrThrow({ where: { id: groupId }, select: { id: true } });
@@ -176,7 +176,7 @@ export class GroupMemberService {
     const assignedIds = assigned.map((m) => m.studentId);
 
     const learners = await this.db.user.findMany({
-      where: { role: UserRole.STUDENT, id: { notIn: assignedIds } },
+      where: { id: { notIn: assignedIds } },
       orderBy: { name: 'asc' },
     });
 
@@ -184,7 +184,7 @@ export class GroupMemberService {
       id: u.id,
       username: u.username,
       name: u.name,
-      role: 'STUDENT' as const,
+      role: u.role,
       timezone: u.timezone as TimeZoneType,
       contact: { notes: u.notes ?? undefined },
       createdAt: u.createdAt.toISOString() as LearnerDto['createdAt'],

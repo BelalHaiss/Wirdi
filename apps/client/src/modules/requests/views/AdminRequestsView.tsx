@@ -32,7 +32,7 @@ export function AdminRequestsView() {
               إدارة الطلبات
             </Typography>
             <Typography size='sm' className='text-muted-foreground'>
-              مراجعة وقبول أو رفض طلبات المتعلمين
+              مراجعة وقبول أو رفض طلبات الطلاب
             </Typography>
           </div>
         </div>
@@ -74,20 +74,22 @@ export function AdminRequestsView() {
           </TabsList>
 
           <TabsContent value={activeTab} className='mt-4 space-y-4'>
-            <div className='bg-card border rounded-lg shadow-sm overflow-hidden'>
+            <div className='bg-card border rounded-lg shadow-sm overflow-hidden overflow-x-auto'>
               {vm.isLoading ? (
                 <div className='flex justify-center py-12'>
                   <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
                 </div>
               ) : (
-                <RequestsTable
-                  requests={vm.requests}
-                  userTimezone={(user?.timezone ?? 'Asia/Riyadh') as TimeZoneType}
-                  onAccept={vm.handleAccept}
-                  onReject={vm.handleReject}
-                  isReviewing={vm.isReviewing}
-                  showActions={activeTab === 'ALL' || activeTab === 'PENDING'}
-                />
+                <div className='min-w-max mx-auto [&_th]:text-center [&_td]:text-center'>
+                  <RequestsTable
+                    requests={vm.requests}
+                    userTimezone={(user?.timezone ?? 'Asia/Riyadh') as TimeZoneType}
+                    onAccept={vm.handleAccept}
+                    onReject={vm.handleReject}
+                    isReviewing={vm.isReviewing}
+                    showActions={activeTab === 'ALL' || activeTab === 'PENDING'}
+                  />
+                </div>
               )}
             </div>
 

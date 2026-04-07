@@ -131,5 +131,6 @@ export const recordLearnerWirdSchema = (locale: ValidationLocale = 'ar') =>
     groupId: nonEmptyIdSchema(locale),
     weekId: nonEmptyIdSchema(locale),
     dayNumber: z.number().int().min(0).max(6),
+    readSource: z.enum(['DEFAULT_GROUP_MATE', 'DIFFERENT_GROUP_MATE', 'OUTSIDE_GROUP']),
     mateId: z.string().trim().nullable().optional(),
   }) satisfies ZodType<RecordLearnerWirdDto>;

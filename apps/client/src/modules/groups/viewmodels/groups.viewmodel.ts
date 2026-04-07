@@ -33,11 +33,11 @@ export function useGroupsViewModel() {
   const createGroupMutation = useApiMutation<CreateGroupDto, GroupDto>({
     mutationFn: groupService.createGroup,
     onSuccess: async () => {
-      toast.success('تم إنشاء الحلقة بنجاح');
+      toast.success('تم إنشاء المجموعة بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
       setIsCreateModalOpen(false);
     },
-    onError: (err) => toast.error(err.message ?? 'حدث خطأ أثناء إنشاء الحلقة'),
+    onError: (err) => toast.error(err.message ?? 'حدث خطأ أثناء إنشاء المجموعة'),
   });
 
   const stats = statsQuery.data?.data;

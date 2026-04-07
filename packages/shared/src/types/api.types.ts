@@ -61,6 +61,11 @@ export type PaginationQueryType = {
   limit?: number;
 };
 
+export type SortingQueryType<TSortField extends string = string> = {
+  sortBy?: TSortField;
+  sortOrder?: 'asc' | 'desc';
+};
+
 export type DateRangeQueryType = {
   fromDate?: ISODateOnlyString;
   toDate?: ISODateOnlyString;

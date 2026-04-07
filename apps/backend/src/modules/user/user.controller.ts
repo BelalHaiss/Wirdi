@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import type {
   ChangeOwnPasswordDto,
   CreateStaffUserDto,
@@ -28,10 +29,16 @@ import {
   updateOwnProfileSchema,
 } from '@wirdi/shared';
 import { UserService } from './user.service';
+import { ExportService } from '../export/export.service';
+import { DatabaseService } from '../database/database.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly exportService: ExportService,
+    private readonly prismaService: DatabaseService
+  ) {}
 
   @Post('learner')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
@@ -49,6 +56,48 @@ export class UserController {
     query: QueryLearnersDto
   ): Promise<QueryLearnersResponseDto> {
     return this.userService.queryLearners(query);
+  }
+
+  @Get('learner/export')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  async exportLearnersCsv(@Res() response: Response): Promise<void> {
+    // Fetch raw data with group memberships
+    const learners = await this.prismaService.user.findMany({
+      where: { role: UserRole.STUDENT },
+      orderBy: { name: 'asc' },
+      select: {
+        username: true,
+        name: true,
+        timezone: true,
+        notes: true,
+        groupMemberships: {
+          select: { group: { select: { name: true } } },
+        },
+      },
+    });
+
+    const rows = learners.map((learner) => ({
+      name: learner.name,
+      username: learner.username ?? '',
+      timezone: learner.timezone,
+      groups: (learner.groupMemberships ?? [])
+        .map((m) => m.group?.name)
+        .filter(Boolean)
+        .join('; '),
+      notes: learner.notes ?? '',
+    }));
+
+    const file = this.exportService.toCsv(rows, [
+      { key: 'name', label: 'اسم الطالب' },
+      { key: 'username', label: 'اسم المستخدم' },
+      { key: 'timezone', label: 'المنطقة الزمنية' },
+      { key: 'groups', label: 'المجموعات' },
+      { key: 'notes', label: 'الملاحظات' },
+    ]);
+
+    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    response.setHeader('Content-Disposition', 'attachment; filename="learners.csv"');
+    response.send(file);
   }
 
   @Patch('learner/:id')

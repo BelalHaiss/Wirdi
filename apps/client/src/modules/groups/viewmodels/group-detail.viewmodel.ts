@@ -29,7 +29,7 @@ export function useGroupDetailViewModel(groupId: string) {
   const updateGroupMutation = useApiMutation<UpdateGroupDto, GroupDto>({
     mutationFn: (dto) => groupService.updateGroup(groupId, dto),
     onSuccess: async () => {
-      toast.success('تم تحديث معلومات الحلقة');
+      toast.success('تم تحديث معلومات المجموعة');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.detail(groupId) });
       setIsEditModalOpen(false);
     },

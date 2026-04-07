@@ -18,7 +18,7 @@ export function LearnerGroupsReadonlyPanel({
     <div className='rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3'>
       <div className='flex items-center justify-between gap-2'>
         <Typography as='div' size='sm' weight='semibold'>
-          حلقات المتعلم
+          حلقات الطالب
         </Typography>
         <Badge variant='soft' color='primary'>
           {resolvedGroupCount}
@@ -27,7 +27,7 @@ export function LearnerGroupsReadonlyPanel({
 
       {resolvedGroups.length === 0 ? (
         <Typography as='div' size='xs' className='text-muted-foreground'>
-          غير منضم لأي حلقة حالياً
+          غير منضم لأي مجموعة حالياً
         </Typography>
       ) : (
         <div className='flex flex-wrap gap-2'>

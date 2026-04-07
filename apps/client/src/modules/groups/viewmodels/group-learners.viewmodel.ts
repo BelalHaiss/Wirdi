@@ -29,7 +29,7 @@ export function useGroupLearnersViewModel(groupId: string) {
   const createLearnersMutation = useApiMutation<CreateAndAssignLearnersDto, GroupMemberDto[]>({
     mutationFn: (dto) => groupService.createAndAssignLearners(dto),
     onSuccess: async () => {
-      toast.success('تمت إضافة المتعلمين بنجاح');
+      toast.success('تمت إضافة الطلاب بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
       await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
       setIsAddModalOpen(false);
@@ -40,7 +40,7 @@ export function useGroupLearnersViewModel(groupId: string) {
   const updateLearnerMutation = useApiMutation<{ id: string; data: UpdateLearnerDto }, LearnerDto>({
     mutationFn: ({ id, data }) => learnerService.updateLearner(id, data),
     onSuccess: async () => {
-      toast.success('تم تعديل بيانات المتعلم بنجاح');
+      toast.success('تم تعديل بيانات الطالب بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.learners.all });
     },
@@ -50,7 +50,7 @@ export function useGroupLearnersViewModel(groupId: string) {
   const removeMemberMutation = useApiMutation<string, null>({
     mutationFn: (memberId) => groupService.removeMember(memberId),
     onSuccess: async () => {
-      toast.success('تم إزالة المتعلم من الحلقة');
+      toast.success('تم إزالة الطالب من المجموعة');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
       await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });

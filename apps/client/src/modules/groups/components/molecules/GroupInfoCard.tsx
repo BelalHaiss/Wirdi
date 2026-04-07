@@ -70,7 +70,7 @@ export function GroupInfoCard({
 
         <Badge variant='soft' color='emerald' className='gap-1.5'>
           <Users className='h-3.5 w-3.5' />
-          {`${group.memberCount} متعلم`}
+          {`${group.memberCount} طالب`}
         </Badge>
 
         <Badge variant='soft' color='purple' className='gap-1.5'>
@@ -101,7 +101,7 @@ export function GroupInfoCard({
               onClick={onManageLearners}
             >
               <GraduationCap className='h-3.5 w-3.5' />
-              إدارة المتعلمين
+              إدارة الطلاب
             </Button>
           )}
         </div>

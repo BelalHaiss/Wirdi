@@ -101,12 +101,16 @@ export function StudentWirdRow({
         {row.days.map((day) => (
           <TableCell key={day.dayNumber} className='px-3 py-3 text-center'>
             <div className='flex justify-center'>
-              <WirdStatusCell status={day.wirdStatus} readOnMateName={day.readOnMateName} />
+              <WirdStatusCell
+                status={day.wirdStatus}
+                readSource={day.readSource}
+                readOnMateName={day.readOnMateName}
+              />
             </div>
           </TableCell>
         ))}
 
-        {/* تنبيهات الأسبوع */}
+        {/* الانذارات الاسبوعية */}
         <TableCell className='px-3 py-3 text-center'>
           {row.weekAlertCount > 0 ? (
             <Badge variant='soft' color='danger' className='text-xs'>
@@ -117,7 +121,7 @@ export function StudentWirdRow({
           )}
         </TableCell>
 
-        {/* تنبيهات الكل */}
+        {/* اجمالي الانذارات */}
         <TableCell className='px-3 py-3 text-center'>
           {row.totalAlertCount > 0 ? (
             <Badge variant='soft' color='warning' className='text-xs'>
@@ -188,7 +192,7 @@ export function StudentWirdRow({
             onOpenChange={setDeleteConfirmOpen}
             onConfirm={handleDelete}
             title='تأكيد الإزالة'
-            description={`هل أنت متأكد من إزالة "${row.studentName}" من الحلقة؟`}
+            description={`هل أنت متأكد من إزالة "${row.studentName}" من المجموعة؟`}
             intent='destructive'
           />
         </>

@@ -37,4 +37,6 @@ export const updateLearnerSchema = (locale: ValidationLocale = 'ar') => {
 export const queryLearnersSchema = (locale: ValidationLocale = 'ar') =>
   paginationSchema(locale).extend({
     search: z.string().trim().min(1).optional(),
+    sortBy: z.enum(['name', 'timezone', 'notes', 'groupCount', 'createdAt']).optional(),
+    sortOrder: z.enum(['asc', 'desc']).optional(),
   }) satisfies ZodType<QueryLearnersDto>;

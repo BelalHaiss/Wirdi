@@ -2,8 +2,10 @@ import {
   ISODateString,
   PaginationQueryType,
   PaginationResponseMeta,
+  SortingQueryType,
   TimeZoneType,
 } from './types/api.types';
+import type { UserRole } from './user.types';
 
 export interface LearnerContactDto {
   notes?: string;
@@ -18,7 +20,7 @@ export interface LearnerDto {
   id: string;
   username: string | null;
   name: string;
-  role: 'STUDENT';
+  role: UserRole;
   timezone: TimeZoneType;
   contact: LearnerContactDto;
   groupCount?: number;
@@ -43,7 +45,7 @@ export interface UpdateLearnerDto {
 
 export type QueryLearnersDto = PaginationQueryType & {
   search?: string;
-};
+} & SortingQueryType;
 
 export type QueryLearnersResponseDto = {
   data: LearnerDto[];

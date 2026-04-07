@@ -49,14 +49,14 @@ export function StudentMainInfoModal({
   });
 
   const title =
-    mode === 'create' ? 'إضافة متعلم' : mode === 'edit' ? 'تعديل بيانات المتعلم' : 'بيانات المتعلم';
+    mode === 'create' ? 'إضافة طالب' : mode === 'edit' ? 'تعديل بيانات الطالب' : 'بيانات الطالب';
 
   const description =
     mode === 'create'
-      ? 'أدخل البيانات الأساسية للمتعلم الجديد'
+      ? 'أدخل البيانات الأساسية للطالب الجديد'
       : mode === 'edit'
         ? 'يمكنك تعديل البيانات وحفظها'
-        : 'عرض البيانات الأساسية للمتعلم';
+        : 'عرض البيانات الأساسية للطالب';
 
   return (
     <>
@@ -74,7 +74,7 @@ export function StudentMainInfoModal({
               id='student-name'
               label='الاسم'
               type='text'
-              placeholder='اسم المتعلم'
+              placeholder='اسم الطالب'
               disabled={vm.isViewMode || isLoading}
             />
 
@@ -86,6 +86,7 @@ export function StudentMainInfoModal({
               type='text'
               placeholder='اسم المستخدم لتسجيل الدخول'
               disabled={vm.isViewMode || isLoading}
+              dir='ltr'
             />
 
             <FormField
@@ -108,7 +109,7 @@ export function StudentMainInfoModal({
               id='student-notes'
               label='ملاحظات'
               type='textarea'
-              placeholder='ملاحظات عن المتعلم'
+              placeholder='ملاحظات عن الطالب'
               disabled={vm.isViewMode || isLoading}
               rows={4}
             />
@@ -154,9 +155,9 @@ export function StudentMainInfoModal({
       <ConfirmDialog
         open={vm.confirmOpen}
         onOpenChange={vm.setConfirmOpen}
-        title={vm.isCreateMode ? 'تأكيد إضافة متعلم' : 'تأكيد تعديل المتعلم'}
+        title={vm.isCreateMode ? 'تأكيد إضافة طالب' : 'تأكيد تعديل الطالب'}
         description={
-          vm.isCreateMode ? 'هل أنت متأكد من إضافة هذا المتعلم؟' : 'هل أنت متأكد من حفظ التعديلات؟'
+          vm.isCreateMode ? 'هل أنت متأكد من إضافة هذا الطالب؟' : 'هل أنت متأكد من حفظ التعديلات؟'
         }
         confirmText={vm.isCreateMode ? 'إضافة' : 'حفظ'}
         cancelText='إلغاء'

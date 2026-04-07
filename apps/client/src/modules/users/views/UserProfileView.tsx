@@ -95,6 +95,7 @@ export function UserProfileView() {
                   placeholder='username'
                   disabled={vm.isUpdatingProfile}
                   inputClassName='text-left'
+                  dir='ltr'
                 />
 
                 <FormField

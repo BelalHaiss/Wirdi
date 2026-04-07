@@ -121,13 +121,14 @@ model ScheduleImage {
 }
 
 model StudentWird {
-  id           String     @id @default(ulid())
-  studentId    String     @map("student_id")
-  weekId       String     @map("week_id")
-  dayNumber    Int        @map("day_number") @db.TinyInt
+  id           String         @id @default(ulid())
+  studentId    String         @map("student_id")
+  weekId       String         @map("week_id")
+  dayNumber    Int            @map("day_number") @db.TinyInt
   status       WirdStatus
-  readOnMateId String?    @map("read_on_mate_id")
-  recordedAt   DateTime   @map("recorded_at")
+  readSource   ReadSourceType @default(DEFAULT_GROUP_MATE) @map("read_source")
+  readOnMateId String?        @map("read_on_mate_id")
+  recordedAt   DateTime       @map("recorded_at")
 
   student    User  @relation("StudentWirdOwner", fields: [studentId], references: [id], onDelete: Cascade)
   week       Week  @relation(fields: [weekId], references: [id], onDelete: Cascade)
@@ -201,6 +202,12 @@ enum WirdStatus {
   ATTENDED
   MISSED
   LATE
+}
+
+enum ReadSourceType {
+  DEFAULT_GROUP_MATE
+  DIFFERENT_GROUP_MATE
+  OUTSIDE_GROUP
 }
 
 enum RequestType {

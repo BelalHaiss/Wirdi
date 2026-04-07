@@ -8,13 +8,13 @@ export function getNotificationMessage(notification: NotificationDto): string {
 
   switch (notification.type) {
     case 'ALERT_ASSIGNED':
-      return `تم تسجيل تنبيه في حلقة ${p.groupName}`;
+      return `تم تسجيل تنبيه في مجموعة ${p.groupName}`;
     case 'LEARNER_DEACTIVATED':
-      return `تم إلغاء تفعيل ${p.studentName} في حلقة ${p.groupName}`;
+      return `تم إلغاء تفعيل ${p.studentName} في مجموعة ${p.groupName}`;
     case 'REQUEST_CREATED':
-      return `طلب جديد من ${p.studentName} في حلقة ${p.groupName}`;
+      return `طلب جديد من ${p.studentName} في مجموعة ${p.groupName}`;
     case 'REQUEST_UPDATED':
-      return `تم ${p.status === 'ACCEPTED' ? 'قبول' : 'رفض'} طلبك في حلقة ${p.groupName}`;
+      return `تم ${p.status === 'ACCEPTED' ? 'قبول' : 'رفض'} طلبك في مجموعة ${p.groupName}`;
     default:
       return 'إشعار جديد';
   }

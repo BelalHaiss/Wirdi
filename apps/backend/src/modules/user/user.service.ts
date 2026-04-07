@@ -242,6 +242,7 @@ export class UserService {
   async queryLearners(query: QueryLearnersDto): Promise<QueryLearnersResponseDto> {
     const { skip, take, page } = this.prismaService.handleQueryPagination(query);
     const searchQuery = query.search?.trim();
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
 
     const where: Prisma.UserWhereInput = {
       role: UserRole.STUDENT,
@@ -254,14 +255,24 @@ export class UserService {
         : {}),
     };
 
+    const sortingClause = this.prismaService.handleSortingClause(query.sortBy, sortOrder, [
+      'name',
+      'timezone',
+      'notes',
+      'createdAt',
+    ]);
+
+    const orderBy: Prisma.UserOrderByWithRelationInput =
+      query.sortBy === 'groupCount'
+        ? { groupMemberships: { _count: sortOrder } }
+        : (sortingClause ?? { createdAt: 'desc' });
+
     const [learners, count] = await this.prismaService.$transaction([
       this.prismaService.user.findMany({
         where,
         skip,
         take,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy,
         select: {
           id: true,
           username: true,
@@ -291,6 +302,32 @@ export class UserService {
         limit: take,
       }),
     };
+  }
+
+  async exportLearners(): Promise<LearnerDto[]> {
+    const learners = await this.prismaService.user.findMany({
+      where: { role: UserRole.STUDENT },
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        role: true,
+        timezone: true,
+        notes: true,
+        createdAt: true,
+        updatedAt: true,
+        groupMemberships: {
+          select: {
+            group: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+      },
+    });
+
+    return learners.map((learner) => this.toLearnerDto(learner));
   }
 
   async updateLearner(id: string, dto: UpdateLearnerDto): Promise<LearnerDto> {
@@ -439,7 +476,7 @@ export class UserService {
       id: user.id,
       username: user.username,
       name: user.name,
-      role: 'STUDENT',
+      role: user.role,
       timezone: user.timezone as TimeZoneType,
       contact: {
         notes: user.notes ?? undefined,

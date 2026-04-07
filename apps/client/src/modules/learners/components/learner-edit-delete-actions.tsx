@@ -47,7 +47,7 @@ export function LearnerEditDeleteActions({
           e.stopPropagation();
           setIsEditOpen(true);
         }}
-        aria-label='تعديل المتعلم'
+        aria-label='تعديل الطالب'
       >
         <Pencil className='w-4 h-4' />
       </Button>
@@ -62,7 +62,7 @@ export function LearnerEditDeleteActions({
           e.stopPropagation();
           setIsDeleteOpen(true);
         }}
-        aria-label='حذف المتعلم'
+        aria-label='حذف الطالب'
       >
         <Trash2 className='w-4 h-4' />
       </Button>
@@ -79,7 +79,7 @@ export function LearnerEditDeleteActions({
       <ConfirmDialog
         open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
-        title='حذف المتعلم'
+        title='حذف الطالب'
         description={deleteDescription}
         confirmText='حذف'
         cancelText='إلغاء'

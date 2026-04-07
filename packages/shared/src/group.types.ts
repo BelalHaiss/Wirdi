@@ -156,6 +156,7 @@ export interface CreateExcuseDto {
 
 /** Values stored in the DB — what was actually recorded for a day. */
 export type RecordedWirdStatus = 'ATTENDED' | 'MISSED' | 'LATE';
+export type ReadSourceType = 'DEFAULT_GROUP_MATE' | 'DIFFERENT_GROUP_MATE' | 'OUTSIDE_GROUP';
 
 /**
  * Full display state for a day cell.
@@ -175,10 +176,23 @@ export interface DayWirdDto {
   dayNumber: number;
   /** Resolved display state — backend-computed, ready to render directly */
   wirdStatus: WirdStatus;
+  readSource?: ReadSourceType;
   readOnMateId?: string;
   readOnMateName?: string;
   recordedAt?: ISODateString;
 }
+
+export type WirdReadInfo =
+  | {
+      readSource: 'DEFAULT_GROUP_MATE' | 'DIFFERENT_GROUP_MATE';
+      readOnMateId: string;
+      readOnMateName?: string;
+    }
+  | {
+      readSource: 'OUTSIDE_GROUP';
+      readOnMateId?: never;
+      readOnMateName?: never;
+    };
 
 /**
  * One row in the tracking table.
@@ -271,6 +285,7 @@ export type RecordableDayStatus =
 /** Response for GET /student-wird/my-group/:groupId/overview */
 export interface LearnerGroupOverviewDto {
   week: WeekStatusFlagsDto;
+  groupStatus: GroupStatus;
   myRow: GroupWirdTrackingRowDto;
   myMembership: GroupMemberDto;
   recordableDay: RecordableDayStatus;
@@ -281,6 +296,7 @@ export interface RecordLearnerWirdDto {
   groupId: string;
   weekId: string;
   dayNumber: number;
-  /** Mate the learner read upon. null = no mate. Omit to keep the default from GroupMember. */
+  readSource: ReadSourceType;
+  /** Mate the learner read upon when source is a group mate. */
   mateId?: string | null;
 }

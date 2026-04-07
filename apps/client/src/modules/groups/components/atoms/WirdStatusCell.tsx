@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { WirdStatus } from '@wirdi/shared';
+import type { ReadSourceType, WirdStatus } from '@wirdi/shared';
 
 const cellVariants = cva(
   'relative inline-flex size-6 items-center justify-center rounded-md text-xs font-medium transition-colors',
@@ -22,14 +22,22 @@ const cellVariants = cva(
 
 type WirdStatusCellProps = VariantProps<typeof cellVariants> & {
   status: WirdStatus;
+  readSource?: ReadSourceType;
   readOnMateName?: string;
   className?: string;
 };
 
-export function WirdStatusCell({ status, readOnMateName, className }: WirdStatusCellProps) {
+export function WirdStatusCell({
+  status,
+  readSource,
+  readOnMateName,
+  className,
+}: WirdStatusCellProps) {
+  const shouldShowTooltip = readSource === 'OUTSIDE_GROUP' || !!readOnMateName;
+
   const content = (
     <div className={cn(cellVariants({ status }), className)}>
-      {readOnMateName && (
+      {shouldShowTooltip && (
         <span className='absolute -top-1 -end-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm'>
           <Users className='h-2 w-2' />
         </span>
@@ -37,13 +45,13 @@ export function WirdStatusCell({ status, readOnMateName, className }: WirdStatus
     </div>
   );
 
-  if (readOnMateName) {
+  if (shouldShowTooltip) {
     return (
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent side='top' className='text-xs'>
-            قُرئ على: {readOnMateName}
+            {readSource === 'OUTSIDE_GROUP' ? 'سُمع خارج المجموعة' : `سُمع على: ${readOnMateName}`}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -7,7 +7,7 @@ type AppLogoProps = React.ComponentProps<'div'> & {
   label?: string;
 };
 
-export function AppLogo({ className, label = 'وِرْدي', ...props }: AppLogoProps) {
+export function AppLogo({ className, label = 'الفردوس', ...props }: AppLogoProps) {
   return (
     <div className={cn('inline-flex items-center gap-2.5', className)} {...props}>
       <Typography as='div' size='lg' weight='semibold'>

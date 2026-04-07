@@ -9,11 +9,12 @@ import type {
   GroupDto,
   GroupMemberDto,
   LearnerGroupOverviewDto,
+  ReadSourceType,
   RecordLearnerWirdDto,
 } from '@wirdi/shared';
 
 export function useLearnerGroupViewModel(groupId: string) {
-  const [mateChecked, setMateChecked] = useState(true);
+  const [readSource, setReadSource] = useState<ReadSourceType>('DEFAULT_GROUP_MATE');
   const [selectedMateId, setSelectedMateId] = useState<string | null>(null);
   const [checkedAwrad, setCheckedAwrad] = useState<Set<string>>(new Set());
 
@@ -31,7 +32,7 @@ export function useLearnerGroupViewModel(groupId: string) {
   const membersQuery = useApiQuery<GroupMemberDto[]>({
     queryKey: queryKeys.groups.learners(groupId),
     queryFn: () => groupService.getGroupLearners(groupId),
-    enabled: !mateChecked,
+    enabled: readSource === 'DIFFERENT_GROUP_MATE',
   });
 
   const group = groupQuery.data?.data;
@@ -51,7 +52,7 @@ export function useLearnerGroupViewModel(groupId: string) {
       toast.success('تم تسجيل الورد بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.learnerWirds.overview(groupId) });
       setCheckedAwrad(new Set());
-      setMateChecked(true);
+      setReadSource('DEFAULT_GROUP_MATE');
       setSelectedMateId(null);
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ أثناء التسجيل'),
@@ -76,17 +77,22 @@ export function useLearnerGroupViewModel(groupId: string) {
   };
 
   const effectiveMateId = useMemo(() => {
-    if (mateChecked) return overview?.myMembership.mateId ?? null;
-    return selectedMateId;
-  }, [mateChecked, overview, selectedMateId]);
+    if (!overview) return null;
+    if (readSource === 'DEFAULT_GROUP_MATE') return overview.myMembership.mateId ?? null;
+    if (readSource === 'DIFFERENT_GROUP_MATE') return selectedMateId;
+    return null;
+  }, [readSource, overview, selectedMateId]);
+
+  const isGroupInactive = overview?.groupStatus === 'INACTIVE';
 
   const canSubmit =
     !!group &&
     !!overview &&
+    !isGroupInactive &&
     overview.myMembership.status === 'ACTIVE' && // Must be active
     overview.recordableDay.status === 'available' &&
     checkedAwrad.size === group.awrad.length &&
-    (mateChecked ? true : !!selectedMateId);
+    (readSource === 'DIFFERENT_GROUP_MATE' ? !!selectedMateId : true);
 
   const handleRecordWird = async () => {
     if (!overview || overview.recordableDay.status !== 'available') return;
@@ -94,6 +100,7 @@ export function useLearnerGroupViewModel(groupId: string) {
       groupId,
       weekId: overview.week.id,
       dayNumber: overview.recordableDay.dayNumber,
+      readSource,
       mateId: effectiveMateId,
     });
   };
@@ -105,8 +112,8 @@ export function useLearnerGroupViewModel(groupId: string) {
     queryError: groupQuery.error?.message ?? overviewQuery.error?.message ?? null,
 
     // Mate selection
-    mateChecked,
-    setMateChecked,
+    readSource,
+    setReadSource,
     selectedMateId,
     setSelectedMateId,
     mateOptions,

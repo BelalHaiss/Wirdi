@@ -15,9 +15,13 @@ import type {
   RequestDto,
 } from '@wirdi/shared';
 
-export function useCreateRequestViewModel(type: RequestType, isOpen: boolean) {
+export function useCreateRequestViewModel(
+  type: RequestType,
+  isOpen: boolean,
+  defaultGroupId?: string
+) {
   const { user } = useApp();
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(defaultGroupId ?? '');
   const [expiryDate, setExpiryDate] = useState<ISODateOnlyString | undefined>();
   const [expiryTime, setExpiryTime] = useState<string>('23:59');
   const [reason, setReason] = useState<string>('');
@@ -41,7 +45,7 @@ export function useCreateRequestViewModel(type: RequestType, isOpen: boolean) {
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.requests.myList() });
       // Reset form
-      setSelectedGroupId('');
+      setSelectedGroupId(defaultGroupId ?? '');
       setExpiryDate(undefined);
       setExpiryTime('23:59');
       setReason('');

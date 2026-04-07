@@ -32,11 +32,11 @@ export function CreateGroupModal({
     <Dialog open={open} onOpenChange={vm.handleClose}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>إنشاء حلقة جديدة</DialogTitle>
+          <DialogTitle>إنشاء مجموعة جديدة</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={vm.handleSubmit} className='space-y-4'>
-          <FormField control={vm.control} name='name' label='اسم الحلقة' type='text' />
+          <FormField control={vm.control} name='name' label='اسم المجموعة' type='text' />
           <FormField
             control={vm.control}
             name='status'

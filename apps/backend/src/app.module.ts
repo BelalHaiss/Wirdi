@@ -21,12 +21,13 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { AlertModule } from './modules/alert/alert.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { RequestModule } from './modules/request/request.module';
+import { ExportModule } from './modules/export/export.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      ignoreEnvFile: process.env.NODE_ENV !== 'development',
+      ignoreEnvFile: Boolean(process.env.NODE_ENV) && process.env.NODE_ENV !== 'development',
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
     ServeStaticModule.forRoot({
@@ -54,6 +55,7 @@ import { RequestModule } from './modules/request/request.module';
     AlertModule,
     StatsModule,
     RequestModule,
+    ExportModule,
   ],
   providers: [
     {

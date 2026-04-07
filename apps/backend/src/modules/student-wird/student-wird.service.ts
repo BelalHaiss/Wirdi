@@ -34,9 +34,12 @@ const DISPLAY_DAY_ORDER = [6, 0, 1, 2, 3, 4] as const;
 /** 4:00 PM as minutes from midnight */
 const FOUR_PM: TimeMinutes = (16 * 60) as TimeMinutes;
 
+type LocalReadSourceType = 'DEFAULT_GROUP_MATE' | 'DIFFERENT_GROUP_MATE' | 'OUTSIDE_GROUP';
+
 type WirdRecord = {
   dayNumber: number;
   status: string;
+  readSource: string;
   readOnMateId: string | null;
   readOnMate: { name: string } | null;
   recordedAt: Date;
@@ -45,6 +48,18 @@ type WirdRecord = {
 function toRecordedStatus(status: string): RecordedWirdStatus | null {
   if (status === 'ATTENDED' || status === 'MISSED' || status === 'LATE') return status;
   return null;
+}
+
+function normalizeReadSource(value: string): LocalReadSourceType {
+  if (
+    value === 'DEFAULT_GROUP_MATE' ||
+    value === 'DIFFERENT_GROUP_MATE' ||
+    value === 'OUTSIDE_GROUP'
+  ) {
+    return value;
+  }
+
+  return 'DEFAULT_GROUP_MATE';
 }
 
 @Injectable()
@@ -80,6 +95,7 @@ export class StudentWirdService {
       return {
         dayNumber: record.dayNumber,
         wirdStatus,
+        readSource: normalizeReadSource(String(record.readSource)),
         readOnMateId: record.readOnMateId ?? undefined,
         readOnMateName: record.readOnMate?.name ?? undefined,
         recordedAt: record.recordedAt.toISOString() as ISODateString,
@@ -324,7 +340,7 @@ export class StudentWirdService {
     // Most recent started week — covers current week or last past week in one query
     const week = await this.db.week.findFirst({
       where: { groupId, startDate: { lte: now } },
-      include: { scheduleImage: true, group: { select: { timezone: true } } },
+      include: { scheduleImage: true, group: { select: { timezone: true, status: true } } },
       orderBy: { weekNumber: 'desc' },
     });
 
@@ -414,7 +430,7 @@ export class StudentWirdService {
       member.joinedAt
     );
 
-    return { week: weekDto, myRow, myMembership, recordableDay };
+    return { week: weekDto, groupStatus: week.group.status, myRow, myMembership, recordableDay };
   }
 
   async recordLearnerWird(studentId: string, dto: RecordLearnerWirdDto): Promise<void> {
@@ -426,7 +442,7 @@ export class StudentWirdService {
       // Sequential reads instead of Promise.all to comply with transaction best practices
       const member = await tx.groupMember.findFirst({
         where: { groupId: dto.groupId, studentId },
-        select: { id: true, joinedAt: true },
+        select: { id: true, joinedAt: true, mateId: true },
       });
       if (!member) throw new ForbiddenException('لست عضواً في هذه الحلقة');
 
@@ -471,6 +487,13 @@ export class StudentWirdService {
 
       const { endAsJSDate } = getStartAndEndOfDay(group.timezone, dayDate);
       const status = now > endAsJSDate ? 'LATE' : 'ATTENDED';
+      const readSource = normalizeReadSource(String(dto.readSource));
+      const readOnMateId =
+        readSource === 'OUTSIDE_GROUP'
+          ? null
+          : readSource === 'DEFAULT_GROUP_MATE'
+            ? (member.mateId ?? null)
+            : (dto.mateId ?? null);
 
       await tx.studentWird.upsert({
         where: {
@@ -481,10 +504,11 @@ export class StudentWirdService {
           weekId: dto.weekId,
           dayNumber: dto.dayNumber,
           status,
-          readOnMateId: dto.mateId ?? null,
+          readSource,
+          readOnMateId,
           recordedAt: now,
         },
-        update: { status, readOnMateId: dto.mateId ?? null, recordedAt: now },
+        update: { status, readSource, readOnMateId, recordedAt: now },
       });
 
       // Policy: LATE recording cancels the specific day's alert (yellow cancels red)

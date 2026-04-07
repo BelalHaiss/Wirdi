@@ -18,7 +18,7 @@ import type {
 
 export const groupService = {
   getStats: async (): Promise<UnifiedApiResponse<GroupStatsDto>> =>
-    apiClient.get<GroupStatsDto>('/group/stats'),
+    apiClient.get<GroupStatsDto>('/stats'),
 
   queryGroups: async (): Promise<UnifiedApiResponse<QueryGroupsResponseDto>> => {
     return apiClient.get<QueryGroupsResponseDto>('/group');

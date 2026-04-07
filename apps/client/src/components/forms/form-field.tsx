@@ -25,6 +25,7 @@ export interface IFormField {
   placeholder?: string;
   disabled?: boolean;
   id?: string;
+  dir?: 'rtl' | 'ltr';
   inputClassName?: string;
   rows?: number;
   options?: SelectOption[];
@@ -43,6 +44,7 @@ function FormFieldComponent<T extends FieldValues>({
   placeholder,
   disabled,
   id,
+  dir,
   inputClassName,
   showError = true,
   rows,
@@ -94,6 +96,7 @@ function FormFieldComponent<T extends FieldValues>({
             aria-invalid={invalid}
             onBlur={onBlur}
             className={inputClassName}
+            dir={dir}
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
@@ -119,6 +122,7 @@ function FormFieldComponent<T extends FieldValues>({
           onBlur={onBlur}
           aria-invalid={invalid}
           className={inputClassName}
+          dir={dir}
           rows={rows}
         />
       );
@@ -133,6 +137,7 @@ function FormFieldComponent<T extends FieldValues>({
       onBlur,
       'aria-invalid': invalid,
       className: inputClassName,
+      dir,
     };
 
     if (type === 'password') {

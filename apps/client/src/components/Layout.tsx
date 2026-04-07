@@ -37,7 +37,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
 
   const navigation = [
     {
-      name: 'الحلقات',
+      name: 'المجموعات',
       href: '/groups',
       icon: Users,
       roles: ['ADMIN', 'MODERATOR', 'STUDENT'],
@@ -49,7 +49,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       roles: ['ADMIN', 'MODERATOR'],
     },
     {
-      name: 'المتعلمون',
+      name: 'الطلاب',
       href: '/learners',
       icon: GraduationCap,
       roles: ['ADMIN', 'MODERATOR'],
@@ -92,20 +92,6 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
 
   return (
     <div className='h-dvh overflow-hidden bg-muted/30'>
-      {/* Mobile Menu Button */}
-      <Button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        variant='outline'
-        color='muted'
-        size='icon'
-        className='lg:hidden fixed top-3 right-3 z-50 shadow-lg'
-        aria-label={isMobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
-        aria-expanded={isMobileMenuOpen}
-        aria-controls={sidebarId}
-      >
-        {isMobileMenuOpen ? <X className='w-5 h-5' /> : <Menu className='w-5 h-5' />}
-      </Button>
-
       {/* Sidebar */}
       <aside
         id={sidebarId}
@@ -116,8 +102,18 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       >
         <div className='flex flex-col h-full min-h-0'>
           {/* Logo */}
-          <div className='flex items-center gap-2 p-4 border-b border-border'>
+          <div className='flex items-center justify-between gap-2 p-4 border-b border-border'>
             <AppLogo />
+            <Button
+              variant='ghost'
+              color='muted'
+              size='icon'
+              className='lg:hidden'
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label='إغلاق القائمة'
+            >
+              <X className='w-5 h-5' />
+            </Button>
           </div>
 
           {/* User Info */}
@@ -211,8 +207,23 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       )}
 
       {/* Main Content */}
-      <div className='h-full lg:pr-56'>
-        <main className='h-full overflow-y-auto p-4 pt-14 lg:p-6 lg:pt-6'>{children}</main>
+      <div className='h-full lg:pr-56 flex flex-col'>
+        <div className='lg:hidden shrink-0 px-4 pt-4'>
+          {!isMobileMenuOpen && (
+            <Button
+              onClick={() => setIsMobileMenuOpen(true)}
+              variant='outline'
+              color='muted'
+              size='icon'
+              aria-label='فتح القائمة'
+              aria-expanded={isMobileMenuOpen}
+              aria-controls={sidebarId}
+            >
+              <Menu className='w-5 h-5' />
+            </Button>
+          )}
+        </div>
+        <main className='h-full overflow-y-auto p-4 lg:p-6'>{children}</main>
       </div>
     </div>
   );

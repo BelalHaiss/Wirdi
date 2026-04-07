@@ -66,6 +66,7 @@ export const LoginView = () => {
                   disabled={isLoading}
                   id='username'
                   inputClassName='text-left'
+                  dir='ltr'
                 />
 
                 <FormField
@@ -105,7 +106,7 @@ export const LoginView = () => {
             </Badge>
             <div className='space-y-3'>
               <CardTitle as='h1' size='2xl'>
-                وِرْدي — تتبّع وِرْدك القرآني
+                الفردوس — تتبّع وِرْدك القرآني
               </CardTitle>
               <CardDescription className='max-w-xl'>
                 منصة عربية لمتابعة الوِرْد اليومي — حفظاً ومراجعةً وتلاوةً — داخل مجموعات الدراسة،

@@ -40,7 +40,7 @@ export function StudentTableItem({
             </div>
             <div className='text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1'>
               <UserCircle2 className='w-3.5 h-3.5' />
-              متعلم
+              طالب
             </div>
           </div>
         </div>

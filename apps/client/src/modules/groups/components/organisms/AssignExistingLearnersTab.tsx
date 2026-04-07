@@ -25,7 +25,7 @@ export function AssignExistingLearnersTab({ groupId, isActive, onSuccess }: Prop
       <div className='relative'>
         <Search className='absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none' />
         <Input
-          placeholder='بحث عن متعلم...'
+          placeholder='بحث عن طالب...'
           value={vm.search}
           onChange={(e) => vm.setSearch(e.target.value)}
           className='pr-9'
@@ -38,15 +38,13 @@ export function AssignExistingLearnersTab({ groupId, isActive, onSuccess }: Prop
         </div>
       ) : vm.filtered.length === 0 ? (
         <div className='flex items-center justify-center h-40 text-muted-foreground'>
-          <Typography size='sm'>لا يوجد متعلمون غير منتسبين</Typography>
+          <Typography size='sm'>لا يوجد طالبون غير منتسبين</Typography>
         </div>
       ) : (
         <>
           <div className='flex items-center justify-between px-1'>
             <Typography size='sm' className='text-muted-foreground'>
-              {vm.selected.size > 0
-                ? `تم تحديد ${vm.selected.size}`
-                : `${vm.filtered.length} متعلم`}
+              {vm.selected.size > 0 ? `تم تحديد ${vm.selected.size}` : `${vm.filtered.length} طالب`}
             </Typography>
             <Button type='button' variant='ghost' size='sm' onClick={vm.toggleAll}>
               {vm.selected.size === vm.filtered.length ? 'إلغاء الكل' : 'تحديد الكل'}
@@ -90,7 +88,7 @@ export function AssignExistingLearnersTab({ groupId, isActive, onSuccess }: Prop
         onClick={handleAssign}
       >
         <UserCheck className='h-4 w-4' />
-        {vm.isAssigning ? 'جاري الإضافة...' : `إضافة ${vm.selected.size || ''} متعلم`.trim()}
+        {vm.isAssigning ? 'جاري الإضافة...' : `إضافة ${vm.selected.size || ''} طالب`.trim()}
       </Button>
     </div>
   );

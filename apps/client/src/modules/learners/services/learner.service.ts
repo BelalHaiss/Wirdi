@@ -15,8 +15,18 @@ export const learnerService = {
     if (query.search?.trim()) {
       params.set('search', query.search.trim());
     }
+    if (query.sortBy) {
+      params.set('sortBy', query.sortBy);
+    }
+    if (query.sortOrder) {
+      params.set('sortOrder', query.sortOrder);
+    }
 
     return apiClient.get<LearnerDto[]>(`/user/learner?${params.toString()}`);
+  },
+
+  exportLearnersCsv: async (): Promise<Blob> => {
+    return apiClient.getBlob('/user/learner/export');
   },
 
   createLearner: async (data: CreateLearnerDto): Promise<UnifiedApiResponse<LearnerDto>> => {

@@ -85,6 +85,7 @@ function UsersView() {
                 placeholder='username'
                 disabled={vm.isSubmitting}
                 inputClassName='text-left'
+                dir='ltr'
               />
 
               {!vm.editingUser && (
@@ -173,7 +174,9 @@ function UsersView() {
                     <div className='text-sm'>{userItem.name}</div>
                   </TableCell>
                   <TableCell className='px-4 py-3'>
-                    <div className='text-sm'>{userItem.username}</div>
+                    <div className='text-sm' dir='ltr'>
+                      {userItem.username}
+                    </div>
                   </TableCell>
                   <TableCell className='px-4 py-3'>
                     <UserBadge role={userItem.role} size='sm' />

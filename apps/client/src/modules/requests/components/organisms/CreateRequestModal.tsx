@@ -13,10 +13,18 @@ type CreateRequestModalProps = {
   type: RequestType;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultGroupId?: string;
+  hideGroupSelect?: boolean;
 };
 
-export function CreateRequestModal({ type, open, onOpenChange }: CreateRequestModalProps) {
-  const vm = useCreateRequestViewModel(type, open);
+export function CreateRequestModal({
+  type,
+  open,
+  onOpenChange,
+  defaultGroupId,
+  hideGroupSelect = false,
+}: CreateRequestModalProps) {
+  const vm = useCreateRequestViewModel(type, open, defaultGroupId);
 
   const isExcuse = type === 'EXCUSE';
   const title = isExcuse ? 'طلب عذر' : 'طلب تفعيل';
@@ -49,13 +57,15 @@ export function CreateRequestModal({ type, open, onOpenChange }: CreateRequestMo
             </Typography>
           ) : (
             <>
-              <GroupSelectField
-                value={vm.selectedGroupId}
-                onChange={vm.setSelectedGroupId}
-                groups={vm.groups}
-                label='اختر المجموعة'
-                placeholder='اختر المجموعة'
-              />
+              {!hideGroupSelect && (
+                <GroupSelectField
+                  value={vm.selectedGroupId}
+                  onChange={vm.setSelectedGroupId}
+                  groups={vm.groups}
+                  label='اختر المجموعة'
+                  placeholder='اختر المجموعة'
+                />
+              )}
 
               {isExcuse && (
                 <>

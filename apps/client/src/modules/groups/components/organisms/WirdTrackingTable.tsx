@@ -73,10 +73,8 @@ export function WirdTrackingTable({
       <Table className='rounded-lg border bg-card shadow-sm'>
         <TableHeader className='bg-muted/40'>
           <TableRow>
-            <TableHead className='px-4 py-3 text-right text-xs'>اسم المتعلم</TableHead>
-            {canManage && (
-              <TableHead className='px-3 py-3 text-right text-xs'>الزميل المسمع</TableHead>
-            )}
+            <TableHead className='px-4 py-3 text-right text-xs'>اسم الطالب</TableHead>
+            {canManage && <TableHead className='px-3 py-3 text-right text-xs'>الرفيق</TableHead>}
             {canManage && (
               <TableHead className='px-3 py-3 text-center text-xs'>تعديل يدوي</TableHead>
             )}
@@ -85,8 +83,8 @@ export function WirdTrackingTable({
                 {DAY_LABELS[dayNum]}
               </TableHead>
             ))}
-            <TableHead className='px-3 py-3 text-center text-xs'>تنبيهات الأسبوع</TableHead>
-            <TableHead className='px-3 py-3 text-center text-xs'>تنبيهات الكل</TableHead>
+            <TableHead className='px-3 py-3 text-center text-xs'>الانذارات الاسبوعية</TableHead>
+            <TableHead className='px-3 py-3 text-center text-xs'>اجمالي الانذارات</TableHead>
             <TableHead className='px-3 py-3 text-center text-xs'>العذر</TableHead>
             {canManage && <TableHead className='px-3 py-3 text-left text-xs'>الإجراءات</TableHead>}
           </TableRow>

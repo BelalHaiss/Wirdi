@@ -33,6 +33,7 @@
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tanstack/react-query": "^5.66.1",
+    "@tanstack/react-table": "^8.21.3",
     "@wirdi/shared": "workspace:*",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",

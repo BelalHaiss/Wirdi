@@ -42,3 +42,7 @@ applyTo: '**'
 - **Thursday late submission** — the allowed window extends to Saturday 4:00 PM (next opening day after Friday off)
 - **Late record + existing alert in the same week** → remove the old alert from that week (yellow cancels the red)
 - **Exception flag** → learner is fully excluded from alert and deactivation logic
+
+## important notes
+
+- admin or moderator can be learner in groups

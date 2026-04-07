@@ -40,7 +40,7 @@ export function useAssignExistingLearnersViewModel(groupId: string, isActive: bo
   const assignMutation = useApiMutation<AssignLearnersToGroupDto, unknown>({
     mutationFn: (dto) => groupService.assignLearnersToGroup(dto),
     onSuccess: async () => {
-      toast.success('تمت إضافة المتعلمين بنجاح');
+      toast.success('تمت إضافة الطلاب بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
       await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });

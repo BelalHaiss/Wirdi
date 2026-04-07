@@ -102,7 +102,7 @@ export function useStudentMainInfoModal({
       setConfirmOpen(false);
       onClose();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'تعذر حفظ بيانات المتعلم');
+      setErrorMessage(error instanceof Error ? error.message : 'تعذر حفظ بيانات الطالب');
     }
   };
 

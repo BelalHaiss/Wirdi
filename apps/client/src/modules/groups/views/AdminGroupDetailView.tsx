@@ -39,7 +39,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
   if (vm.queryError || !vm.group) {
     return (
       <Alert alertType='ERROR'>
-        <AlertDescription>{vm.queryError ?? 'لم يتم العثور على الحلقة'}</AlertDescription>
+        <AlertDescription>{vm.queryError ?? 'لم يتم العثور على المجموعة'}</AlertDescription>
       </Alert>
     );
   }
@@ -82,7 +82,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
             <CardTitle className='text-base'>سجل المتابعة اليومي</CardTitle>
             <Button onClick={learnersVm.openAddModal} size='sm' className='gap-2'>
               <UserPlus className='w-4 h-4' />
-              إضافة متعلم جديد
+              إضافة طالب جديد
             </Button>
           </CardHeader>
           <CardContent className='space-y-4'>

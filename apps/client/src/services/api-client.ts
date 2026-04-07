@@ -123,6 +123,18 @@ class ApiClient {
       throw normalizeError(error);
     }
   }
+
+  async getBlob(url: string, config?: AxiosRequestConfig): Promise<Blob> {
+    try {
+      const response: AxiosResponse<Blob> = await this.client.get(url, {
+        ...config,
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      throw normalizeError(error);
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

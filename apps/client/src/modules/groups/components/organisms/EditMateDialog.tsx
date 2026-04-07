@@ -55,12 +55,12 @@ export function EditMateDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle>تعديل الزميل المسمع</DialogTitle>
+          <DialogTitle>تعديل الرفيق</DialogTitle>
         </DialogHeader>
 
         <div className='space-y-3 py-2'>
           <p className='text-sm text-muted-foreground'>
-            اختر الزميل المسمع لـ{' '}
+            اختر الرفيق لـ{' '}
             <span className='font-medium text-foreground'>{member?.studentName}</span>
           </p>
 

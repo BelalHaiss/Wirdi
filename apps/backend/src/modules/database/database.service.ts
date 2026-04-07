@@ -53,6 +53,19 @@ export class DatabaseService extends PrismaClient {
     return { skip: (page - 1) * limit, take: limit, page };
   }
 
+  handleSortingClause<TSortField extends string>(
+    sortBy: string | undefined,
+    sortOrder: 'asc' | 'desc' | undefined,
+    allowedFields: TSortField[]
+  ): Record<TSortField, Prisma.SortOrder> | undefined {
+    if (!sortBy || !allowedFields.includes(sortBy as TSortField)) {
+      return undefined;
+    }
+
+    const direction: Prisma.SortOrder = sortOrder === 'asc' ? 'asc' : 'desc';
+    return { [sortBy]: direction } as Record<TSortField, Prisma.SortOrder>;
+  }
+
   formatPaginationResponse(args: {
     page: number;
     count: number;

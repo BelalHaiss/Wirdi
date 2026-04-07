@@ -13,8 +13,8 @@ import { CreateGroupModal } from '../components/organisms/CreateGroupModal';
 import { useGroupsViewModel } from '../viewmodels/groups.viewmodel';
 
 const STATUS_LABELS: Record<GroupStatus, string> = {
-  ACTIVE: 'الحلقات النشطة',
-  INACTIVE: 'الحلقات الموقوفة',
+  ACTIVE: 'المجموعات النشطة',
+  INACTIVE: 'المجموعات الموقوفة',
 };
 
 const STATUS_ORDER: GroupStatus[] = ['ACTIVE', 'INACTIVE'];
@@ -53,16 +53,16 @@ export default function GroupsView() {
         <section className='space-y-3 rounded-2xl border border-primary/20 bg-linear-to-l from-primary/5 via-background to-success/5 p-4'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <Typography as='h2' size='lg' weight='semibold'>
-              ملخص الحلقات
+              ملخص المجموعات
             </Typography>
             <Typography as='div' size='xs' className='text-muted-foreground'>
-              إحصائيات مباشرة عن المتعلمين والحلقات
+              إحصائيات مباشرة عن الطلاب والمجموعات
             </Typography>
           </div>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
             <StatsCountCard
               icon={GraduationCap}
-              data={{ count: vm.learnersCount, title: 'إجمالي المتعلمين' }}
+              data={{ count: vm.learnersCount, title: 'إجمالي الطلاب' }}
               isLoading={vm.isLoadingStats}
               className='bg-linear-to-br from-primary/15 via-primary/5 to-background border-primary/30 ring-primary/20'
               iconClassName='bg-primary/15 text-primary'
@@ -76,7 +76,7 @@ export default function GroupsView() {
             />
             <StatsCountCard
               icon={BookOpen}
-              data={{ count: vm.groupsCount, title: 'إجمالي الحلقات' }}
+              data={{ count: vm.groupsCount, title: 'إجمالي المجموعات' }}
               isLoading={vm.isLoadingStats}
               className='bg-card border-border ring-border'
               iconClassName='bg-muted/70 text-muted-foreground'
@@ -86,13 +86,13 @@ export default function GroupsView() {
       ) : null}
 
       <PageHeader
-        title='الحلقات'
+        title='المجموعات'
         description='إدارة حلقات الأوراد'
         actions={
           vm.canManageGroups ? (
             <Button onClick={() => vm.setIsCreateModalOpen(true)} className='gap-2'>
               <Plus className='h-4 w-4' />
-              إضافة حلقة
+              إضافة مجموعة
             </Button>
           ) : null
         }
@@ -147,7 +147,7 @@ export default function GroupsView() {
                       <div className='space-y-1.5 flex-1'>
                         <div className='flex items-center justify-between'>
                           <Typography as='div' size='xs' className='text-muted-foreground'>
-                            المتعلمون
+                            الطلاب
                           </Typography>
                           <Typography as='div' size='xs' weight='medium'>
                             {group.memberCount}

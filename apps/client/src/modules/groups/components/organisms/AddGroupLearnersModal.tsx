@@ -39,16 +39,16 @@ export function AddGroupLearnersModal({
     <Dialog open={open} onOpenChange={vm.handleClose}>
       <DialogContent className='min-w-3/4 max-h-[85vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>إضافة متعلمين للحلقة</DialogTitle>
+          <DialogTitle>إضافة طالبين للمجموعة</DialogTitle>
         </DialogHeader>
 
         <Tabs value={vm.tab} onValueChange={(v) => vm.setTab(v as 'new' | 'existing')}>
           <TabsList className='w-full'>
             <TabsTrigger value='new' className='flex-1'>
-              متعلمون جدد
+              طالبون جدد
             </TabsTrigger>
             <TabsTrigger value='existing' className='flex-1'>
-              متعلمون موجودون
+              طالبون موجودون
             </TabsTrigger>
           </TabsList>
 
@@ -66,7 +66,7 @@ export function AddGroupLearnersModal({
                         name={`learners.${index}.name`}
                         label='الاسم'
                         type='text'
-                        placeholder='اسم المتعلم'
+                        placeholder='اسم الطالب'
                       />
                     </div>
                     <div className='flex-1 min-w-32'>
@@ -116,7 +116,7 @@ export function AddGroupLearnersModal({
                 onClick={vm.addLearner}
               >
                 <Plus className='h-3.5 w-3.5' />
-                إضافة متعلم آخر
+                إضافة طالب آخر
               </Button>
 
               <DialogFooter>
@@ -125,7 +125,7 @@ export function AddGroupLearnersModal({
                 </Button>
                 <Button type='submit' color='success' disabled={isLoading} className='gap-1.5'>
                   <UserPlus className='h-4 w-4' />
-                  {isLoading ? 'جاري الإضافة...' : `إضافة ${vm.learnersCount} متعلم`}
+                  {isLoading ? 'جاري الإضافة...' : `إضافة ${vm.learnersCount} طالب`}
                 </Button>
               </DialogFooter>
             </form>
