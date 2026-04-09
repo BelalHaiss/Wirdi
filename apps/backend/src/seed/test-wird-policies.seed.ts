@@ -27,7 +27,7 @@ async function main() {
     await seedUsers({
       prisma: prismaSeedClient,
       totalModerators: 2,
-      totalLearners: 15,
+      totalLearners: 30,
     });
 
     // Seed wird tracking test data

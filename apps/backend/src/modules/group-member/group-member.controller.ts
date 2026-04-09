@@ -10,7 +10,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { UserRole } from 'generated/prisma/client';
+import type { User as PrismaUser } from 'generated/prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
+import { User } from 'src/decorators/user.decorator';
 import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import {
   assignLearnersToGroupSchema,
@@ -30,6 +32,12 @@ export class GroupMemberController {
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
   getUnassignedLearners(@Param('groupId') groupId: string) {
     return this.groupMemberService.getUnassignedLearners(groupId);
+  }
+
+  @Get(':groupId/removed')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getRemovedMembers(@Param('groupId') groupId: string) {
+    return this.groupMemberService.getRemovedMembers(groupId);
   }
 
   @Post('group-learners/create')
@@ -63,7 +71,7 @@ export class GroupMemberController {
   @Delete(':id')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeMember(@Param('id') id: string) {
-    return this.groupMemberService.removeMember(id);
+  removeMember(@Param('id') id: string, @User() actor: PrismaUser) {
+    return this.groupMemberService.removeMember(id, actor.id);
   }
 }

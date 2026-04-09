@@ -41,7 +41,7 @@ export const LoginView = () => {
       <div className='mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center gap-6 lg:flex-row'>
         <Card className='w-full max-w-md border-border/80 bg-muted/30 shadow-xl backdrop-blur lg:w-96'>
           <CardHeader className='space-y-4 text-center'>
-            <AppLogo className='mx-auto' />
+            <AppLogo className='mx-auto' size='lg' />
             <div className='space-y-2'>
               <Badge variant='outline' color='muted' className='mx-auto w-fit'>
                 تسجيل الدخول
@@ -106,7 +106,7 @@ export const LoginView = () => {
             </Badge>
             <div className='space-y-3'>
               <CardTitle as='h1' size='2xl'>
-                الفردوس — تتبّع وِرْدك القرآني
+                النبراس — تتبّع وِرْدك القرآني
               </CardTitle>
               <CardDescription className='max-w-xl'>
                 منصة عربية لمتابعة الوِرْد اليومي — حفظاً ومراجعةً وتلاوةً — داخل مجموعات الدراسة،

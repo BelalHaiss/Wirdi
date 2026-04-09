@@ -8,6 +8,7 @@ export * from './request.types';
 export * from './validation/fields.constants';
 
 // Export utilities
+export * from './utils/arabic.util';
 export * from './utils/date.util';
 export * from './utils/date.constants';
 export * from './utils/object.util';

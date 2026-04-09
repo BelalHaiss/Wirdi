@@ -14,6 +14,7 @@ import {
   DEFAULT_TIMEZONE,
   ISODateString,
   LearnerDto,
+  normalizeArabic,
   QueryLearnersDto,
   QueryLearnersResponseDto,
   StaffUserDto,
@@ -70,6 +71,7 @@ export class UserService {
     const createdStaffUser = await this.prismaService.user.create({
       data: {
         name: dto.name,
+        nameNormalized: normalizeArabic(dto.name),
         username: dto.username,
         role: dto.role,
         timezone: dto.timezone ?? DEFAULT_TIMEZONE,
@@ -111,7 +113,9 @@ export class UserService {
     const updatedStaffUser = await this.prismaService.user.update({
       where: { id },
       data: {
-        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.name !== undefined
+          ? { name: dto.name, nameNormalized: normalizeArabic(dto.name) }
+          : {}),
         ...(dto.username !== undefined ? { username: dto.username } : {}),
         ...(dto.role !== undefined ? { role: dto.role } : {}),
         ...(dto.timezone !== undefined ? { timezone: dto.timezone } : {}),
@@ -179,6 +183,7 @@ export class UserService {
       where: { id: userId },
       data: {
         name: dto.name,
+        nameNormalized: normalizeArabic(dto.name),
         username: dto.username,
         timezone: dto.timezone,
       },
@@ -228,6 +233,7 @@ export class UserService {
     const createdLearner = await this.prismaService.user.create({
       data: {
         name: dto.name,
+        nameNormalized: normalizeArabic(dto.name),
         username: dto.username,
         role: UserRole.STUDENT,
         password: await argon.hash('12345678'),
@@ -242,14 +248,15 @@ export class UserService {
   async queryLearners(query: QueryLearnersDto): Promise<QueryLearnersResponseDto> {
     const { skip, take, page } = this.prismaService.handleQueryPagination(query);
     const searchQuery = query.search?.trim();
+    const normalizedSearch = searchQuery ? normalizeArabic(searchQuery) : undefined;
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
-
+    console.log({ normalizedSearch });
     const where: Prisma.UserWhereInput = {
       role: UserRole.STUDENT,
-      ...(searchQuery
+      ...(normalizedSearch
         ? {
-            name: {
-              contains: searchQuery,
+            nameNormalized: {
+              contains: normalizedSearch,
             },
           }
         : {}),
@@ -284,6 +291,7 @@ export class UserService {
           updatedAt: true,
           groupMemberships: {
             select: {
+              removedAt: true,
               group: {
                 select: { id: true, name: true },
               },
@@ -319,6 +327,7 @@ export class UserService {
         updatedAt: true,
         groupMemberships: {
           select: {
+            removedAt: true,
             group: {
               select: { id: true, name: true },
             },
@@ -346,6 +355,7 @@ export class UserService {
 
     if (dto.name !== undefined) {
       data.name = dto.name;
+      data.nameNormalized = normalizeArabic(dto.name);
     }
 
     if (dto.username !== undefined && dto.username !== learner.username) {
@@ -465,11 +475,12 @@ export class UserService {
     notes: string | null;
     createdAt: Date;
     updatedAt: Date;
-    groupMemberships?: { group: { id: string; name: string } }[];
+    groupMemberships?: { removedAt: Date | null; group: { id: string; name: string } }[];
   }): LearnerDto {
     const groups = (user.groupMemberships ?? []).map((m) => ({
       id: m.group.id,
       name: m.group.name,
+      removedAt: m.removedAt ? (m.removedAt.toISOString() as ISODateString) : undefined,
     }));
 
     return {
@@ -481,7 +492,7 @@ export class UserService {
       contact: {
         notes: user.notes ?? undefined,
       },
-      groupCount: groups.length,
+      groupCount: groups.filter((group) => !group.removedAt).length,
       groups,
       createdAt: user.createdAt.toISOString() as ISODateString,
       updatedAt: user.updatedAt.toISOString() as ISODateString,

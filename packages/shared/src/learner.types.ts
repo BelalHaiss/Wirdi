@@ -14,6 +14,7 @@ export interface LearnerContactDto {
 export interface LearnerGroupSummaryDto {
   id: string;
   name: string;
+  removedAt?: ISODateString;
 }
 
 export interface LearnerDto {

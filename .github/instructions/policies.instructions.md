@@ -41,8 +41,10 @@ applyTo: '**'
 
 - **Thursday late submission** — the allowed window extends to Saturday 4:00 PM (next opening day after Friday off)
 - **Late record + existing alert in the same week** → remove the old alert from that week (yellow cancels the red)
-- **Exception flag** → learner is fully excluded from alert and deactivation logic
+- **Active excuse as exception** — an active excuse (`expiresAt > now`, same `groupId`) is the only exception mechanism; it fully excludes the learner from alert creation and deactivation logic for its duration. There is no separate permanent exception flag.
 
 ## important notes
 
 - admin or moderator can be learner in groups
+- learner removal from group is soft-delete (`removedAt`/`removedBy`) to preserve history
+- removed learners can view old groups as read-only, but cannot record or attend

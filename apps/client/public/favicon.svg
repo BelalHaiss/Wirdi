@@ -1,18 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Halaqa">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="النبراس">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0f766e" />
-      <stop offset="100%" stop-color="#155e75" />
+      <stop offset="0%" stop-color="#1a4a5c" />
+      <stop offset="100%" stop-color="#0d2e3d" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a843" />
+      <stop offset="100%" stop-color="#b8860b" />
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#bg)" />
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)" />
+  <!-- open book -->
   <path
-    d="M18 22c5-2 10-2 14 1v19c-4-3-9-3-14-1V22Zm28 0c-5-2-10-2-14 1v19c4-3 9-3 14-1V22Z"
+    d="M32 18c-5-2-11-2-16 0v22c5-2 11-2 16 0V18Z"
     fill="none"
-    stroke="#ffffff"
-    stroke-width="3"
+    stroke="url(#gold)"
+    stroke-width="2.5"
     stroke-linecap="round"
     stroke-linejoin="round"
   />
-  <path d="M32 23v18" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M32 18c5-2 11-2 16 0v22c-5-2-11-2-16 0V18Z"
+    fill="none"
+    stroke="url(#gold)"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <line x1="32" y1="18" x2="32" y2="40" stroke="url(#gold)" stroke-width="2" stroke-linecap="round" />
+  <!-- crescent -->
+  <path
+    d="M32 10 a4 4 0 0 1 0 8 a5 5 0 0 0 0-8Z"
+    fill="#d4a843"
+  />
 </svg>

@@ -1,7 +1,7 @@
 import { User, PrismaClient } from 'generated/prisma/client';
 import { faker, fakerAR } from '@faker-js/faker';
 import argon from 'argon2';
-import { UserRole } from '@wirdi/shared';
+import { normalizeArabic, UserRole } from '@wirdi/shared';
 
 const seedTimezones = [
   'Africa/Cairo',
@@ -12,8 +12,11 @@ const seedTimezones = [
 ];
 
 export const seedAppUser = async (username: string, role: UserRole) => {
+  const name = fakerAR.person.fullName();
+  const normalizedName = normalizeArabic(name).toLocaleLowerCase();
   const user: Omit<User, 'id' | 'createdAt' | 'updatedAt'> = {
-    name: fakerAR.person.fullName(),
+    name,
+    nameNormalized: normalizedName,
     role,
     password: await argon.hash('12345678'),
     username,
@@ -24,6 +27,32 @@ export const seedAppUser = async (username: string, role: UserRole) => {
   return user;
 };
 
+function buildLearners(totalLearners: number, passwordHash: string) {
+  return Array.from({ length: totalLearners }, (_, index) => {
+    const name = fakerAR.person.fullName();
+    const normalizedName = normalizeArabic(name);
+    return {
+      name,
+      nameNormalized: normalizedName,
+      role: 'STUDENT' as const,
+      username: `student${index + 1}`,
+      password: passwordHash,
+      timezone: faker.helpers.arrayElement(seedTimezones),
+      notes: faker.datatype.boolean(0.45) ? fakerAR.lorem.sentence() : null,
+    };
+  });
+}
+
+async function buildStaffUsers(totalModerators: number) {
+  return Promise.all([
+    seedAppUser('admin', 'ADMIN'),
+    seedAppUser('moderator', 'MODERATOR'),
+    ...Array.from({ length: totalModerators - 1 }, (_, index) =>
+      seedAppUser(`moderator${index + 2}`, 'MODERATOR')
+    ),
+  ]);
+}
+
 export async function seedUsers(args: {
   prisma: PrismaClient;
   totalModerators: number;
@@ -31,22 +60,8 @@ export async function seedUsers(args: {
 }): Promise<{ students: { id: string }[] }> {
   const defaultPassword = await argon.hash('12345678');
 
-  const staffUsers = await Promise.all([
-    seedAppUser('admin', 'ADMIN'),
-    seedAppUser('moderator', 'MODERATOR'),
-    ...Array.from({ length: args.totalModerators - 1 }, (_, index) =>
-      seedAppUser(`moderator${index + 2}`, 'MODERATOR')
-    ),
-  ]);
-
-  const learners = Array.from({ length: args.totalLearners }, (_, index) => ({
-    name: fakerAR.person.fullName(),
-    role: 'STUDENT' as const,
-    username: `student${index + 1}`,
-    password: defaultPassword,
-    timezone: faker.helpers.arrayElement(seedTimezones),
-    notes: faker.datatype.boolean(0.45) ? fakerAR.lorem.sentence() : null,
-  }));
+  const staffUsers = await buildStaffUsers(args.totalModerators);
+  const learners = buildLearners(args.totalLearners, defaultPassword);
 
   await args.prisma.user.createMany({
     data: [...staffUsers, ...learners],

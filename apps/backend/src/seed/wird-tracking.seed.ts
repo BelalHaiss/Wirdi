@@ -1,476 +1,899 @@
-import { PrismaClient } from 'generated/prisma/client';
-import { addDaysToDateStr, dateToISODateOnly } from '@wirdi/shared';
+import { PrismaClient, UserRole } from 'generated/prisma/client';
+import {
+  addDaysToDateStr,
+  combineDateTime,
+  dateToISODateOnly,
+  type ISODateOnlyString,
+  type TimeMinutes,
+} from '@wirdi/shared';
 
-/**
- * Seeds complete wird tracking scenario for testing cron job and policies
- */
-export async function seedWirdTracking(prisma: PrismaClient) {
-  console.log('🌱 Seeding wird tracking data...');
+type UsernameMap = Record<string, { id: string; role: UserRole }>;
+type WeekDayNumber = 6 | 0 | 1 | 2 | 3 | 4;
+type MembershipStatus = 'ACTIVE' | 'INACTIVE';
+type WirdSeedStatus = 'ATTENDED' | 'MISSED';
 
-  // Get admin, moderator, and specific students (student1-student10)
-  const studentUsernames = Array.from({ length: 10 }, (_, i) => `student${i + 1}`);
+type MembershipSeed = {
+  username: string;
+  status?: MembershipStatus;
+  mateUsername?: string;
+  joinedOffsetDays?: number;
+  removed?: boolean;
+};
 
-  const [admin, moderator, studentsRaw] = await Promise.all([
-    prisma.user.findFirst({ where: { role: 'ADMIN' } }),
-    prisma.user.findFirst({ where: { role: 'MODERATOR' } }),
-    prisma.user.findMany({
-      where: { username: { in: studentUsernames } },
-    }),
-  ]);
+type SeedClockPoint = {
+  offsetDays: number;
+  hour: number;
+  minute?: number;
+};
 
-  // Sort by numeric part of username to ensure correct order (student1, student2, ... student10)
-  const students = studentsRaw.sort((a, b) => {
-    const getNum = (username: string) => parseInt(username.replace('student', ''));
-    return getNum(a.username) - getNum(b.username);
-  });
+type RecordingSeed = {
+  dayNumber: WeekDayNumber;
+  offsetDaysFromTarget?: number;
+  hour: number;
+  minute?: number;
+  readOnMateUsername?: string;
+};
 
-  if (!admin || !moderator || students.length < 10) {
-    throw new Error('Not enough users. Run main seed first.');
+type WirdEntrySeed = {
+  dayNumber: WeekDayNumber;
+  status: WirdSeedStatus;
+  recordedAt: Date;
+  readOnMateId?: string;
+};
+
+type AlertEntrySeed = {
+  dayNumber: WeekDayNumber;
+  createdAt: Date;
+};
+
+type SimulatedWeekInput = {
+  weekStartDateStr: ISODateOnlyString;
+  timezone: string;
+  asOf: SeedClockPoint;
+  recordings?: RecordingSeed[];
+  activeExcuseUntil?: SeedClockPoint;
+  previousWeekAlertCountForGrace?: number;
+  joinedOffsetDays?: number;
+  removed?: boolean;
+  initialStatus?: MembershipStatus;
+};
+
+type SimulatedWeekResult = {
+  wirds: WirdEntrySeed[];
+  alerts: AlertEntrySeed[];
+  finalStatus: MembershipStatus;
+};
+
+const WEEK_DAY_SEQUENCE: WeekDayNumber[] = [6, 0, 1, 2, 3, 4];
+const CRON_HOUR = 16;
+const DAY_OFFSET_BY_NUMBER: Record<WeekDayNumber, number> = {
+  6: 0,
+  0: 1,
+  1: 2,
+  2: 3,
+  3: 4,
+  4: 5,
+};
+
+function toTimeMinutes(hour: number, minute = 0): TimeMinutes {
+  return (hour * 60 + minute) as TimeMinutes;
+}
+
+function at(offsetDays: number, hour: number, minute = 0): SeedClockPoint {
+  return { offsetDays, hour, minute };
+}
+
+function recordOn(
+  dayNumber: WeekDayNumber,
+  options?: {
+    offsetDaysFromTarget?: number;
+    hour?: number;
+    minute?: number;
+    readOnMateUsername?: string;
+  }
+): RecordingSeed {
+  return {
+    dayNumber,
+    offsetDaysFromTarget: options?.offsetDaysFromTarget,
+    hour: options?.hour ?? 10,
+    minute: options?.minute ?? 0,
+    readOnMateUsername: options?.readOnMateUsername,
+  };
+}
+
+function getWeekAnchors() {
+  const today = new Date();
+  const dayOfWeek = today.getUTCDay();
+  const daysToSubtract = dayOfWeek === 6 ? 0 : (dayOfWeek + 1) % 7;
+
+  const currentSaturday = new Date(today);
+  currentSaturday.setUTCDate(today.getUTCDate() - daysToSubtract);
+  currentSaturday.setUTCHours(0, 0, 0, 0);
+
+  const currentSaturdayStr = dateToISODateOnly(currentSaturday);
+  const currentFridayStr = addDaysToDateStr(currentSaturdayStr, 6);
+
+  const previousSaturday = new Date(currentSaturday);
+  previousSaturday.setUTCDate(previousSaturday.getUTCDate() - 7);
+  previousSaturday.setUTCHours(0, 0, 0, 0);
+
+  const previousSaturdayStr = dateToISODateOnly(previousSaturday);
+  const previousFridayStr = addDaysToDateStr(previousSaturdayStr, 6);
+
+  return {
+    currentSaturday,
+    currentSaturdayStr,
+    currentFridayStr,
+    previousSaturday,
+    previousSaturdayStr,
+    previousFridayStr,
+  };
+}
+
+function getDateAtPoint(
+  weekStartDateStr: ISODateOnlyString,
+  timezone: string,
+  point: SeedClockPoint
+): Date {
+  const dateStr = addDaysToDateStr(weekStartDateStr, point.offsetDays);
+  return new Date(combineDateTime(dateStr, toTimeMinutes(point.hour, point.minute ?? 0), timezone));
+}
+
+function getDayDateStr(
+  weekStartDateStr: ISODateOnlyString,
+  dayNumber: WeekDayNumber
+): ISODateOnlyString {
+  return addDaysToDateStr(weekStartDateStr, DAY_OFFSET_BY_NUMBER[dayNumber]);
+}
+
+function getDeadlineAt(
+  weekStartDateStr: ISODateOnlyString,
+  timezone: string,
+  dayNumber: WeekDayNumber
+): Date {
+  const dayDateStr = getDayDateStr(weekStartDateStr, dayNumber);
+  const deadlineDateStr = addDaysToDateStr(dayDateStr, dayNumber === 4 ? 2 : 1);
+  return new Date(combineDateTime(deadlineDateStr, toTimeMinutes(CRON_HOUR), timezone));
+}
+
+function buildCronTimeline(weekStartDateStr: ISODateOnlyString, timezone: string) {
+  return WEEK_DAY_SEQUENCE.map((dayNumber) => ({
+    dayNumber,
+    runAt: getDeadlineAt(weekStartDateStr, timezone, dayNumber),
+  }));
+}
+
+function getEligibleDaySequence(joinedOffsetDays = 0): WeekDayNumber[] {
+  return WEEK_DAY_SEQUENCE.filter(
+    (dayNumber) => DAY_OFFSET_BY_NUMBER[dayNumber] >= joinedOffsetDays
+  );
+}
+
+function canRecordDay(
+  wirds: Map<WeekDayNumber, WirdEntrySeed>,
+  eligibleDaySequence: WeekDayNumber[],
+  dayNumber: WeekDayNumber
+): boolean {
+  const dayIndex = eligibleDaySequence.indexOf(dayNumber);
+  if (dayIndex === -1) {
+    return false;
   }
 
-  // Create test group
-  const group = await prisma.group.create({
+  return eligibleDaySequence
+    .slice(0, dayIndex)
+    .every((previousDayNumber) => wirds.get(previousDayNumber)?.status === 'ATTENDED');
+}
+
+function buildRecordingDate(
+  weekStartDateStr: ISODateOnlyString,
+  timezone: string,
+  recording: RecordingSeed
+): Date {
+  const absoluteOffset =
+    DAY_OFFSET_BY_NUMBER[recording.dayNumber] + (recording.offsetDaysFromTarget ?? 0);
+
+  return getDateAtPoint(weekStartDateStr, timezone, {
+    offsetDays: absoluteOffset,
+    hour: recording.hour,
+    minute: recording.minute,
+  });
+}
+
+function simulateWeekPolicy(input: SimulatedWeekInput, users: UsernameMap): SimulatedWeekResult {
+  const asOf = getDateAtPoint(input.weekStartDateStr, input.timezone, input.asOf);
+  const activeExcuseUntil = input.activeExcuseUntil
+    ? getDateAtPoint(input.weekStartDateStr, input.timezone, input.activeExcuseUntil)
+    : null;
+  const eligibleDaySequence = getEligibleDaySequence(input.joinedOffsetDays ?? 0);
+
+  const wirds = new Map<WeekDayNumber, WirdEntrySeed>();
+  const alerts = new Map<WeekDayNumber, AlertEntrySeed>();
+  let finalStatus: MembershipStatus = input.initialStatus ?? 'ACTIVE';
+
+  const recordingEvents = (input.recordings ?? [])
+    .map((recording) => ({
+      type: 'recording' as const,
+      recording,
+      at: buildRecordingDate(input.weekStartDateStr, input.timezone, recording),
+    }))
+    .filter((event) => event.at <= asOf);
+
+  const cronEvents = buildCronTimeline(input.weekStartDateStr, input.timezone)
+    .filter((event) => eligibleDaySequence.includes(event.dayNumber))
+    .map((event) => ({ type: 'cron' as const, ...event }))
+    .filter((event) => event.runAt <= asOf);
+
+  const events = [...recordingEvents, ...cronEvents].sort((left, right) => {
+    const leftAt = left.type === 'recording' ? left.at : left.runAt;
+    const rightAt = right.type === 'recording' ? right.at : right.runAt;
+    const timeDiff = leftAt.getTime() - rightAt.getTime();
+
+    if (timeDiff !== 0) {
+      return timeDiff;
+    }
+
+    return left.type === 'recording' ? -1 : 1;
+  });
+
+  for (const event of events) {
+    if (event.type === 'recording') {
+      if (input.removed || finalStatus !== 'ACTIVE') {
+        continue;
+      }
+
+      const deadlineAt = getDeadlineAt(
+        input.weekStartDateStr,
+        input.timezone,
+        event.recording.dayNumber
+      );
+      if (event.at > deadlineAt) {
+        continue;
+      }
+
+      if (!canRecordDay(wirds, eligibleDaySequence, event.recording.dayNumber)) {
+        continue;
+      }
+
+      wirds.set(event.recording.dayNumber, {
+        dayNumber: event.recording.dayNumber,
+        status: 'ATTENDED',
+        recordedAt: event.at,
+        readOnMateId: event.recording.readOnMateUsername
+          ? users[event.recording.readOnMateUsername]?.id
+          : undefined,
+      });
+
+      continue;
+    }
+
+    if (input.removed || finalStatus !== 'ACTIVE') {
+      continue;
+    }
+
+    const excuseIsActive = activeExcuseUntil ? activeExcuseUntil > event.runAt : false;
+
+    if (!excuseIsActive && !wirds.has(event.dayNumber)) {
+      wirds.set(event.dayNumber, {
+        dayNumber: event.dayNumber,
+        status: 'MISSED',
+        recordedAt: event.runAt,
+      });
+      alerts.set(event.dayNumber, {
+        dayNumber: event.dayNumber,
+        createdAt: event.runAt,
+      });
+
+      if (alerts.size >= 3) {
+        finalStatus = 'INACTIVE';
+      }
+    }
+
+    if (
+      event.dayNumber === 4 &&
+      finalStatus === 'ACTIVE' &&
+      !excuseIsActive &&
+      (input.previousWeekAlertCountForGrace ?? 0) >= 1
+    ) {
+      finalStatus = 'INACTIVE';
+    }
+  }
+
+  return {
+    wirds: Array.from(wirds.values()).sort(
+      (left, right) => DAY_OFFSET_BY_NUMBER[left.dayNumber] - DAY_OFFSET_BY_NUMBER[right.dayNumber]
+    ),
+    alerts: Array.from(alerts.values()).sort(
+      (left, right) => DAY_OFFSET_BY_NUMBER[left.dayNumber] - DAY_OFFSET_BY_NUMBER[right.dayNumber]
+    ),
+    finalStatus,
+  };
+}
+
+async function loadScenarioUsers(prisma: PrismaClient): Promise<UsernameMap> {
+  const scenarioUsernames = [
+    'admin',
+    'moderator',
+    'moderator2',
+    ...Array.from({ length: 25 }, (_, i) => `student${i + 1}`),
+  ];
+
+  const users = await prisma.user.findMany({
+    where: { username: { in: scenarioUsernames } },
+    select: { id: true, username: true, role: true },
+  });
+
+  const byUsername: UsernameMap = {};
+  for (const user of users) {
+    byUsername[user.username] = { id: user.id, role: user.role };
+  }
+
+  const missing = scenarioUsernames.filter((username) => !byUsername[username]);
+  if (missing.length > 0) {
+    throw new Error(`Missing users for wird tracking seed: ${missing.join(', ')}`);
+  }
+
+  return byUsername;
+}
+
+async function createWeek(
+  prisma: PrismaClient,
+  input: {
+    groupId: string;
+    weekNumber: number;
+    startDate: Date;
+    endDateStr: string;
+    scheduleName: string;
+    imageUrl: string;
+    imagekitFileId: string;
+  }
+) {
+  return prisma.week.create({
+    data: {
+      groupId: input.groupId,
+      weekNumber: input.weekNumber,
+      startDate: input.startDate,
+      endDate: new Date(input.endDateStr),
+      scheduleImage: {
+        create: {
+          name: input.scheduleName,
+          imageUrl: input.imageUrl,
+          imagekitFileId: input.imagekitFileId,
+        },
+      },
+    },
+  });
+}
+
+async function createMemberships(
+  prisma: PrismaClient,
+  input: {
+    groupId: string;
+    members: MembershipSeed[];
+    users: UsernameMap;
+    joinedBaseDate: Date;
+    actorId: string;
+  }
+) {
+  for (const member of input.members) {
+    const user = input.users[member.username];
+    const mate = member.mateUsername ? input.users[member.mateUsername] : null;
+
+    const joinedAt = new Date(input.joinedBaseDate);
+    if (member.joinedOffsetDays) {
+      joinedAt.setUTCDate(joinedAt.getUTCDate() + member.joinedOffsetDays);
+    }
+
+    await prisma.groupMember.create({
+      data: {
+        groupId: input.groupId,
+        studentId: user.id,
+        mateId: mate?.id ?? null,
+        status: member.status ?? 'ACTIVE',
+        joinedAt,
+        removedAt: member.removed ? new Date() : null,
+        removedBy: member.removed ? input.actorId : null,
+      },
+    });
+  }
+}
+
+async function addWirds(
+  prisma: PrismaClient,
+  input: {
+    weekId: string;
+    userId: string;
+    entries: WirdEntrySeed[];
+  }
+) {
+  if (input.entries.length === 0) return;
+
+  await prisma.studentWird.createMany({
+    data: input.entries.map((entry) => ({
+      studentId: input.userId,
+      weekId: input.weekId,
+      dayNumber: entry.dayNumber,
+      status: entry.status,
+      readOnMateId: entry.readOnMateId,
+      recordedAt: entry.recordedAt,
+    })),
+  });
+}
+
+async function addAlerts(
+  prisma: PrismaClient,
+  input: {
+    groupId: string;
+    weekId: string;
+    userId: string;
+    entries: AlertEntrySeed[];
+  }
+) {
+  if (input.entries.length === 0) return;
+
+  await prisma.alert.createMany({
+    data: input.entries.map((entry) => ({
+      studentId: input.userId,
+      groupId: input.groupId,
+      weekId: input.weekId,
+      dayNumber: entry.dayNumber,
+      createdAt: entry.createdAt,
+    })),
+  });
+}
+
+async function applyWeekSimulation(
+  prisma: PrismaClient,
+  input: {
+    groupId: string;
+    weekId: string;
+    userId: string;
+    users: UsernameMap;
+    weekStartDateStr: ISODateOnlyString;
+    timezone: string;
+    asOf: SeedClockPoint;
+    recordings?: RecordingSeed[];
+    activeExcuseUntil?: SeedClockPoint;
+    previousWeekAlertCountForGrace?: number;
+    joinedOffsetDays?: number;
+    removed?: boolean;
+    initialStatus?: MembershipStatus;
+  }
+) {
+  const simulation = simulateWeekPolicy(
+    {
+      weekStartDateStr: input.weekStartDateStr,
+      timezone: input.timezone,
+      asOf: input.asOf,
+      recordings: input.recordings,
+      activeExcuseUntil: input.activeExcuseUntil,
+      previousWeekAlertCountForGrace: input.previousWeekAlertCountForGrace,
+      joinedOffsetDays: input.joinedOffsetDays,
+      removed: input.removed,
+      initialStatus: input.initialStatus,
+    },
+    input.users
+  );
+
+  await addWirds(prisma, {
+    weekId: input.weekId,
+    userId: input.userId,
+    entries: simulation.wirds,
+  });
+
+  await addAlerts(prisma, {
+    groupId: input.groupId,
+    weekId: input.weekId,
+    userId: input.userId,
+    entries: simulation.alerts,
+  });
+
+  if (simulation.finalStatus === 'INACTIVE') {
+    await prisma.groupMember.update({
+      where: {
+        groupId_studentId: {
+          groupId: input.groupId,
+          studentId: input.userId,
+        },
+      },
+      data: { status: 'INACTIVE' },
+    });
+  }
+}
+
+function createAttendedEntries(
+  weekStartDateStr: ISODateOnlyString,
+  timezone: string,
+  days: WeekDayNumber[]
+): WirdEntrySeed[] {
+  return days.map((dayNumber) => ({
+    dayNumber,
+    status: 'ATTENDED',
+    recordedAt: getDateAtPoint(weekStartDateStr, timezone, {
+      offsetDays: DAY_OFFSET_BY_NUMBER[dayNumber],
+      hour: 10,
+    }),
+  }));
+}
+
+export async function seedWirdTracking(prisma: PrismaClient) {
+  console.log('🌱 Seeding wird tracking scenarios...');
+
+  const users = await loadScenarioUsers(prisma);
+  const adminId = users['admin'].id;
+  const moderatorId = users['moderator'].id;
+  const anchors = getWeekAnchors();
+  const groupTimezone = 'Asia/Riyadh';
+
+  const mainGroup = await prisma.group.create({
     data: {
       name: 'حلقة الاختبار',
-      timezone: 'Asia/Riyadh',
-      moderatorId: moderator.id,
+      timezone: groupTimezone,
+      moderatorId,
       status: 'ACTIVE',
       awrad: ['حفظ', 'مراجعة', 'تلاوة'],
       description: 'حلقة لاختبار سياسات التتبع',
     },
   });
 
-  // Get last Saturday (start of current week)
-  const today = new Date();
-  const dayOfWeek = today.getUTCDay();
-  const daysToSubtract = dayOfWeek === 6 ? 0 : (dayOfWeek + 1) % 7;
-  const lastSaturday = new Date(today);
-  lastSaturday.setUTCDate(today.getUTCDate() - daysToSubtract);
-  lastSaturday.setUTCHours(0, 0, 0, 0);
-
-  const saturdayStr = dateToISODateOnly(lastSaturday);
-  const fridayStr = addDaysToDateStr(saturdayStr, 6);
-
-  // Create current week
-  const week = await prisma.week.create({
+  const historicalGroup = await prisma.group.create({
     data: {
-      groupId: group.id,
-      weekNumber: 1,
-      startDate: lastSaturday,
-      endDate: new Date(fridayStr),
-      scheduleImage: {
-        create: {
-          name: 'جدول الأسبوع الأول',
-          imageUrl: 'https://example.com/schedule.jpg',
-          imagekitFileId: 'test-file-id',
-        },
-      },
+      name: 'حلقة سابقة',
+      timezone: groupTimezone,
+      moderatorId,
+      status: 'ACTIVE',
+      awrad: ['حفظ', 'مراجعة'],
+      description: 'مجموعة لاختبار عرض المجموعات السابقة',
     },
   });
 
-  // Create previous week for grace period testing
-  const prevSaturday = new Date(lastSaturday);
-  prevSaturday.setUTCDate(lastSaturday.getUTCDate() - 7);
-  const prevFriday = new Date(prevSaturday);
-  prevFriday.setUTCDate(prevSaturday.getUTCDate() + 6);
-
-  const prevWeek = await prisma.week.create({
-    data: {
-      groupId: group.id,
-      weekNumber: 0,
-      startDate: prevSaturday,
-      endDate: prevFriday,
-      scheduleImage: {
-        create: {
-          name: 'جدول الأسبوع السابق',
-          imageUrl: 'https://example.com/schedule-prev.jpg',
-          imagekitFileId: 'test-file-id-prev',
-        },
-      },
-    },
+  const currentWeek = await createWeek(prisma, {
+    groupId: mainGroup.id,
+    weekNumber: 1,
+    startDate: anchors.currentSaturday,
+    endDateStr: anchors.currentFridayStr,
+    scheduleName: 'جدول الأسبوع الحالي',
+    imageUrl: 'https://example.com/schedule-current.jpg',
+    imagekitFileId: 'schedule-current',
   });
 
-  // Assign students to group with different scenarios
-  const memberData: Array<{
-    studentId: string;
-    mateId: string | null;
-    scenario: string;
-    status: 'ACTIVE' | 'INACTIVE';
-  }> = [
-    // Student 1: Perfect attendance (all ATTENDED)
-    { studentId: students[0].id, mateId: students[1].id, scenario: 'perfect', status: 'ACTIVE' },
+  const previousWeek = await createWeek(prisma, {
+    groupId: mainGroup.id,
+    weekNumber: 0,
+    startDate: anchors.previousSaturday,
+    endDateStr: anchors.previousFridayStr,
+    scheduleName: 'جدول الأسبوع السابق',
+    imageUrl: 'https://example.com/schedule-previous.jpg',
+    imagekitFileId: 'schedule-previous',
+  });
 
-    // Student 2: Has 1 LATE record with existing alert (yellow cancels red)
-    {
-      studentId: students[1].id,
-      mateId: students[0].id,
-      scenario: 'late_cancels_alert',
-      status: 'ACTIVE',
-    },
+  const historicalWeek = await createWeek(prisma, {
+    groupId: historicalGroup.id,
+    weekNumber: 1,
+    startDate: anchors.currentSaturday,
+    endDateStr: anchors.currentFridayStr,
+    scheduleName: 'جدول مجموعة سابقة',
+    imageUrl: 'https://example.com/schedule-history.jpg',
+    imagekitFileId: 'schedule-history',
+  });
 
-    // Student 3: Will miss Sunday (cron will create MISSED + alert)
-    {
-      studentId: students[2].id,
-      mateId: null,
-      scenario: 'will_miss_sunday',
-      status: 'ACTIVE',
-    },
-
-    // Student 4: Has active excuse (should skip alert creation)
-    { studentId: students[3].id, mateId: null, scenario: 'has_excuse', status: 'ACTIVE' },
-
-    // Student 5: 2 alerts this week (will get 3rd and deactivate immediately)
-    { studentId: students[4].id, mateId: null, scenario: 'three_alerts', status: 'ACTIVE' },
-
-    // Student 6: 1 alert in previous week (grace period deactivation on Saturday)
-    { studentId: students[5].id, mateId: null, scenario: 'grace_period', status: 'ACTIVE' },
-
-    // Student 7: Mid-week join (joined Monday, no need to record Saturday/Sunday)
-    { studentId: students[6].id, mateId: null, scenario: 'mid_week_join', status: 'ACTIVE' },
-
-    // Student 8: Mixed status (ATTENDED, LATE, will have MISSED)
-    { studentId: students[7].id, mateId: students[8].id, scenario: 'mixed', status: 'ACTIVE' },
-
-    // Student 9: Thursday special case (can record late until Saturday 4 PM)
-    {
-      studentId: students[8].id,
-      mateId: null,
-      scenario: 'thursday_special',
-      status: 'ACTIVE',
-    },
-
-    // Student 10: INACTIVE member (deactivated, should show blocked UI)
-    { studentId: students[9].id, mateId: null, scenario: 'inactive', status: 'INACTIVE' },
-  ];
-
-  // Create group members
-  const joinDate = new Date(lastSaturday);
-  for (const member of memberData) {
-    const joinedAt =
-      member.scenario === 'mid_week_join'
-        ? new Date(addDaysToDateStr(saturdayStr, 2)) // Joined Monday
-        : joinDate;
-
-    await prisma.groupMember.create({
-      data: {
-        groupId: group.id,
-        studentId: member.studentId,
-        mateId: member.mateId,
-        status: member.status,
-        joinedAt,
-      },
-    });
-  }
-
-  // Seed wird records based on scenarios
-  const now = new Date();
-
-  // Student 1: Perfect (Sat=6, Sun=0, Mon=1, Tue=2)
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[0].id,
-        weekId: week.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[0].id,
-        weekId: week.id,
-        dayNumber: 0,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[0].id,
-        weekId: week.id,
-        dayNumber: 1,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[0].id,
-        weekId: week.id,
-        dayNumber: 2,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
+  await createMemberships(prisma, {
+    groupId: mainGroup.id,
+    users,
+    joinedBaseDate: anchors.currentSaturday,
+    actorId: adminId,
+    members: [
+      { username: 'student1', mateUsername: 'student2' },
+      { username: 'student2', mateUsername: 'student1' },
+      { username: 'student3' },
+      { username: 'student4' },
+      { username: 'student5' },
+      { username: 'student6' },
+      { username: 'student7', joinedOffsetDays: 2 },
+      { username: 'student8', mateUsername: 'student9' },
+      { username: 'student9' },
+      { username: 'student10', status: 'INACTIVE' },
+      { username: 'admin' },
+      { username: 'moderator' },
+      { username: 'student15' },
+      { username: 'student16' },
+      { username: 'student17' },
+      { username: 'student18', removed: true, mateUsername: 'student8' },
+      { username: 'student19', status: 'INACTIVE' },
+      { username: 'student20', removed: true },
+      { username: 'student21', removed: true },
+      { username: 'student22' },
+      { username: 'student23', removed: true },
+      { username: 'student24', status: 'INACTIVE' },
+      { username: 'student25' },
+      { username: 'student14', removed: true },
     ],
   });
 
-  // Student 2: Has LATE that should cancel existing alert (yellow cancels red)
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[1].id,
-        weekId: week.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      // Sunday was MISSED first (alert created), then recorded LATE (alert should be deleted by recordLearnerWird)
-      { studentId: students[1].id, weekId: week.id, dayNumber: 0, status: 'LATE', recordedAt: now },
-      {
-        studentId: students[1].id,
-        weekId: week.id,
-        dayNumber: 1,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
+  await createMemberships(prisma, {
+    groupId: historicalGroup.id,
+    users,
+    joinedBaseDate: anchors.currentSaturday,
+    actorId: adminId,
+    members: [
+      { username: 'student25', removed: true },
+      { username: 'student14', removed: true },
+      { username: 'student11' },
+      { username: 'student12' },
+      { username: 'student13' },
     ],
   });
-  // Create alert for day 0 (this should be deleted when LATE is recorded via API)
-  await prisma.alert.create({
-    data: { studentId: students[1].id, groupId: group.id, weekId: week.id, dayNumber: 0 },
-  });
 
-  // Student 3: Recorded Saturday only (Sunday will be MISSED by cron)
-  await prisma.studentWird.create({
-    data: {
-      studentId: students[2].id,
-      weekId: week.id,
-      dayNumber: 6,
-      status: 'ATTENDED',
-      recordedAt: now,
-    },
-  });
-
-  // Student 4: Has excuse + recorded Saturday
-  await prisma.studentWird.create({
-    data: {
-      studentId: students[3].id,
-      weekId: week.id,
-      dayNumber: 6,
-      status: 'ATTENDED',
-      recordedAt: now,
-    },
-  });
-  const futureExpiryDate = new Date();
-  futureExpiryDate.setDate(futureExpiryDate.getDate() + 7);
   await prisma.excuse.create({
     data: {
-      studentId: students[3].id,
-      groupId: group.id,
-      createdBy: admin.id,
-      expiresAt: futureExpiryDate,
+      studentId: users['student4'].id,
+      groupId: mainGroup.id,
+      createdBy: adminId,
+      expiresAt: getDateAtPoint(anchors.currentSaturdayStr, groupTimezone, at(7, 0)),
     },
   });
 
-  // Student 5: Will have 3 alerts (2 existing + 1 from cron)
-  await prisma.studentWird.create({
-    data: {
-      studentId: students[4].id,
-      weekId: week.id,
-      dayNumber: 6,
-      status: 'ATTENDED',
-      recordedAt: now,
-    },
-  });
-  // Create 2 existing alerts
-  await prisma.alert.createMany({
-    data: [
-      { studentId: students[4].id, groupId: group.id, weekId: week.id, dayNumber: 0 },
-      { studentId: students[4].id, groupId: group.id, weekId: week.id, dayNumber: 1 },
-    ],
-  });
-  // Create corresponding MISSED records
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[4].id,
-        weekId: week.id,
-        dayNumber: 0,
-        status: 'MISSED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[4].id,
-        weekId: week.id,
-        dayNumber: 1,
-        status: 'MISSED',
-        recordedAt: now,
-      },
-    ],
-  });
-
-  // Student 6: 1 alert in previous week (grace period test)
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[5].id,
-        weekId: prevWeek.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[5].id,
-        weekId: prevWeek.id,
-        dayNumber: 0,
-        status: 'MISSED',
-        recordedAt: now,
-      },
-    ],
-  });
-  await prisma.alert.create({
-    data: { studentId: students[5].id, groupId: group.id, weekId: prevWeek.id, dayNumber: 0 },
-  });
-  // Current week all attended
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[5].id,
-        weekId: week.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[5].id,
-        weekId: week.id,
-        dayNumber: 0,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-    ],
-  });
-
-  // Student 7: Mid-week join (Mon) - recorded Mon, Tue
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[6].id,
-        weekId: week.id,
-        dayNumber: 1,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[6].id,
-        weekId: week.id,
-        dayNumber: 2,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-    ],
-  });
-
-  // Student 8: Mixed statuses
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[7].id,
-        weekId: week.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-        readOnMateId: students[8].id,
-      },
-      { studentId: students[7].id, weekId: week.id, dayNumber: 0, status: 'LATE', recordedAt: now },
-      {
-        studentId: students[7].id,
-        weekId: week.id,
-        dayNumber: 1,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      // Day 2 will be MISSED by cron
-    ],
-  });
-
-  // Student 9: Thursday special case - recorded all days including Thursday
-  // This tests that Thursday deadline extends to Saturday 4 PM (not Friday)
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[8].id,
-        weekId: week.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[8].id,
-        weekId: week.id,
-        dayNumber: 0,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[8].id,
-        weekId: week.id,
-        dayNumber: 1,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[8].id,
-        weekId: week.id,
-        dayNumber: 2,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[8].id,
-        weekId: week.id,
-        dayNumber: 3,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      // Thursday (day 4) not recorded yet - can be recorded late until Saturday 4 PM
-      // To test: Try recording day 4 on Friday/Saturday before 4 PM (should work)
-    ],
-  });
-
-  // Student 10: INACTIVE member - has some past records but is now deactivated
-  // Has wird records + excuse + inactive status (should show blocked UI with excuse info)
-  await prisma.studentWird.createMany({
-    data: [
-      {
-        studentId: students[9].id,
-        weekId: week.id,
-        dayNumber: 6,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      {
-        studentId: students[9].id,
-        weekId: week.id,
-        dayNumber: 0,
-        status: 'ATTENDED',
-        recordedAt: now,
-      },
-      // Was deactivated after day 0, so no more records
-    ],
-  });
-  // Create excuse for student 10 (even though inactive, shows they had excuse before deactivation)
-  const student10ExcuseExpiry = new Date();
-  student10ExcuseExpiry.setDate(student10ExcuseExpiry.getDate() + 3); // 3 days from now
   await prisma.excuse.create({
     data: {
-      studentId: students[9].id,
-      groupId: group.id,
-      createdBy: admin.id,
-      expiresAt: student10ExcuseExpiry,
+      studentId: users['student10'].id,
+      groupId: mainGroup.id,
+      createdBy: adminId,
+      expiresAt: getDateAtPoint(anchors.currentSaturdayStr, groupTimezone, at(3, 23)),
     },
   });
 
-  console.log('✅ Wird tracking data seeded!');
-  console.log(`📊 Group: ${group.name} (ID: ${group.id})`);
-  console.log(`📅 Current Week: ${week.weekNumber} (${saturdayStr} to ${fridayStr})`);
-  console.log(`👥 Assigned ${memberData.length} students with different scenarios`);
-  console.log('\n🔑 Test Credentials (password: 12345678):');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('✅ ACTIVE Learner:');
-  console.log('   Username: student1');
-  console.log('   Status: Perfect attendance (all days recorded)');
-  console.log('   Can record wird and view all features');
-  console.log('');
-  console.log('❌ INACTIVE Learner:');
-  console.log('   Username: student10');
-  console.log('   Status: INACTIVE (blocked UI)');
-  console.log('   Has: Wird records (Sat+Sun) + Active excuse');
-  console.log('   Result: Cannot record wird, sees blocked message');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  await prisma.excuse.create({
+    data: {
+      studentId: users['student20'].id,
+      groupId: mainGroup.id,
+      createdBy: adminId,
+      expiresAt: getDateAtPoint(anchors.currentSaturdayStr, groupTimezone, at(10, 0)),
+    },
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student1'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(5, 12),
+    recordings: [recordOn(6), recordOn(0), recordOn(1), recordOn(2)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student2'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(3, 12),
+    recordings: [recordOn(6)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student3'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(3, 17),
+    recordings: [recordOn(6)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student4'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(4, 17),
+    recordings: [recordOn(6)],
+    activeExcuseUntil: at(7, 0),
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student5'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(4, 17),
+    recordings: [recordOn(6)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: previousWeek.id,
+    userId: users['student6'].id,
+    users,
+    weekStartDateStr: anchors.previousSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(2, 17),
+    recordings: [recordOn(6)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student6'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(7, 17),
+    recordings: [recordOn(6), recordOn(0), recordOn(1), recordOn(2), recordOn(3), recordOn(4)],
+    previousWeekAlertCountForGrace: 1,
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student7'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(4, 12),
+    joinedOffsetDays: 2,
+    recordings: [recordOn(1), recordOn(2)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student8'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(3, 12),
+    recordings: [recordOn(6, { readOnMateUsername: 'student9' })],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student9'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(6, 12),
+    recordings: [recordOn(6), recordOn(0), recordOn(1), recordOn(2), recordOn(3)],
+  });
+
+  await addWirds(prisma, {
+    weekId: currentWeek.id,
+    userId: users['student10'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6, 0]),
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['admin'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(2, 12),
+    recordings: [recordOn(6), recordOn(0)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['moderator'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(2, 12),
+    recordings: [recordOn(6)],
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student15'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(1, 17),
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student16'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(0, 12),
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student17'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(6, 12),
+    recordings: [recordOn(6), recordOn(0), recordOn(1), recordOn(2), recordOn(3)],
+  });
+
+  await addWirds(prisma, {
+    weekId: currentWeek.id,
+    userId: users['student14'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6, 0]),
+  });
+
+  await addWirds(prisma, {
+    weekId: currentWeek.id,
+    userId: users['student20'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student21'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(4, 17),
+    removed: true,
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student22'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(3, 17),
+    recordings: [recordOn(6)],
+  });
+
+  await addWirds(prisma, {
+    weekId: currentWeek.id,
+    userId: users['student23'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
+  });
+
+  await addWirds(prisma, {
+    weekId: currentWeek.id,
+    userId: users['student24'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
+  });
+
+  await applyWeekSimulation(prisma, {
+    groupId: mainGroup.id,
+    weekId: currentWeek.id,
+    userId: users['student25'].id,
+    users,
+    weekStartDateStr: anchors.currentSaturdayStr,
+    timezone: groupTimezone,
+    asOf: at(2, 12),
+    recordings: [recordOn(6), recordOn(0)],
+  });
+
+  await addWirds(prisma, {
+    weekId: historicalWeek.id,
+    userId: users['student25'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
+  });
+
+  await addWirds(prisma, {
+    weekId: historicalWeek.id,
+    userId: users['student14'].id,
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
+  });
+
+  console.log('✅ Wird tracking scenarios seeded');
+  console.log(`📊 Main group: ${mainGroup.name}`);
+  console.log(`📊 Historical group: ${historicalGroup.name}`);
+  console.log(`📅 Current week: ${anchors.currentSaturdayStr} -> ${anchors.currentFridayStr}`);
+  console.log('🧪 Covered users: admin, moderator, student1 .. student25');
 }

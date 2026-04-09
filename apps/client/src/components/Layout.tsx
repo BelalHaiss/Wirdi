@@ -103,7 +103,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
         <div className='flex flex-col h-full min-h-0'>
           {/* Logo */}
           <div className='flex items-center justify-between gap-2 p-4 border-b border-border'>
-            <AppLogo />
+            <AppLogo className='mx-auto' />
             <Button
               variant='ghost'
               color='muted'

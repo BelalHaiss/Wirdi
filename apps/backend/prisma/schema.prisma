@@ -11,22 +11,24 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(ulid())
-  username  String   @unique @db.VarChar(50)
-  name      String   @db.VarChar(100)
-  password  String   @db.VarChar(255)
-  role      UserRole
-  timezone  String   @default("Africa/Cairo") @db.VarChar(50)
-  notes     String?  @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(ulid())
+  username       String   @unique @db.VarChar(50)
+  name           String   @db.VarChar(100)
+  nameNormalized String?  @map("name_normalized") @db.VarChar(100)
+  password       String   @db.VarChar(255)
+  role           UserRole
+  timezone       String   @default("Africa/Cairo") @db.VarChar(50)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Group moderator relation
   moderatedGroups Group[] @relation("GroupModerator")
 
   // GroupMember relations (student enrolled, or listed as mate)
-  groupMemberships  GroupMember[] @relation("GroupMemberStudent")
-  mateInMemberships GroupMember[] @relation("GroupMemberMate")
+  groupMemberships   GroupMember[] @relation("GroupMemberStudent")
+  mateInMemberships  GroupMember[] @relation("GroupMemberMate")
+  removedMemberships GroupMember[] @relation("GroupMemberRemovedBy")
 
   // StudentWird relations (owns the wird, or is the mate read upon)
   studentWirds StudentWird[] @relation("StudentWirdOwner")
@@ -45,6 +47,7 @@ model User {
   notifications Notification[]
 
   @@index([role])
+  @@index([nameNormalized])
   @@map("users")
 }
 
@@ -77,14 +80,19 @@ model GroupMember {
   mateId    String?           @map("mate_id")
   status    GroupMemberStatus @default(ACTIVE)
   joinedAt  DateTime          @default(now()) @map("joined_at")
+  removedAt DateTime?         @map("removed_at")
+  removedBy String?           @map("removed_by")
 
-  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  student User  @relation("GroupMemberStudent", fields: [studentId], references: [id], onDelete: Cascade)
-  mate    User? @relation("GroupMemberMate", fields: [mateId], references: [id], onDelete: SetNull)
+  group         Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student       User  @relation("GroupMemberStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  mate          User? @relation("GroupMemberMate", fields: [mateId], references: [id], onDelete: SetNull)
+  removedByUser User? @relation("GroupMemberRemovedBy", fields: [removedBy], references: [id], onDelete: SetNull)
 
   @@unique([groupId, studentId])
   @@index([studentId])
   @@index([mateId])
+  @@index([removedAt])
+  @@index([removedBy])
   @@map("group_members")
 }
 
@@ -255,6 +263,7 @@ model Notification {
 enum NotificationType {
   ALERT_ASSIGNED
   LEARNER_DEACTIVATED
+  LEARNER_REMOVED
   REQUEST_CREATED
   REQUEST_UPDATED
 }

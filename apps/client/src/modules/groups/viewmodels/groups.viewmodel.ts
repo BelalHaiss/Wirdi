@@ -24,6 +24,12 @@ export function useGroupsViewModel() {
     queryFn: groupService.queryGroups,
   });
 
+  const removedGroupsQuery = useApiQuery<GroupDto[]>({
+    queryKey: queryKeys.groups.removedGroups(),
+    queryFn: groupService.getRemovedGroups,
+    enabled: isStudent,
+  });
+
   const staffQuery = useApiQuery<StaffUserDto[]>({
     queryKey: queryKeys.users.list({ scope: 'staff' }),
     queryFn: userService.getStaffUsers,
@@ -45,6 +51,7 @@ export function useGroupsViewModel() {
   return {
     // Groups list
     groups: groupsQuery.data?.data ?? [],
+    removedGroups: removedGroupsQuery.data?.data ?? [],
     isLoadingGroups: groupsQuery.isLoading,
     groupsError: groupsQuery.error?.message,
 

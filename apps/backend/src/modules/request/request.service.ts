@@ -38,6 +38,10 @@ export class RequestService {
       throw new ForbiddenException('أنت لست عضواً في هذه المجموعة');
     }
 
+    if (membership.removedAt) {
+      throw new ForbiddenException('تمت إزالتك من هذه المجموعة');
+    }
+
     // Check for existing pending ACTIVATION request (EXCUSE is checked separately)
     if (type === 'ACTIVATION') {
       const existingPending = await this.db.request.findFirst({

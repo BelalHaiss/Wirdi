@@ -41,9 +41,11 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.groups.details(), id] as const,
     schedules: (id: string) => [...queryKeys.groups.all, 'schedules', id] as const,
     learners: (id: string) => [...queryKeys.groups.all, 'learners', id] as const,
+    removedLearners: (id: string) => [...queryKeys.groups.all, 'removed-learners', id] as const,
     unassigned: (id: string) => [...queryKeys.groups.all, 'unassigned', id] as const,
     eligibleForActivation: () => [...queryKeys.groups.all, 'eligible-for-activation'] as const,
     myGroups: () => [...queryKeys.groups.all, 'my-groups'] as const,
+    removedGroups: () => [...queryKeys.groups.all, 'removed-groups'] as const,
   },
 
   // Sessions queries

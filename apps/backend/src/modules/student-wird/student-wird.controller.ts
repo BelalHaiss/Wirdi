@@ -59,7 +59,7 @@ export class StudentWirdController {
   // ─── Learner Self-Recording ──────────────────────────────────────────────────
 
   @Get('my-group/:groupId/overview')
-  @Roles([UserRole.STUDENT])
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])
   getLearnerGroupOverview(
     @Param('groupId') groupId: string,
     @User() user: PrismaUser
@@ -68,7 +68,7 @@ export class StudentWirdController {
   }
 
   @Post('my-wird')
-  @Roles([UserRole.STUDENT])
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])
   recordLearnerWird(
     @Body(new ZodValidationPipe(recordLearnerWirdSchema('en'))) dto: RecordLearnerWirdDto,
     @User() user: PrismaUser

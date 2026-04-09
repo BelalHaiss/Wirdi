@@ -62,6 +62,10 @@ function normalizeReadSource(value: string): LocalReadSourceType {
   return 'DEFAULT_GROUP_MATE';
 }
 
+function isPendingWirdStatus(status: DayWirdDto['wirdStatus']): boolean {
+  return status === 'EMPTY' || status === 'MISSED';
+}
+
 @Injectable()
 export class StudentWirdService {
   constructor(
@@ -103,10 +107,7 @@ export class StudentWirdService {
     });
   }
 
-  /**
-   * Finds the first EMPTY day the learner can still record, based on the allowed time window.
-   * Enforces recording order: learner cannot record a day if any previous day (after join date) is EMPTY.
-   */
+  /** Finds the oldest EMPTY day still recordable within the allowed window. */
   private computeRecordableDay(
     days: DayWirdDto[],
     startStr: ISODateOnlyString,
@@ -120,21 +121,9 @@ export class StudentWirdService {
       return dayDate >= joinedAtStr;
     });
 
-    for (let i = 0; i < allowedDays.length; i++) {
-      const day = allowedDays[i];
-      if (day.wirdStatus !== 'EMPTY') continue;
+    for (const day of allowedDays) {
+      if (!isPendingWirdStatus(day.wirdStatus)) continue;
 
-      // Check for blocking previous EMPTY days
-      const blockingDay = allowedDays.slice(0, i).find((d) => d.wirdStatus === 'EMPTY');
-      if (blockingDay) {
-        return {
-          status: 'blocked',
-          reason: 'previous_day_unrecorded',
-          blockedByDay: blockingDay.dayNumber,
-        };
-      }
-
-      // Check if within allowed time window
       const dayDate = addDaysToDateStr(startStr, (day.dayNumber + 1) % 7);
       const nextDayOffset = day.dayNumber === 4 ? 2 : 1; // Thu → Sat (+2), others → next day (+1)
       const deadline = combineDateTime(
@@ -143,15 +132,16 @@ export class StudentWirdService {
         groupTimezone
       );
 
-      if (now.toISOString() <= deadline) {
-        const { endAsJSDate } = getStartAndEndOfDay(groupTimezone, dayDate);
-        return { status: 'available', dayNumber: day.dayNumber, isLate: now > endAsJSDate };
-      }
+      return {
+        status: 'available',
+        dayNumber: day.dayNumber,
+        isLate: day.wirdStatus === 'MISSED' || now.toISOString() > deadline,
+      };
     }
 
     return {
       status: 'none',
-      reason: days.every((d) => d.wirdStatus === 'FUTURE') ? 'upcoming' : 'all_recorded',
+      reason: allowedDays.every((d) => d.wirdStatus === 'FUTURE') ? 'upcoming' : 'all_recorded',
     };
   }
 
@@ -207,31 +197,32 @@ export class StudentWirdService {
 
   async getWeekTracking(groupId: string, weekId: string): Promise<GroupWirdTrackingDto> {
     const now = new Date();
+    const week = await this.db.week.findUniqueOrThrow({ where: { id: weekId } });
 
-    const [week, members, wirds, weekAlertCounts, totalAlertCounts, activeExcuses] =
-      await this.db.$transaction([
-        this.db.week.findUniqueOrThrow({ where: { id: weekId } }),
-        this.db.groupMember.findMany({
-          where: { groupId },
-          include: { student: true, mate: true },
-          orderBy: { joinedAt: 'asc' },
-        }),
-        this.db.studentWird.findMany({
-          where: { weekId, week: { groupId } },
-          include: { readOnMate: true },
-        }),
-        this.db.alert.findMany({
-          where: { weekId },
-          select: { studentId: true },
-        }),
-        this.db.alert.findMany({
-          where: { groupId },
-          select: { studentId: true },
-        }),
-        this.db.excuse.findMany({
-          where: { groupId, expiresAt: { gt: now } },
-        }),
-      ]);
+    const members = await this.db.groupMember.findMany({
+      where: { groupId, removedAt: null },
+      include: { student: true, mate: true },
+      orderBy: { joinedAt: 'asc' },
+    });
+
+    const wirds = await this.db.studentWird.findMany({
+      where: { weekId, week: { groupId } },
+      include: { readOnMate: true },
+    });
+
+    const weekAlertCounts = await this.db.alert.findMany({
+      where: { weekId },
+      select: { studentId: true },
+    });
+
+    const totalAlertCounts = await this.db.alert.findMany({
+      where: { groupId },
+      select: { studentId: true },
+    });
+
+    const activeExcuses = await this.db.excuse.findMany({
+      where: { groupId, expiresAt: { gt: now } },
+    });
 
     const startStr = dateToISODateOnly(week.startDate);
     const todayUTC = getNowAsUTC().split('T')[0] as ISODateOnlyString;
@@ -257,7 +248,16 @@ export class StudentWirdService {
       activeExcuseMap.set(excuse.studentId, excuse.expiresAt.toISOString() as ISODateString);
     }
 
-    const rows: GroupWirdTrackingRowDto[] = members.map((member) => {
+    const typedMembers = members as Array<{
+      id: string;
+      studentId: string;
+      mateId: string | null;
+      status: 'ACTIVE' | 'INACTIVE';
+      student: { name: string; notes: string | null };
+      mate: { name: string } | null;
+    }>;
+
+    const rows: GroupWirdTrackingRowDto[] = typedMembers.map((member) => {
       const days = this.buildStudentDays(wirdMap.get(member.studentId) ?? [], startStr, todayUTC);
 
       return {
@@ -337,68 +337,179 @@ export class StudentWirdService {
     const now = new Date();
     const todayUTC = dateToISODateOnly(now);
 
+    const group = await this.db.group.findUniqueOrThrow({
+      where: { id: groupId },
+      select: { id: true, status: true, timezone: true, awrad: true },
+    });
+
+    const member = await this.db.groupMember.findFirst({
+      where: { groupId, studentId },
+      include: { student: true, mate: true },
+    });
+
+    if (!member) {
+      return { type: 'nothing', reason: 'not_member' };
+    }
+
+    if (member.removedAt) {
+      return { type: 'nothing', reason: 'removed' };
+    }
+
+    const membership = member as {
+      id: string;
+      groupId: string;
+      studentId: string;
+      mateId: string | null;
+      status: 'ACTIVE' | 'INACTIVE';
+      joinedAt: Date;
+      removedAt: Date | null;
+      removedBy: string | null;
+      student: { name: string; username: string; timezone: string; notes: string | null };
+      mate: { name: string } | null;
+    };
+
     // Most recent started week — covers current week or last past week in one query
     const week = await this.db.week.findFirst({
       where: { groupId, startDate: { lte: now } },
-      include: { scheduleImage: true, group: { select: { timezone: true, status: true } } },
+      include: { scheduleImage: true },
       orderBy: { weekNumber: 'desc' },
     });
 
     if (!week?.scheduleImage) {
-      throw new BadRequestException('لا يوجد أسبوع نشط لهذه الحلقة بعد');
+      return { type: 'nothing', reason: 'no_week' };
     }
 
-    const [member, wirds, weekAlertCount, totalAlertCount, activeExcuse] =
-      await this.db.$transaction([
-        this.db.groupMember.findFirstOrThrow({
-          where: { groupId, studentId },
-          include: { student: true, mate: true },
-        }),
-        this.db.studentWird.findMany({
-          where: { studentId, weekId: week.id },
-          include: { readOnMate: true },
-        }),
-        this.db.alert.count({ where: { studentId, weekId: week.id } }),
-        this.db.alert.count({ where: { studentId, groupId } }),
-        this.db.excuse.findFirst({
-          where: { studentId, groupId, expiresAt: { gt: now } },
-          orderBy: { expiresAt: 'desc' },
-        }),
-      ]);
+    const members = await this.db.groupMember.findMany({
+      where: { groupId, removedAt: null },
+      include: { student: true, mate: true },
+      orderBy: { joinedAt: 'asc' },
+    });
+
+    const allWirds = await this.db.studentWird.findMany({
+      where: { weekId: week.id },
+      include: { readOnMate: true },
+    });
+
+    const weekAlertCounts = await this.db.alert.findMany({
+      where: { weekId: week.id },
+      select: { studentId: true },
+    });
+
+    const totalAlertCounts = await this.db.alert.findMany({
+      where: { groupId },
+      select: { studentId: true },
+    });
+
+    const activeExcuses = await this.db.excuse.findMany({
+      where: { groupId, expiresAt: { gt: now } },
+      orderBy: { expiresAt: 'desc' },
+      select: { studentId: true, expiresAt: true },
+    });
+
+    const typedMembers = members as Array<{
+      id: string;
+      groupId: string;
+      studentId: string;
+      mateId: string | null;
+      status: 'ACTIVE' | 'INACTIVE';
+      joinedAt: Date;
+      removedAt: Date | null;
+      removedBy: string | null;
+      student: { name: string; username: string; timezone: string; notes: string | null };
+      mate: { name: string } | null;
+    }>;
+
+    const trackedMember = typedMembers.find((m) => m.studentId === studentId) ?? {
+      id: membership.id,
+      groupId: membership.groupId,
+      studentId: membership.studentId,
+      mateId: membership.mateId,
+      status: membership.status,
+      joinedAt: membership.joinedAt,
+      removedAt: membership.removedAt,
+      removedBy: membership.removedBy,
+      student: {
+        name: membership.student.name,
+        username: membership.student.username,
+        timezone: membership.student.timezone,
+        notes: membership.student.notes,
+      },
+      mate: membership.mate ? { name: membership.mate.name } : null,
+    };
 
     const startStr = dateToISODateOnly(week.startDate);
     const endStr = dateToISODateOnly(week.endDate);
 
-    const days = this.buildStudentDays(wirds, startStr, todayUTC);
+    const wirdMap = new Map<string, typeof allWirds>();
+    for (const wird of allWirds) {
+      if (!wirdMap.has(wird.studentId)) wirdMap.set(wird.studentId, []);
+      wirdMap.get(wird.studentId)!.push(wird);
+    }
 
-    const myRow: GroupWirdTrackingRowDto = {
-      memberId: member.id,
-      studentId: member.studentId,
-      studentName: member.student.name,
-      studentStatus: member.status,
-      mateId: member.mateId ?? undefined,
-      mateName: member.mate?.name ?? undefined,
-      studentNotes: member.student.notes ?? undefined,
-      days,
-      weekAlertCount,
-      totalAlertCount,
-      activeExcuseExpiresAt: activeExcuse
-        ? (activeExcuse.expiresAt.toISOString() as ISODateString)
-        : undefined,
+    const weekAlertMap = new Map<string, number>();
+    for (const entry of weekAlertCounts) {
+      weekAlertMap.set(entry.studentId, (weekAlertMap.get(entry.studentId) ?? 0) + 1);
+    }
+
+    const totalAlertMap = new Map<string, number>();
+    for (const entry of totalAlertCounts) {
+      totalAlertMap.set(entry.studentId, (totalAlertMap.get(entry.studentId) ?? 0) + 1);
+    }
+
+    const activeExcuseMap = new Map<string, ISODateString>();
+    for (const excuse of activeExcuses) {
+      if (!activeExcuseMap.has(excuse.studentId)) {
+        activeExcuseMap.set(excuse.studentId, excuse.expiresAt.toISOString() as ISODateString);
+      }
+    }
+
+    const rows: GroupWirdTrackingRowDto[] = typedMembers.map((groupMember) => ({
+      memberId: groupMember.id,
+      studentId: groupMember.studentId,
+      studentName: groupMember.student.name,
+      studentStatus: groupMember.status,
+      mateId: groupMember.mateId ?? undefined,
+      mateName: groupMember.mate?.name ?? undefined,
+      studentNotes: groupMember.student.notes ?? undefined,
+      days: this.buildStudentDays(wirdMap.get(groupMember.studentId) ?? [], startStr, todayUTC),
+      weekAlertCount: weekAlertMap.get(groupMember.studentId) ?? 0,
+      totalAlertCount: totalAlertMap.get(groupMember.studentId) ?? 0,
+      activeExcuseExpiresAt: activeExcuseMap.get(groupMember.studentId),
+    }));
+
+    const fallbackMyRow: GroupWirdTrackingRowDto = {
+      memberId: trackedMember.id,
+      studentId: trackedMember.studentId,
+      studentName: trackedMember.student.name,
+      studentStatus: trackedMember.status,
+      mateId: trackedMember.mateId ?? undefined,
+      mateName: trackedMember.mate?.name ?? undefined,
+      studentNotes: trackedMember.student.notes ?? undefined,
+      days: this.buildStudentDays(wirdMap.get(trackedMember.studentId) ?? [], startStr, todayUTC),
+      weekAlertCount: weekAlertMap.get(trackedMember.studentId) ?? 0,
+      totalAlertCount: totalAlertMap.get(trackedMember.studentId) ?? 0,
+      activeExcuseExpiresAt: activeExcuseMap.get(trackedMember.studentId),
     };
+    const myRow = rows.find((row) => row.studentId === studentId) ?? fallbackMyRow;
+    const orderedRows = [myRow, ...rows.filter((row) => row.studentId !== studentId)];
 
     const myMembership: GroupMemberDto = {
-      id: member.id,
-      groupId: member.groupId,
-      studentId: member.studentId,
-      studentName: member.student.name,
-      studentUsername: member.student.username,
-      studentTimezone: member.student.timezone as TimeZoneType,
-      mateId: member.mateId ?? undefined,
-      mateName: member.mate?.name ?? undefined,
-      notes: member.student.notes ?? undefined,
-      joinedAt: member.joinedAt.toISOString() as ISODateString,
-      status: member.status,
+      id: trackedMember.id,
+      groupId: trackedMember.groupId,
+      studentId: trackedMember.studentId,
+      studentName: trackedMember.student.name,
+      studentUsername: trackedMember.student.username,
+      studentTimezone: trackedMember.student.timezone as TimeZoneType,
+      mateId: trackedMember.mateId ?? undefined,
+      mateName: trackedMember.mate?.name ?? undefined,
+      notes: trackedMember.student.notes ?? undefined,
+      joinedAt: trackedMember.joinedAt.toISOString() as ISODateString,
+      status: trackedMember.status,
+      removedAt: trackedMember.removedAt
+        ? (trackedMember.removedAt.toISOString() as ISODateString)
+        : undefined,
+      removedById: trackedMember.removedBy ?? undefined,
+      activeExcuseExpiresAt: activeExcuseMap.get(trackedMember.studentId),
     };
 
     const isCurrent = todayUTC >= startStr && todayUTC <= endStr;
@@ -423,14 +534,23 @@ export class StudentWirdService {
     };
 
     const recordableDay = this.computeRecordableDay(
-      days,
+      myRow.days,
       startStr,
-      week.group.timezone,
+      group.timezone,
       now,
-      member.joinedAt
+      trackedMember.joinedAt
     );
 
-    return { week: weekDto, groupStatus: week.group.status, myRow, myMembership, recordableDay };
+    return {
+      type: 'overview',
+      week: weekDto,
+      groupStatus: group.status,
+      awrad: (group.awrad as string[]) ?? [],
+      myRow,
+      rows: orderedRows,
+      myMembership,
+      recordableDay,
+    };
   }
 
   async recordLearnerWird(studentId: string, dto: RecordLearnerWirdDto): Promise<void> {
@@ -441,52 +561,75 @@ export class StudentWirdService {
     await this.db.$transaction(async (tx) => {
       // Sequential reads instead of Promise.all to comply with transaction best practices
       const member = await tx.groupMember.findFirst({
-        where: { groupId: dto.groupId, studentId },
+        where: { groupId: dto.groupId, studentId, removedAt: null },
         select: { id: true, joinedAt: true, mateId: true },
       });
       if (!member) throw new ForbiddenException('لست عضواً في هذه الحلقة');
 
+      const membershipStatus = await tx.groupMember.findUniqueOrThrow({
+        where: { groupId_studentId: { groupId: dto.groupId, studentId } },
+        select: { status: true, removedAt: true },
+      });
+
+      if (membershipStatus.removedAt) {
+        throw new ForbiddenException('تمت إزالتك من هذه الحلقة');
+      }
+
+      if (membershipStatus.status !== 'ACTIVE') {
+        throw new ForbiddenException('يجب أن تكون عضواً نشطاً للتسجيل');
+      }
+
       const group = await tx.group.findUniqueOrThrow({
         where: { id: dto.groupId },
-        select: { timezone: true },
+        select: { timezone: true, status: true },
       });
+
+      if (group.status !== 'ACTIVE') {
+        throw new ForbiddenException('هذه الحلقة غير نشطة حالياً');
+      }
 
       const week = await tx.week.findUniqueOrThrow({ where: { id: dto.weekId } });
 
       const startStr = dateToISODateOnly(week.startDate);
       const joinedAtStr = dateToISODateOnly(member.joinedAt);
 
-      // Validate previous days are recorded (after join date, before current day)
+      // Validate previous days are completed in order (ATTENDED/LATE).
       const existingWirds = await tx.studentWird.findMany({
         where: { studentId, weekId: dto.weekId },
-        select: { dayNumber: true },
+        select: { dayNumber: true, status: true },
       });
-      const recordedDays = new Set(existingWirds.map((w) => w.dayNumber));
+      const recordedDayStatusMap = new Map(existingWirds.map((w) => [w.dayNumber, w.status]));
 
-      for (const dayNum of [0, 1, 2, 3, 4]) {
-        if (dayNum >= dto.dayNumber) break;
+      const orderedDays = [6, 0, 1, 2, 3, 4] as const;
+      const targetIndex = orderedDays.indexOf(dto.dayNumber as (typeof orderedDays)[number]);
+
+      for (const dayNum of orderedDays.slice(0, Math.max(targetIndex, 0))) {
         const dayDate = addDaysToDateStr(startStr, (dayNum + 1) % 7);
-        if (dayDate >= joinedAtStr && !recordedDays.has(dayNum)) {
-          throw new BadRequestException('يجب تسجيل الأيام السابقة أولاً');
+        if (dayDate < joinedAtStr) continue;
+
+        const previousStatus = recordedDayStatusMap.get(dayNum);
+        if (previousStatus === 'ATTENDED' || previousStatus === 'LATE') {
+          continue;
         }
+
+        throw new BadRequestException('يجب تسجيل الأيام السابقة أولاً');
       }
 
-      // Validate deadline and determine status
+      // Validate target day has started and determine final status.
       const dayDate = addDaysToDateStr(startStr, (dto.dayNumber + 1) % 7);
       const now = new Date();
+      const { startAsJSDate } = getStartAndEndOfDay(group.timezone, dayDate);
+      if (now < startAsJSDate) {
+        throw new BadRequestException('لا يمكن تسجيل يوم لم يبدأ بعد');
+      }
+
       const nextDayOffset = dto.dayNumber === 4 ? 2 : 1;
       const deadline = combineDateTime(
         addDaysToDateStr(dayDate, nextDayOffset),
         FOUR_PM,
         group.timezone
       );
-
-      if (now.toISOString() > deadline) {
-        throw new BadRequestException('انتهت مدة تسجيل هذا اليوم');
-      }
-
-      const { endAsJSDate } = getStartAndEndOfDay(group.timezone, dayDate);
-      const status = now > endAsJSDate ? 'LATE' : 'ATTENDED';
+      const status = now.toISOString() > deadline ? 'LATE' : 'ATTENDED';
       const readSource = normalizeReadSource(String(dto.readSource));
       const readOnMateId =
         readSource === 'OUTSIDE_GROUP'

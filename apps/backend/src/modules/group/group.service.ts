@@ -36,14 +36,14 @@ export class GroupService {
         ? {}
         : actor.role === 'MODERATOR'
           ? { moderatorId: actor.id }
-          : { members: { some: { studentId: actor.id } } };
+          : { members: { some: { studentId: actor.id, removedAt: null } } };
 
     const groups = await this.db.group.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         moderator: { select: { name: true } },
-        _count: { select: { members: true, weeks: true } },
+        _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
       },
     });
     return groups.map((g) => this.toGroupDto(g));
@@ -54,7 +54,7 @@ export class GroupService {
       where: { id },
       include: {
         moderator: { select: { name: true } },
-        _count: { select: { members: true, weeks: true } },
+        _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
         ...(studentId && {
           members: { where: { studentId }, select: { id: true }, take: 1 },
         }),
@@ -78,7 +78,7 @@ export class GroupService {
       },
       include: {
         moderator: { select: { name: true } },
-        _count: { select: { members: true, weeks: true } },
+        _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
       },
     });
     return this.toGroupDto(group);
@@ -96,7 +96,7 @@ export class GroupService {
       },
       include: {
         moderator: { select: { name: true } },
-        _count: { select: { members: true, weeks: true } },
+        _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
       },
     });
     return this.toGroupDto(group);
@@ -210,7 +210,7 @@ export class GroupService {
     const now = new Date();
 
     const members = await this.db.groupMember.findMany({
-      where: { groupId },
+      where: { groupId, removedAt: null },
       orderBy: { joinedAt: 'desc' },
       include: {
         student: {
@@ -241,12 +241,12 @@ export class GroupService {
 
   async getStudentInactiveGroups(studentId: string): Promise<GroupDto[]> {
     const memberships = await this.db.groupMember.findMany({
-      where: { studentId, status: 'INACTIVE' },
+      where: { studentId, status: 'INACTIVE', removedAt: null },
       include: {
         group: {
           include: {
             moderator: { select: { name: true } },
-            _count: { select: { members: true, weeks: true } },
+            _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
           },
         },
       },
@@ -256,16 +256,33 @@ export class GroupService {
 
   async getStudentActiveGroups(studentId: string): Promise<GroupDto[]> {
     const memberships = await this.db.groupMember.findMany({
-      where: { studentId, status: 'ACTIVE' },
+      where: { studentId, status: 'ACTIVE', removedAt: null },
       include: {
         group: {
           include: {
             moderator: { select: { name: true } },
-            _count: { select: { members: true, weeks: true } },
+            _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
           },
         },
       },
     });
+    return memberships.map((m) => this.toGroupDto(m.group));
+  }
+
+  async getStudentRemovedGroups(studentId: string): Promise<GroupDto[]> {
+    const memberships = await this.db.groupMember.findMany({
+      where: { studentId, removedAt: { not: null } },
+      include: {
+        group: {
+          include: {
+            moderator: { select: { name: true } },
+            _count: { select: { members: { where: { removedAt: null } }, weeks: true } },
+          },
+        },
+      },
+      orderBy: { removedAt: 'desc' },
+    });
+
     return memberships.map((m) => this.toGroupDto(m.group));
   }
 

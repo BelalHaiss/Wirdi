@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Select,
   SelectContent,
@@ -11,7 +12,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Typography } from '@/components/ui/typography';
-import type { GroupMemberDto, ReadSourceType } from '@wirdi/shared';
+import { useWirdRecordingViewModel } from '../../viewmodels/wird-recording.viewmodel';
+import { AllRecordedMessage } from './AllRecordedMessage';
+import { BlockedByPreviousDayMessage } from './BlockedByPreviousDayMessage';
 
 const DAY_LABELS: Record<number, string> = {
   6: 'السبت',
@@ -28,38 +31,56 @@ const READ_SOURCE_OPTIONS = {
   OUTSIDE_GROUP: 'OUTSIDE_GROUP',
 } as const;
 
-type Props = {
-  recordableDay: {
-    dayNumber: number;
-    isLate: boolean;
-  };
-  daysInWeek: { dayNumber: number; dayRecorded: boolean }[];
-  allAwradChecked: boolean;
-  onCheckAllAwrad: (checked: boolean) => void;
-  readSource: ReadSourceType;
-  onReadSourceChange: (value: ReadSourceType) => void;
-  selectedMateId: string | null;
-  onMateChange: (value: string) => void;
-  eligibleMates: GroupMemberDto[];
-  isRecording: boolean;
-  canSubmit: boolean;
-  onSubmit: () => void;
-};
+type Props = { groupId: string };
 
-export function WirdRecordingCard({
-  recordableDay,
-  daysInWeek,
-  allAwradChecked,
-  onCheckAllAwrad,
-  readSource,
-  onReadSourceChange,
-  selectedMateId,
-  onMateChange,
-  eligibleMates,
-  isRecording,
-  canSubmit,
-  onSubmit,
-}: Props) {
+export function WirdRecordingCard({ groupId }: Props) {
+  const vm = useWirdRecordingViewModel(groupId);
+
+  if (vm.isLoading) {
+    return (
+      <Card>
+        <CardContent className='pt-6 flex items-center gap-2 text-muted-foreground'>
+          <Loader2 className='h-4 w-4 animate-spin' />
+          <Typography size='sm'>جاري تحميل حالة التسجيل...</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (vm.queryError) {
+    return (
+      <Alert alertType='ERROR'>
+        <AlertDescription>{vm.queryError}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!vm.overview || vm.overview.type === 'nothing') {
+    return null;
+  }
+
+  if (
+    vm.overview.groupStatus === 'INACTIVE' ||
+    vm.overview.myMembership.status === 'INACTIVE' ||
+    !!vm.overview.myMembership.removedAt
+  ) {
+    return null;
+  }
+
+  const { recordableDay, myRow } = vm.overview;
+
+  if (recordableDay.status === 'none') {
+    if (recordableDay.reason === 'all_recorded') {
+      return <AllRecordedMessage />;
+    }
+    return <BlockedByPreviousDayMessage blockedBy='الوقت الحالي' />;
+  }
+
+  const daysInWeek = myRow.days.map((day) => ({
+    dayNumber: day.dayNumber,
+    dayRecorded: day.wirdStatus !== 'MISSED',
+  }));
+
   return (
     <Card>
       <CardHeader className='pb-3'>
@@ -82,8 +103,8 @@ export function WirdRecordingCard({
           <div className='flex items-center gap-2'>
             <Checkbox
               id='check-all-awrad'
-              checked={allAwradChecked}
-              onCheckedChange={onCheckAllAwrad}
+              checked={vm.allAwradChecked}
+              onCheckedChange={(checked) => vm.setAllAwradChecked(checked === true)}
             />
             <Label htmlFor='check-all-awrad' className='cursor-pointer font-medium text-sm'>
               اسمع جميع الأوراد ✓
@@ -116,7 +137,10 @@ export function WirdRecordingCard({
         <div className='space-y-3'>
           <Label className='text-sm font-medium'>أين سمعت الورد؟</Label>
 
-          <Select value={readSource} onValueChange={onReadSourceChange}>
+          <Select
+            value={vm.readSource}
+            onValueChange={(value) => vm.setReadSource(value as typeof vm.readSource)}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -131,28 +155,33 @@ export function WirdRecordingCard({
             </SelectContent>
           </Select>
 
-          {/* Mate selector - only show for non-OUTSIDE_GROUP */}
-          {readSource !== READ_SOURCE_OPTIONS.OUTSIDE_GROUP && eligibleMates.length > 0 && (
-            <div className='space-y-2'>
-              <Label className='text-xs text-muted-foreground'>اختر الرفيق</Label>
-              <Select value={selectedMateId ?? ''} onValueChange={onMateChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder='اختر الرفيق' />
-                </SelectTrigger>
-                <SelectContent>
-                  {eligibleMates.map((mate) => (
-                    <SelectItem key={mate.studentId} value={mate.studentId}>
-                      {mate.studentName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {/* Mate selector - only needed when learner chooses a different mate */}
+          {vm.readSource === READ_SOURCE_OPTIONS.DIFFERENT_GROUP_MATE &&
+            vm.mateOptions.length > 0 && (
+              <div className='space-y-2'>
+                <Label className='text-xs text-muted-foreground'>اختر الرفيق</Label>
+                <Select value={vm.selectedMateId ?? ''} onValueChange={vm.setSelectedMateId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder='اختر الرفيق' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vm.mateOptions.map((mate) => (
+                      <SelectItem key={mate.studentId} value={mate.studentId}>
+                        {mate.studentName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
         </div>
 
-        <Button className='w-full' disabled={!canSubmit || isRecording} onClick={onSubmit}>
-          {isRecording ? (
+        <Button
+          className='w-full'
+          disabled={!vm.canSubmit || vm.isRecording}
+          onClick={vm.handleRecordWird}
+        >
+          {vm.isRecording ? (
             <>
               <Loader2 className='h-4 w-4 animate-spin' />
               جاري التسجيل...

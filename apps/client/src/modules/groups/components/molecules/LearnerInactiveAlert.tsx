@@ -28,7 +28,6 @@ export function LearnerInactiveAlert({ onRequestActivation }: Props) {
         </div>
         <div className='flex gap-2 flex-wrap'>
           <Button
-            asChild
             variant='outline'
             color='primary'
             size='sm'

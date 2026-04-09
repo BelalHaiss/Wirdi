@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Typography } from '@/components/ui/typography';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { GroupInfoCard } from '../components/molecules/GroupInfoCard';
 import { EditGroupModal } from '../components/organisms/EditGroupModal';
@@ -12,6 +13,7 @@ import { AddGroupLearnersModal } from '../components/organisms/AddGroupLearnersM
 import { EditMateDialog } from '../components/organisms/EditMateDialog';
 import { WeekTabs } from '../components/molecules/WeekTabs';
 import { WirdTrackingTable } from '../components/organisms/WirdTrackingTable';
+import { WirdRecordingCard } from '../components/molecules/WirdRecordingCard';
 import { useGroupDetailViewModel } from '../viewmodels/group-detail.viewmodel';
 import { useWirdTrackingViewModel } from '../viewmodels/wird-tracking.viewmodel';
 import { useGroupLearnersViewModel } from '../viewmodels/group-learners.viewmodel';
@@ -103,6 +105,21 @@ export default function AdminGroupDetailView({ groupId }: Props) {
               onEditLearner={handleEditLearner}
               onDeleteLearner={handleDeleteLearner}
             />
+
+            {learnersVm.removedMembers.length > 0 && (
+              <div className='rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-2'>
+                <Typography size='sm' weight='semibold' className='text-warning'>
+                  الطلاب المحذوفون من الحلقة
+                </Typography>
+                <div className='flex flex-wrap gap-2'>
+                  {learnersVm.removedMembers.map((member) => (
+                    <Badge key={member.id} variant='soft' color='warning'>
+                      {member.studentName}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -165,6 +182,8 @@ export default function AdminGroupDetailView({ groupId }: Props) {
           isLoading={learnersVm.isUpdatingLearner}
         />
       )}
+
+      <WirdRecordingCard groupId={groupId} />
     </div>
   );
 }

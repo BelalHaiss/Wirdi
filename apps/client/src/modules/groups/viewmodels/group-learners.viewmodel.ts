@@ -26,11 +26,18 @@ export function useGroupLearnersViewModel(groupId: string) {
     placeholderData: (prev) => prev,
   });
 
+  const removedLearnersQuery = useApiQuery<GroupMemberDto[]>({
+    queryKey: queryKeys.groups.removedLearners(groupId),
+    queryFn: () => groupService.getRemovedGroupLearners(groupId),
+    placeholderData: (prev) => prev,
+  });
+
   const createLearnersMutation = useApiMutation<CreateAndAssignLearnersDto, GroupMemberDto[]>({
     mutationFn: (dto) => groupService.createAndAssignLearners(dto),
     onSuccess: async () => {
       toast.success('تمت إضافة الطلاب بنجاح');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.removedLearners(groupId) });
       await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
       setIsAddModalOpen(false);
     },
@@ -52,6 +59,7 @@ export function useGroupLearnersViewModel(groupId: string) {
     onSuccess: async () => {
       toast.success('تم إزالة الطالب من المجموعة');
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.learners(groupId) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.removedLearners(groupId) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
       await queryClient.invalidateQueries({ queryKey: ['wirds', 'tracking', groupId] });
     },
@@ -73,6 +81,7 @@ export function useGroupLearnersViewModel(groupId: string) {
   });
 
   const members = learnersQuery.data?.data ?? [];
+  const removedMembers = removedLearnersQuery.data?.data ?? [];
   const total = learnersQuery.data?.meta?.total ?? 0;
   const totalPages = learnersQuery.data?.meta?.totalPages ?? 1;
 
@@ -95,11 +104,13 @@ export function useGroupLearnersViewModel(groupId: string) {
 
   return {
     members,
+    removedMembers,
     total,
     totalPages,
     page,
     setPage,
     isLoading: learnersQuery.isLoading,
+    isLoadingRemovedMembers: removedLearnersQuery.isLoading,
     queryError: learnersQuery.error?.message ?? null,
     // Add modal
     isAddModalOpen,

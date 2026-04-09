@@ -202,7 +202,51 @@ export default function GroupsView() {
         </section>
       ))}
 
-      {vm.groups.length === 0 ? (
+      {vm.isStudent && vm.removedGroups.length > 0 ? (
+        <section className='space-y-4'>
+          <div className='flex items-center gap-2'>
+            <Typography as='h2' size='lg' weight='semibold'>
+              المجموعات السابقة
+            </Typography>
+            <Typography as='span' size='sm' className='text-muted-foreground'>
+              ({vm.removedGroups.length})
+            </Typography>
+          </div>
+
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            {vm.removedGroups.map((group) => (
+              <Link
+                key={group.id}
+                to={`/groups/${group.id}`}
+                className='block transition-shadow hover:shadow-md h-full'
+              >
+                <Card className='h-full flex flex-col border-warning/30 bg-warning/5'>
+                  <CardContent className='space-y-3 p-4 flex-1 flex flex-col'>
+                    <div className='flex items-start justify-between'>
+                      <div className='rounded-lg bg-warning/15 p-2'>
+                        <Users className='h-5 w-5 text-warning' />
+                      </div>
+                      <Badge variant='soft' color='warning'>
+                        سابقاً
+                      </Badge>
+                    </div>
+
+                    <Typography as='h3' size='lg' weight='semibold' className='line-clamp-1'>
+                      {group.name}
+                    </Typography>
+
+                    <Typography as='p' size='xs' className='text-muted-foreground'>
+                      عرض للقراءة فقط
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {vm.groups.length === 0 && (!vm.isStudent || vm.removedGroups.length === 0) ? (
         <div className='py-12 text-center'>
           <Users className='mx-auto mb-3 h-12 w-12 opacity-30' />
           <Typography as='div' size='sm' className='text-muted-foreground'>

@@ -127,10 +127,26 @@ export const updateStudentWirdsSchema = (locale: ValidationLocale = 'ar') =>
   }) satisfies ZodType<UpdateStudentWirdsDto>;
 
 export const recordLearnerWirdSchema = (locale: ValidationLocale = 'ar') =>
-  z.object({
-    groupId: nonEmptyIdSchema(locale),
-    weekId: nonEmptyIdSchema(locale),
-    dayNumber: z.number().int().min(0).max(6),
-    readSource: z.enum(['DEFAULT_GROUP_MATE', 'DIFFERENT_GROUP_MATE', 'OUTSIDE_GROUP']),
-    mateId: z.string().trim().nullable().optional(),
-  }) satisfies ZodType<RecordLearnerWirdDto>;
+  z.discriminatedUnion('readSource', [
+    z.object({
+      groupId: nonEmptyIdSchema(locale),
+      weekId: nonEmptyIdSchema(locale),
+      dayNumber: z.number().int().min(0).max(6),
+      readSource: z.literal('DEFAULT_GROUP_MATE'),
+      mateId: z.null(),
+    }),
+    z.object({
+      groupId: nonEmptyIdSchema(locale),
+      weekId: nonEmptyIdSchema(locale),
+      dayNumber: z.number().int().min(0).max(6),
+      readSource: z.literal('DIFFERENT_GROUP_MATE'),
+      mateId: nonEmptyIdSchema(locale),
+    }),
+    z.object({
+      groupId: nonEmptyIdSchema(locale),
+      weekId: nonEmptyIdSchema(locale),
+      dayNumber: z.number().int().min(0).max(6),
+      readSource: z.literal('OUTSIDE_GROUP'),
+      mateId: z.null().optional(),
+    }),
+  ]) satisfies ZodType<RecordLearnerWirdDto>;

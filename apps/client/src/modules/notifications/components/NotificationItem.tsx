@@ -35,6 +35,11 @@ export function NotificationItem({ notification, onClose }: NotificationItemProp
       icon: 'text-red-600',
       ring: 'ring-red-500/30',
     },
+    LEARNER_REMOVED: {
+      bg: 'bg-linear-to-br from-red-500/10 to-red-600/5',
+      icon: 'text-red-600',
+      ring: 'ring-red-500/30',
+    },
     REQUEST_CREATED: {
       bg: 'bg-linear-to-br from-blue-500/10 to-blue-600/5',
       icon: 'text-blue-600',

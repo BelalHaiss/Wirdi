@@ -1,6 +1,6 @@
 {
-  "name": "الفردوس | Alfirdaws",
-  "short_name": "الفردوس",
+  "name": "النبراس",
+  "short_name": "النبراس",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,9 +9,9 @@
   "background_color": "#f5fbfc",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/logo.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

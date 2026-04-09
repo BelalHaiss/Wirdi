@@ -151,8 +151,6 @@ export class PrismaExceptionFilter implements ExceptionFilter {
           defaultError.statusCode = HttpStatus.SERVICE_UNAVAILABLE;
           defaultError.message = 'Database connection timeout';
           break;
-        default:
-          defaultError.message = exception.message;
       }
     }
 

@@ -35,6 +35,7 @@ export function ConfirmDialog({
 
   const handleConfirm = async (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsLoading(true);
     try {
       await onConfirm();
@@ -48,14 +49,25 @@ export function ConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>{cancelText}</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} disabled={isLoading} intent={intent}>
+          <AlertDialogCancel
+            className=' z-50'
+            disabled={isLoading}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {cancelText}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className=' z-50'
+            onClick={handleConfirm}
+            disabled={isLoading}
+            intent={intent}
+          >
             {isLoading ? 'جارٍ المعالجة...' : confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>

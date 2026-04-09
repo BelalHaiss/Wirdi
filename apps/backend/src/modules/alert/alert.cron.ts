@@ -136,7 +136,7 @@ export class AlertCron {
 
     // Get all ACTIVE group members
     const members = await tx.groupMember.findMany({
-      where: { groupId, status: 'ACTIVE' },
+      where: { groupId, status: 'ACTIVE', removedAt: null },
       select: { studentId: true },
     });
 
@@ -258,7 +258,7 @@ export class AlertCron {
 
     // Get all ACTIVE members in the group
     const members = await tx.groupMember.findMany({
-      where: { groupId, status: 'ACTIVE' },
+      where: { groupId, status: 'ACTIVE', removedAt: null },
       select: { studentId: true },
     });
 

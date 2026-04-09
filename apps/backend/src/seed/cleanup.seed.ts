@@ -3,6 +3,9 @@ import { PrismaClient } from 'generated/prisma/client';
 export async function cleanUpDatabase(prisma: PrismaClient): Promise<void> {
   try {
     await prisma.$transaction(async (tx) => {
+      await tx.notification.deleteMany();
+      await tx.alert.deleteMany();
+      await tx.excuse.deleteMany();
       await tx.studentWird.deleteMany();
       await tx.scheduleImage.deleteMany();
       await tx.week.deleteMany();

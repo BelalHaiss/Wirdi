@@ -101,6 +101,8 @@ export interface GroupMemberDto {
   notes?: string;
   status: 'ACTIVE' | 'INACTIVE';
   joinedAt: ISODateString;
+  removedAt?: ISODateString;
+  removedById?: string;
   /** ISO datetime of the active excuse expiry, undefined if no active excuse */
   activeExcuseExpiresAt?: ISODateString;
 }
@@ -279,24 +281,44 @@ export interface UpdateStudentWirdsDto {
  */
 export type RecordableDayStatus =
   | { status: 'available'; dayNumber: number; isLate: boolean }
-  | { status: 'blocked'; reason: 'previous_day_unrecorded'; blockedByDay: number }
   | { status: 'none'; reason: 'all_recorded' | 'upcoming' };
 
 /** Response for GET /student-wird/my-group/:groupId/overview */
-export interface LearnerGroupOverviewDto {
-  week: WeekStatusFlagsDto;
-  groupStatus: GroupStatus;
-  myRow: GroupWirdTrackingRowDto;
-  myMembership: GroupMemberDto;
-  recordableDay: RecordableDayStatus;
-}
+export type LearnerGroupOverviewDto =
+  | {
+      type: 'nothing';
+      reason: 'not_member' | 'removed' | 'no_week';
+    }
+  | {
+      type: 'overview';
+      week: WeekStatusFlagsDto;
+      groupStatus: GroupStatus;
+      awrad: AwradType[];
+      myRow: GroupWirdTrackingRowDto;
+      rows: GroupWirdTrackingRowDto[];
+      myMembership: GroupMemberDto;
+      recordableDay: RecordableDayStatus;
+    };
 
 /** Payload for POST /student-wird/my-wird */
-export interface RecordLearnerWirdDto {
+export type RecordLearnerWirdDto = {
   groupId: string;
   weekId: string;
   dayNumber: number;
-  readSource: ReadSourceType;
-  /** Mate the learner read upon when source is a group mate. */
-  mateId?: string | null;
-}
+} & (
+  | {
+      readSource: 'DIFFERENT_GROUP_MATE';
+      /** Required when reading on a different mate. */
+      mateId: string;
+    }
+  | {
+      readSource: 'DEFAULT_GROUP_MATE';
+      /** Must be null for default mate; server resolves from membership. */
+      mateId: null;
+    }
+  | {
+      readSource: 'OUTSIDE_GROUP';
+      /** No mate is expected when read source is outside group. */
+      mateId?: null;
+    }
+);

@@ -83,6 +83,12 @@ export const groupService = {
     return apiClient.get<GroupMemberDto[]>(`/group/${groupId}/learners`);
   },
 
+  getRemovedGroupLearners: async (
+    groupId: string
+  ): Promise<UnifiedApiResponse<GroupMemberDto[]>> => {
+    return apiClient.get<GroupMemberDto[]>(`/group-member/${groupId}/removed`);
+  },
+
   createAndAssignLearners: async (
     dto: CreateAndAssignLearnersDto
   ): Promise<UnifiedApiResponse<GroupMemberDto[]>> => {
@@ -116,4 +122,7 @@ export const groupService = {
 
   getMyGroups: (): Promise<UnifiedApiResponse<GroupDto[]>> =>
     apiClient.get<GroupDto[]>('/group/student/my-groups'),
+
+  getRemovedGroups: (): Promise<UnifiedApiResponse<GroupDto[]>> =>
+    apiClient.get<GroupDto[]>('/group/student/removed-groups'),
 };

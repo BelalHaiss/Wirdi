@@ -24,6 +24,7 @@ import {
   createWeekScheduleSchema,
   updateGroupSchema,
   updateScheduleImageSchema,
+  type GroupDto,
   type CreateGroupDto,
   type CreateWeekScheduleDto,
   type UpdateGroupDto,
@@ -126,13 +127,19 @@ export class GroupController {
 
   @Get('student/eligible-for-activation')
   @Roles([UserRole.STUDENT])
-  getEligibleActivationGroups(@User('id') studentId: string) {
+  getEligibleActivationGroups(@User('id') studentId: string): Promise<GroupDto[]> {
     return this.groupService.getStudentInactiveGroups(studentId);
   }
 
   @Get('student/my-groups')
   @Roles([UserRole.STUDENT])
-  getMyGroups(@User('id') studentId: string) {
+  getMyGroups(@User('id') studentId: string): Promise<GroupDto[]> {
     return this.groupService.getStudentActiveGroups(studentId);
+  }
+
+  @Get('student/removed-groups')
+  @Roles([UserRole.STUDENT])
+  async getRemovedGroups(@User('id') studentId: string): Promise<GroupDto[]> {
+    return await this.groupService.getStudentRemovedGroups(studentId);
   }
 }
