@@ -9,6 +9,7 @@ async function bootstrapAdmin() {
     create: {
       username: 'admin',
       name: 'System Admin',
+      nameNormalized: 'System Admin',
       role: 'ADMIN',
       password: hashedPassword,
       timezone: 'Africa/Cairo',

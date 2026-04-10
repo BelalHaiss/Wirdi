@@ -14,7 +14,7 @@ model User {
   id             String   @id @default(ulid())
   username       String   @unique @db.VarChar(50)
   name           String   @db.VarChar(100)
-  nameNormalized String?  @map("name_normalized") @db.VarChar(100)
+  nameNormalized String   @map("name_normalized") @db.VarChar(100)
   password       String   @db.VarChar(255)
   role           UserRole
   timezone       String   @default("Africa/Cairo") @db.VarChar(50)
