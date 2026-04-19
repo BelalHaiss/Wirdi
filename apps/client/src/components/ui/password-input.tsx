@@ -26,6 +26,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
           className={cn('pr-10', className)}
           ref={ref}
           {...props}
+          dir='ltr'
         />
         <button
           type='button'

@@ -17,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 import { cn } from '@/lib/utils';
 import { AppLogo } from '@/components/AppLogo';
+import { FontSizeControl } from '@/components/FontSizeControl';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Typography } from '@/components/ui/typography';
@@ -177,6 +178,11 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
                 {isDark ? 'الوضع النهاري' : 'الوضع الليلي'}
               </Typography>
             </Button>
+          </div>
+
+          {/* Font Size Controls */}
+          <div className='px-3 py-2 border-t border-border'>
+            <FontSizeControl />
           </div>
 
           {/* Logout */}

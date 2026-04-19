@@ -141,7 +141,7 @@ function FormFieldComponent<T extends FieldValues>({
     };
 
     if (type === 'password') {
-      return <PasswordInput {...commonProps} />;
+      return <PasswordInput {...commonProps} dir='ltr' />;
     }
 
     return <Input type={type} {...commonProps} />;

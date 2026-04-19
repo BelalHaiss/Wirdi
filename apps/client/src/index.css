@@ -36,6 +36,7 @@
 }
 
 :root {
+  --app-font-scale: 100%;
   --radius: 0.625rem;
   --background: oklch(0.995 0.004 197);
   --foreground: oklch(0.205 0.01 218);
@@ -97,6 +98,7 @@
 @layer base {
   html {
     color-scheme: light;
+    font-size: var(--app-font-scale, 100%);
   }
   html.dark {
     color-scheme: dark;

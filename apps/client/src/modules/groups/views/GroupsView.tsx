@@ -19,11 +19,20 @@ const STATUS_LABELS: Record<GroupStatus, string> = {
 
 const STATUS_ORDER: GroupStatus[] = ['ACTIVE', 'INACTIVE'];
 
+const arabicGroupNameCollator = new Intl.Collator('ar', {
+  sensitivity: 'base',
+  numeric: true,
+});
+
+function sortGroupsByArabicName(groups: GroupDto[]): GroupDto[] {
+  return [...groups].sort((a, b) => arabicGroupNameCollator.compare(a.name, b.name));
+}
+
 function groupsByStatus(groups: GroupDto[]) {
   return STATUS_ORDER.map((status) => ({
     status,
     label: STATUS_LABELS[status],
-    groups: groups.filter((g) => g.status === status),
+    groups: sortGroupsByArabicName(groups.filter((g) => g.status === status)),
   }));
 }
 
@@ -214,7 +223,7 @@ export default function GroupsView() {
           </div>
 
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            {vm.removedGroups.map((group) => (
+            {sortGroupsByArabicName(vm.removedGroups).map((group) => (
               <Link
                 key={group.id}
                 to={`/groups/${group.id}`}
