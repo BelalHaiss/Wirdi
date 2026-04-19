@@ -40,6 +40,7 @@ type WirdTrackingTableProps = {
   userTimezone: TimeZoneType;
   canManage: boolean;
   isUpcomingWeek?: boolean;
+  staffUserIds?: Set<string>;
   onEditMate?: (row: GroupWirdTrackingRowDto) => void;
   onEditLearner?: (studentId: string) => void;
   onDeleteLearner?: (memberId: string) => Promise<void>;
@@ -53,6 +54,7 @@ export function WirdTrackingTable({
   userTimezone,
   canManage,
   isUpcomingWeek,
+  staffUserIds,
   onEditMate,
   onEditLearner,
   onDeleteLearner,
@@ -121,7 +123,7 @@ export function WirdTrackingTable({
                 canManage={canManage}
                 isUpcomingWeek={isUpcomingWeek}
                 onEditMate={onEditMate}
-                onEditLearner={onEditLearner}
+                onEditLearner={staffUserIds?.has(row.studentId) ? undefined : onEditLearner}
                 onDeleteLearner={onDeleteLearner}
               />
             ))

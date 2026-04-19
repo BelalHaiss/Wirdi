@@ -3,14 +3,12 @@ import { toast } from 'sonner';
 import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { queryClient, queryKeys } from '@/lib/query-client';
-import { useApp } from '@/contexts/AppContext';
 import { userService } from '@/modules/users/services/user.service';
 import { groupService } from '../services/group.service';
 import type { GroupDto, UpdateGroupDto, StaffUserDto } from '@wirdi/shared';
 
 export function useGroupDetailViewModel(groupId: string) {
-  const { user } = useApp();
-  const isEditable = user?.role === 'ADMIN' || user?.role === 'MODERATOR';
+  const isEditable = true;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -23,7 +21,7 @@ export function useGroupDetailViewModel(groupId: string) {
   const staffQuery = useApiQuery<StaffUserDto[]>({
     queryKey: queryKeys.users.list({ scope: 'staff' }),
     queryFn: userService.getStaffUsers,
-    enabled: isEditModalOpen && isEditable,
+    enabled: isEditable,
   });
 
   const updateGroupMutation = useApiMutation<UpdateGroupDto, GroupDto>({

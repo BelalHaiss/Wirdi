@@ -68,6 +68,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
   // Determine if the selected week is upcoming to disable manual editing
   const selectedWeek = wirdVm.weeks.find((w) => w.id === wirdVm.selectedWeekId);
   const isSelectedWeekUpcoming = selectedWeek?.isUpcoming ?? false;
+  const staffUserIds = new Set(vm.staffUsers.map((staffUser) => staffUser.id));
 
   return (
     <div className='space-y-6'>
@@ -101,6 +102,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
               userTimezone={vm.group.timezone}
               canManage={true}
               isUpcomingWeek={isSelectedWeekUpcoming}
+              staffUserIds={staffUserIds}
               onEditMate={handleEditMate}
               onEditLearner={handleEditLearner}
               onDeleteLearner={handleDeleteLearner}
