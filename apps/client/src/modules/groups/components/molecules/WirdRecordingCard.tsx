@@ -1,3 +1,4 @@
+import { Controller } from 'react-hook-form';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,12 +26,6 @@ const DAY_LABELS: Record<number, string> = {
   4: 'الخميس',
 };
 
-const READ_SOURCE_OPTIONS = {
-  DEFAULT_GROUP_MATE: 'DEFAULT_GROUP_MATE',
-  DIFFERENT_GROUP_MATE: 'DIFFERENT_GROUP_MATE',
-  OUTSIDE_GROUP: 'OUTSIDE_GROUP',
-} as const;
-
 type Props = { groupId: string };
 
 export function WirdRecordingCard({ groupId }: Props) {
@@ -55,9 +50,7 @@ export function WirdRecordingCard({ groupId }: Props) {
     );
   }
 
-  if (!vm.overview || vm.overview.type === 'nothing') {
-    return null;
-  }
+  if (!vm.overview || vm.overview.type === 'nothing') return null;
 
   if (
     vm.overview.groupStatus === 'INACTIVE' ||
@@ -70,9 +63,7 @@ export function WirdRecordingCard({ groupId }: Props) {
   const { recordableDay, myRow } = vm.overview;
 
   if (recordableDay.status === 'none') {
-    if (recordableDay.reason === 'all_recorded') {
-      return <AllRecordedMessage />;
-    }
+    if (recordableDay.reason === 'all_recorded') return <AllRecordedMessage />;
     return <BlockedByPreviousDayMessage blockedBy='الوقت الحالي' />;
   }
 
@@ -80,6 +71,9 @@ export function WirdRecordingCard({ groupId }: Props) {
     dayNumber: day.dayNumber,
     dayRecorded: day.wirdStatus !== 'MISSED',
   }));
+
+  const awradError =
+    vm.form.formState.errors.awrad?.root?.message ?? vm.form.formState.errors.awrad?.message;
 
   return (
     <Card>
@@ -98,88 +92,122 @@ export function WirdRecordingCard({ groupId }: Props) {
         </div>
       </CardHeader>
       <CardContent className='space-y-5'>
-        {/* Single all-or-none awrad checkbox */}
-        <div className='space-y-3'>
-          <div className='flex items-center gap-2'>
-            <Checkbox
-              id='check-all-awrad'
-              checked={vm.allAwradChecked}
-              onCheckedChange={(checked) => vm.setAllAwradChecked(checked === true)}
-            />
-            <Label htmlFor='check-all-awrad' className='cursor-pointer font-medium text-sm'>
-              اسمع جميع الأوراد ✓
-            </Label>
-          </div>
-
-          {/* Show unrecorded days warning */}
-          {daysInWeek.some((d) => !d.dayRecorded) && (
-            <div className='bg-warning/5 border border-warning/30 rounded-lg p-3 space-y-2'>
-              <Typography size='xs' weight='medium' className='text-warning'>
-                الأيام التي لم تسجل فيها:
-              </Typography>
-              <div className='flex flex-wrap gap-2'>
-                {daysInWeek
-                  .filter((d) => !d.dayRecorded)
-                  .map((d) => (
-                    <span
-                      key={d.dayNumber}
-                      className='text-xs bg-warning/10 text-warning px-2 py-1 rounded'
+        {/* Individual awrad checkboxes */}
+        <div className='space-y-2'>
+          <Label className='text-sm font-medium'>الأوراد </Label>
+          <div className='space-y-2'>
+            {vm.awradList.map((wirdName, index) => (
+              <Controller
+                key={wirdName}
+                control={vm.form.control}
+                name={`awrad.${index}` as `awrad.${number}`}
+                render={({ field }) => (
+                  <div className='flex items-center gap-2'>
+                    <Checkbox
+                      id={`awrad-${index}`}
+                      checked={!!field.value}
+                      onCheckedChange={(checked) => field.onChange(!!checked)}
+                    />
+                    <Label
+                      htmlFor={`awrad-${index}`}
+                      className='cursor-pointer text-sm font-normal'
                     >
-                      {DAY_LABELS[d.dayNumber]}
-                    </span>
-                  ))}
-              </div>
-            </div>
+                      {wirdName}
+                    </Label>
+                  </div>
+                )}
+              />
+            ))}
+          </div>
+          {awradError && (
+            <Typography size='xs' className='text-danger'>
+              {awradError}
+            </Typography>
           )}
         </div>
 
+        {/* Show unrecorded days warning */}
+        {daysInWeek.some((d) => !d.dayRecorded) && (
+          <div className='bg-warning/5 border border-warning/30 rounded-lg p-3 space-y-2'>
+            <Typography size='xs' weight='medium' className='text-warning'>
+              الأيام التي لم تسجل فيها:
+            </Typography>
+            <div className='flex flex-wrap gap-2'>
+              {daysInWeek
+                .filter((d) => !d.dayRecorded)
+                .map((d) => (
+                  <span
+                    key={d.dayNumber}
+                    className='text-xs bg-warning/10 text-warning px-2 py-1 rounded'
+                  >
+                    {DAY_LABELS[d.dayNumber]}
+                  </span>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Read source selector */}
-        <div className='space-y-3'>
+        <div className='space-y-2'>
           <Label className='text-sm font-medium'>أين سمعت الورد؟</Label>
-
-          <Select
-            value={vm.readSource}
-            onValueChange={(value) => vm.setReadSource(value as typeof vm.readSource)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={READ_SOURCE_OPTIONS.DEFAULT_GROUP_MATE}>
-                سمعت على الرفيق الافتراضي
-              </SelectItem>
-              <SelectItem value={READ_SOURCE_OPTIONS.DIFFERENT_GROUP_MATE}>
-                سمعت على رفيق مختلف
-              </SelectItem>
-              <SelectItem value={READ_SOURCE_OPTIONS.OUTSIDE_GROUP}>سمعت خارج المجموعة</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Mate selector - only needed when learner chooses a different mate */}
-          {vm.readSource === READ_SOURCE_OPTIONS.DIFFERENT_GROUP_MATE &&
-            vm.mateOptions.length > 0 && (
-              <div className='space-y-2'>
-                <Label className='text-xs text-muted-foreground'>اختر الرفيق</Label>
-                <Select value={vm.selectedMateId ?? ''} onValueChange={vm.setSelectedMateId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder='اختر الرفيق' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vm.mateOptions.map((mate) => (
-                      <SelectItem key={mate.studentId} value={mate.studentId}>
-                        {mate.studentName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <Controller
+            control={vm.form.control}
+            name='readSource'
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {vm.hasMate && <SelectItem value='DEFAULT_GROUP_MATE'>رفيقي الدائم</SelectItem>}
+                  <SelectItem value='DIFFERENT_GROUP_MATE'>متطوع من داخل المجموعة</SelectItem>
+                  <SelectItem value='OUTSIDE_GROUP'>متطوع من منصة النبراس</SelectItem>
+                </SelectContent>
+              </Select>
             )}
+          />
         </div>
+
+        {/* Mate selector — only when reading on a different group mate */}
+        {vm.readSource === 'DIFFERENT_GROUP_MATE' && (
+          <div className='space-y-2'>
+            <Label className='text-xs text-muted-foreground'>اختر الرفيق</Label>
+            <Controller
+              control={vm.form.control}
+              name='mateId'
+              render={({ field, fieldState }) => (
+                <>
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={(v) => field.onChange(v || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='اختر الرفيق' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vm.mateOptions.map((mate) => (
+                        <SelectItem key={mate.value} value={mate.value}>
+                          {mate.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {fieldState.error && (
+                    <Typography size='xs' className='text-danger'>
+                      {fieldState.error.message}
+                    </Typography>
+                  )}
+                </>
+              )}
+            />
+          </div>
+        )}
 
         <Button
           className='w-full'
-          disabled={!vm.canSubmit || vm.isRecording}
-          onClick={vm.handleRecordWird}
+          color='success'
+          disabled={vm.isRecording}
+          onClick={vm.handleSubmit}
         >
           {vm.isRecording ? (
             <>

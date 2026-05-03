@@ -46,7 +46,7 @@ export function StudentWirdRow({
     <>
       <TableRow>
         {/* Name */}
-        <TableCell className='px-4 py-3 font-medium text-right'>
+        <TableCell className='px-4 py-3 font-medium text-right sticky right-0 z-10 bg-card'>
           <div className='flex items-center gap-2'>
             <span>{row.studentName}</span>
             {row.studentStatus === 'INACTIVE' && (

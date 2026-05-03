@@ -1,0 +1,162 @@
+import { useState, useCallback } from 'react';
+import { useForm, useFieldArray, type Resolver } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { readSheet } from 'read-excel-file/browser';
+import type { CellValue, Row } from 'read-excel-file/browser';
+import {
+  createAndAssignLearnersSchema,
+  DEFAULT_TIMEZONE,
+  LEARNER_DETAIL_FIELDS,
+  normalizeArabic,
+} from '@wirdi/shared';
+import type { CreateAndAssignLearnersDto, LearnerDetailsDto } from '@wirdi/shared';
+
+type FormValues = Pick<CreateAndAssignLearnersDto, 'learners'>;
+
+/** Columns that are required in the Excel file */
+const REQUIRED_EXCEL_COLUMNS = ['الاسم', 'رقم الهاتف'] as const;
+
+type UseImportLearnersViewModelArgs = {
+  groupId: string;
+  onSubmit: (dto: CreateAndAssignLearnersDto) => Promise<void>;
+  onClose: () => void;
+};
+
+export function useImportLearnersViewModel({
+  groupId,
+  onSubmit,
+  onClose,
+}: UseImportLearnersViewModelArgs) {
+  const [step, setStep] = useState<'upload' | 'preview'>('upload');
+  const [blockingErrors, setBlockingErrors] = useState<string[]>([]);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(
+      createAndAssignLearnersSchema('ar').omit({ groupId: true })
+    ) as unknown as Resolver<FormValues>,
+    defaultValues: { learners: [] },
+    mode: 'onChange',
+  });
+
+  const fieldArray = useFieldArray({ control: form.control, name: 'learners' });
+
+  /** Normalize Arabic column header for comparison */
+  const normalizeHeader = (h: unknown): string =>
+    typeof h === 'string' ? normalizeArabic(h.trim()) : '';
+
+  /** Map a raw Excel row (header→value map) to a DTO learner entry */
+  const mapRowToLearner = (
+    row: Record<string, CellValue | null>
+  ): FormValues['learners'][number] => {
+    // Build a normalized-key lookup
+    const normalized: Record<string, CellValue | null> = {};
+    for (const [k, v] of Object.entries(row)) {
+      normalized[normalizeArabic(k.trim())] = v;
+    }
+
+    const get = (col: string): string | undefined => {
+      const val = normalized[normalizeArabic(col)];
+      return val != null && val !== '' ? String(val).trim() : undefined;
+    };
+
+    const details: LearnerDetailsDto = {};
+    for (const field of LEARNER_DETAIL_FIELDS) {
+      const val = get(field.excelColumn);
+      if (val) details[field.key] = val;
+    }
+
+    return {
+      name: get('الاسم') ?? '',
+      username: get('رقم الهاتف') ?? '',
+      timezone: DEFAULT_TIMEZONE,
+      notes: undefined,
+      details: Object.keys(details).length > 0 ? details : undefined,
+    };
+  };
+
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      if (!file.name.toLowerCase().endsWith('.xlsx')) {
+        toast.error('يجب أن يكون الملف بصيغة xlsx. فقط');
+        return;
+      }
+
+      const rawRows: Row[] = await readSheet(file, { dateFormat: 'YYYY-MM-DD' });
+      if (rawRows.length < 2) {
+        setBlockingErrors(['الملف فارغ أو لا يحتوي على بيانات']);
+        setStep('preview');
+        return;
+      }
+
+      const headerRow = rawRows[0].map((h) => (h != null ? String(h) : ''));
+      const normalizedHeaders = headerRow.map(normalizeHeader);
+
+      // Validate required columns
+      const errors: string[] = [];
+      for (const col of REQUIRED_EXCEL_COLUMNS) {
+        if (!normalizedHeaders.includes(normalizeArabic(col))) {
+          errors.push(`العمود المطلوب "${col}" غير موجود في الملف`);
+        }
+      }
+      setBlockingErrors(errors);
+
+      // Map data rows to learner DTOs
+      const dataRows = rawRows
+        .slice(1)
+        .filter((row) => row.some((cell) => cell != null && cell !== ''));
+
+      const learners = dataRows.map((row) => {
+        const rowObj: Record<string, CellValue | null> = {};
+        headerRow.forEach((h, i) => {
+          rowObj[h] = row[i];
+        });
+        return mapRowToLearner(rowObj);
+      });
+
+      form.reset({ learners });
+      setStep('preview');
+    },
+    [form]
+  );
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    await onSubmit({
+      groupId,
+      learners: values.learners.map((l) => ({
+        name: l.name,
+        username: l.username,
+        timezone: l.timezone,
+        notes: l.notes || undefined,
+        details: l.details,
+      })),
+    });
+    handleClose();
+  });
+
+  const handleClose = () => {
+    form.reset({ learners: [] });
+    setStep('upload');
+    setBlockingErrors([]);
+    onClose();
+  };
+
+  const handleBack = () => {
+    form.reset({ learners: [] });
+    setStep('upload');
+    setBlockingErrors([]);
+  };
+
+  return {
+    step,
+    blockingErrors,
+    control: form.control,
+    fields: fieldArray.fields,
+    formState: form.formState,
+    learnersCount: fieldArray.fields.length,
+    handleFileSelect,
+    handleSubmit,
+    handleClose,
+    handleBack,
+  };
+}

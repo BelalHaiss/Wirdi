@@ -17,14 +17,14 @@ export function useAddGroupLearnersModal({
   onSubmit,
   onClose,
 }: UseAddGroupLearnersModalArgs) {
-  const [tab, setTab] = useState<'new' | 'existing'>('new');
+  const [tab, setTab] = useState<'new' | 'existing' | 'import'>('new');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(
       createAndAssignLearnersSchema('ar').omit({ groupId: true })
     ) as unknown as Resolver<FormValues>,
     defaultValues: {
-      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
+      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '', details: {} }],
     },
   });
 
@@ -35,7 +35,6 @@ export function useAddGroupLearnersModal({
     setTab('new');
     onClose();
   };
-
   const handleSubmit = form.handleSubmit(async (values) => {
     await onSubmit({
       groupId,
@@ -44,18 +43,26 @@ export function useAddGroupLearnersModal({
         username: l.username,
         timezone: l.timezone,
         notes: l.notes || undefined,
+        details: l.details && Object.values(l.details).some(Boolean) ? l.details : undefined,
       })),
     });
     form.reset();
   });
 
   const addLearner = () =>
-    fieldArray.append({ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' });
+    fieldArray.append({
+      name: '',
+      username: '',
+      timezone: DEFAULT_TIMEZONE,
+      notes: '',
+      details: {},
+    });
 
   return {
     tab,
     setTab,
     control: form.control,
+    formState: form.formState,
     handleSubmit,
     handleClose,
     fields: fieldArray.fields,

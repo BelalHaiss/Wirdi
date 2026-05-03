@@ -1,4 +1,4 @@
-import { TIMEZONES } from '@wirdi/shared';
+import { LEARNER_DETAIL_FIELDS, TIMEZONES } from '@wirdi/shared';
 import { FormField } from '@/components/forms/form-field';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -113,6 +113,19 @@ export function StudentMainInfoModal({
               disabled={vm.isViewMode || isLoading}
               rows={4}
             />
+
+            {LEARNER_DETAIL_FIELDS.map((field) => (
+              <FormField
+                key={field.key}
+                control={vm.form.control}
+                name={`details.${field.key}`}
+                id={`student-details-${field.key}`}
+                label={field.label}
+                type='text'
+                placeholder={field.label}
+                disabled={vm.isViewMode || isLoading}
+              />
+            ))}
 
             {vm.isViewMode ? (
               <LearnerGroupsReadonlyPanel

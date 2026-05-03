@@ -88,6 +88,15 @@ export const createAndAssignLearnersSchema = (locale: ValidationLocale = 'ar') =
           username: usernameAccountSchema(locale),
           timezone: timezoneSchema(locale),
           notes: notesSchema(locale).optional(),
+          details: z
+            .object({
+              age: z.string().trim().optional(),
+              country: z.string().trim().optional(),
+              platform: z.string().trim().optional(),
+              schedule: z.string().trim().optional(),
+              recitation: z.string().trim().optional(),
+            })
+            .optional(),
         })
       )
       .min(1, locale === 'ar' ? 'يجب إضافة متعلم واحد على الأقل' : 'At least one learner required'),

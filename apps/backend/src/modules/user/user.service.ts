@@ -13,6 +13,7 @@ import {
   CreateLearnerDto,
   DEFAULT_TIMEZONE,
   ISODateString,
+  LearnerDetailsDto,
   LearnerDto,
   normalizeArabic,
   QueryLearnersDto,
@@ -239,6 +240,7 @@ export class UserService {
         password: await argon.hash('12345678'),
         timezone: dto.timezone ?? DEFAULT_TIMEZONE,
         notes: dto.contact?.notes,
+        details: (dto.contact?.details as Prisma.InputJsonValue) ?? Prisma.JsonNull,
       },
     });
 
@@ -250,7 +252,6 @@ export class UserService {
     const searchQuery = query.search?.trim();
     const normalizedSearch = searchQuery ? normalizeArabic(searchQuery) : undefined;
     const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
-    console.log({ normalizedSearch });
     const where: Prisma.UserWhereInput = {
       role: UserRole.STUDENT,
       ...(normalizedSearch
@@ -287,6 +288,7 @@ export class UserService {
           role: true,
           timezone: true,
           notes: true,
+          details: true,
           createdAt: true,
           updatedAt: true,
           groupMemberships: {
@@ -323,6 +325,7 @@ export class UserService {
         role: true,
         timezone: true,
         notes: true,
+        details: true,
         createdAt: true,
         updatedAt: true,
         groupMemberships: {
@@ -375,6 +378,10 @@ export class UserService {
 
     if (dto.contact?.notes !== undefined) {
       data.notes = dto.contact.notes;
+    }
+
+    if (dto.contact?.details !== undefined) {
+      data.details = (dto.contact.details as Prisma.InputJsonValue) ?? Prisma.JsonNull;
     }
 
     const updatedLearner = await this.prismaService.user.update({
@@ -473,6 +480,7 @@ export class UserService {
     role: UserRole;
     timezone: string;
     notes: string | null;
+    details?: Prisma.JsonValue | null;
     createdAt: Date;
     updatedAt: Date;
     groupMemberships?: { removedAt: Date | null; group: { id: string; name: string } }[];
@@ -491,6 +499,7 @@ export class UserService {
       timezone: user.timezone as TimeZoneType,
       contact: {
         notes: user.notes ?? undefined,
+        details: (user.details as LearnerDetailsDto) ?? undefined,
       },
       groupCount: groups.filter((group) => !group.removedAt).length,
       groups,

@@ -69,7 +69,7 @@ export function EditMateDialog({
               <SelectValue placeholder='اختر الزميل...' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NO_MATE_VALUE}>بدون زميل</SelectItem>
+              <SelectItem value={NO_MATE_VALUE}>بدون رفيق</SelectItem>
               {eligibleMates.map((mate) => (
                 <SelectItem key={mate.studentId} value={mate.studentId}>
                   {mate.studentName}

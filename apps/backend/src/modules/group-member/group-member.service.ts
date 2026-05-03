@@ -6,12 +6,13 @@ import {
   AssignLearnersToGroupDto,
   CreateAndAssignLearnersDto,
   GroupMemberDto,
+  LearnerDetailsDto,
   LearnerDto,
   UpdateMemberMateDto,
   TimeZoneType,
   normalizeArabic,
 } from '@wirdi/shared';
-import { UserRole } from 'generated/prisma/client';
+import { Prisma, UserRole } from 'generated/prisma/client';
 
 @Injectable()
 export class GroupMemberService {
@@ -39,13 +40,16 @@ export class GroupMemberService {
             timezone: learnerData.timezone,
             role: UserRole.STUDENT,
             notes: learnerData.notes,
+            details: (learnerData.details as Prisma.InputJsonValue) ?? Prisma.JsonNull,
           },
         });
 
         const member = await tx.groupMember.create({
           data: { groupId: dto.groupId, studentId: student.id },
           include: {
-            student: { select: { name: true, username: true, timezone: true, notes: true } },
+            student: {
+              select: { name: true, username: true, timezone: true, notes: true, details: true },
+            },
             mate: { select: { name: true } },
           },
         });
@@ -60,6 +64,7 @@ export class GroupMemberService {
           mateId: member.mateId ?? undefined,
           mateName: member.mate?.name ?? undefined,
           notes: member.student.notes ?? undefined,
+          details: (member.student.details as LearnerDetailsDto) ?? undefined,
           joinedAt: member.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
           status: member.status,
           activeExcuseExpiresAt: undefined,
@@ -89,7 +94,9 @@ export class GroupMemberService {
             joinedAt: new Date(),
           },
           include: {
-            student: { select: { name: true, username: true, timezone: true, notes: true } },
+            student: {
+              select: { name: true, username: true, timezone: true, notes: true, details: true },
+            },
             mate: { select: { name: true } },
           },
         })
@@ -106,6 +113,7 @@ export class GroupMemberService {
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
+      details: (m.student.details as LearnerDetailsDto) ?? undefined,
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       status: m.status,
       activeExcuseExpiresAt: undefined,
@@ -120,7 +128,9 @@ export class GroupMemberService {
       where: { id: memberId },
       data: { mateId: dto.mateId },
       include: {
-        student: { select: { name: true, username: true, timezone: true, notes: true } },
+        student: {
+          select: { name: true, username: true, timezone: true, notes: true, details: true },
+        },
         mate: { select: { name: true } },
       },
     });
@@ -135,6 +145,7 @@ export class GroupMemberService {
       mateId: updated.mateId ?? undefined,
       mateName: updated.mate?.name ?? undefined,
       notes: updated.student.notes ?? undefined,
+      details: (updated.student.details as LearnerDetailsDto) ?? undefined,
       joinedAt: updated.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       status: updated.status,
       activeExcuseExpiresAt: undefined,
@@ -242,7 +253,10 @@ export class GroupMemberService {
       name: u.name,
       role: u.role,
       timezone: u.timezone as TimeZoneType,
-      contact: { notes: u.notes ?? undefined },
+      contact: {
+        notes: u.notes ?? undefined,
+        details: (u.details as LearnerDetailsDto) ?? undefined,
+      },
       createdAt: u.createdAt.toISOString() as LearnerDto['createdAt'],
       updatedAt: u.updatedAt.toISOString() as LearnerDto['updatedAt'],
     }));
@@ -253,7 +267,9 @@ export class GroupMemberService {
       where: { groupId, removedAt: { not: null } },
       orderBy: { removedAt: 'desc' },
       include: {
-        student: { select: { name: true, username: true, timezone: true, notes: true } },
+        student: {
+          select: { name: true, username: true, timezone: true, notes: true, details: true },
+        },
         mate: { select: { name: true } },
       },
     });
@@ -268,6 +284,7 @@ export class GroupMemberService {
       mateId: member.mateId ?? undefined,
       mateName: member.mate?.name ?? undefined,
       notes: member.student.notes ?? undefined,
+      details: (member.student.details as LearnerDetailsDto) ?? undefined,
       joinedAt: member.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       status: member.status,
       removedAt: member.removedAt

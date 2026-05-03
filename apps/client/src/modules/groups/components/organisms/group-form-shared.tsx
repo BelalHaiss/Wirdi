@@ -10,7 +10,11 @@ import {
 import { TIMEZONES } from '@wirdi/shared';
 import type { AwradType, StaffUserDto } from '@wirdi/shared';
 
-export const AWRAD_SUGGESTIONS: AwradType[] = ['حفظ', 'مراجعة', 'تلاوة'];
+export const AWRAD_SUGGESTIONS: AwradType[] = [
+  'حفظ',
+  'المراجعة (القريبة والبعيدة)',
+  'الاستماع (مرتين للمشايخ المتفق عليها)',
+];
 
 export const STATUS_OPTIONS = [
   { value: 'ACTIVE', label: 'نشط' },

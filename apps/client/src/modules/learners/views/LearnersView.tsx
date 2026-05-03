@@ -18,6 +18,7 @@ import { StudentTableItem } from '@/modules/learners/components/student-table-it
 import { StudentMainInfoModal } from '@/modules/learners/components/student-main-info-modal';
 import type { StudentMainInfoSubmitArgs } from '@/modules/learners/components/student-main-info-modal';
 import type { LearnerDto } from '@wirdi/shared';
+import { LEARNER_DETAIL_FIELDS } from '@wirdi/shared';
 import { useLearnersViewModel } from '../viewmodels/learners.viewmodel';
 
 export default function LearnersView() {
@@ -49,6 +50,12 @@ export default function LearnersView() {
         header: 'عدد المجموعات',
         enableSorting: true,
       },
+      ...LEARNER_DETAIL_FIELDS.map(({ key, label }) => ({
+        id: key,
+        accessorFn: (row: LearnerDto) => row.contact.details?.[key] ?? '-',
+        header: label,
+        enableSorting: false,
+      })),
       {
         id: 'actions',
         header: 'الإجراءات',

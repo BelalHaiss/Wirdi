@@ -1,8 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DEFAULT_TIMEZONE } from '@wirdi/shared';
-import type { CreateLearnerDto, LearnerDto, UpdateLearnerDto } from '@wirdi/shared';
+import { DEFAULT_TIMEZONE, LEARNER_DETAIL_FIELDS } from '@wirdi/shared';
+import type {
+  CreateLearnerDto,
+  LearnerDetailsDto,
+  LearnerDto,
+  UpdateLearnerDto,
+} from '@wirdi/shared';
 import {
   studentMainInfoFormSchema,
   type StudentMainInfoFormValues,
@@ -49,6 +54,13 @@ export function useStudentMainInfoModal({
       username: learner && !isCreateMode ? (learner.username ?? '') : '',
       timezone: learner && !isCreateMode ? learner.timezone || DEFAULT_TIMEZONE : DEFAULT_TIMEZONE,
       notes: learner && !isCreateMode ? learner.contact.notes || '' : '',
+      details: {
+        age: (!isCreateMode && learner?.contact.details?.age) || '',
+        country: (!isCreateMode && learner?.contact.details?.country) || '',
+        platform: (!isCreateMode && learner?.contact.details?.platform) || '',
+        schedule: (!isCreateMode && learner?.contact.details?.schedule) || '',
+        recitation: (!isCreateMode && learner?.contact.details?.recitation) || '',
+      },
     }),
     [learner, isCreateMode]
   );
@@ -61,11 +73,21 @@ export function useStudentMainInfoModal({
     mode: 'onTouched',
   });
 
+  const buildDetails = (d: StudentMainInfoFormValues['details']): LearnerDetailsDto | undefined => {
+    const result = Object.fromEntries(
+      LEARNER_DETAIL_FIELDS.map(({ key }) => [key, d[key].trim()]).filter(([, val]) => val !== '')
+    ) as LearnerDetailsDto;
+    return Object.keys(result).length > 0 ? result : undefined;
+  };
+
   const handleFormSubmit = (values: StudentMainInfoFormValues) => {
     if (isViewMode || !onSubmit) {
       onClose();
       return;
     }
+
+    const notes = values.notes.trim() || undefined;
+    const details = buildDetails(values.details);
 
     const submitData: StudentMainInfoSubmitArgs = isCreateMode
       ? {
@@ -75,7 +97,7 @@ export function useStudentMainInfoModal({
             name: values.name.trim(),
             username: values.username.trim(),
             timezone: values.timezone,
-            contact: values.notes.trim() ? { notes: values.notes.trim() } : undefined,
+            contact: notes || details ? { notes, details } : undefined,
           },
         }
       : {
@@ -85,7 +107,7 @@ export function useStudentMainInfoModal({
             name: values.name.trim(),
             username: values.username.trim(),
             timezone: values.timezone,
-            contact: { notes: values.notes.trim() || undefined },
+            contact: { notes, details },
           },
         };
 

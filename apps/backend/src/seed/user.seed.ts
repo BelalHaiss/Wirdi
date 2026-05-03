@@ -1,4 +1,4 @@
-import { User, PrismaClient } from 'generated/prisma/client';
+import { Prisma, PrismaClient } from 'generated/prisma/client';
 import { faker, fakerAR } from '@faker-js/faker';
 import argon from 'argon2';
 import { normalizeArabic, UserRole } from '@wirdi/shared';
@@ -14,7 +14,7 @@ const seedTimezones = [
 export const seedAppUser = async (username: string, role: UserRole) => {
   const name = fakerAR.person.fullName();
   const normalizedName = normalizeArabic(name).toLocaleLowerCase();
-  const user: Omit<User, 'id' | 'createdAt' | 'updatedAt'> = {
+  return {
     name,
     nameNormalized: normalizedName,
     role,
@@ -22,9 +22,8 @@ export const seedAppUser = async (username: string, role: UserRole) => {
     username,
     timezone: faker.helpers.arrayElement(seedTimezones),
     notes: faker.datatype.boolean(0.2) ? fakerAR.lorem.sentence() : null,
+    details: Prisma.DbNull,
   };
-
-  return user;
 };
 
 function buildLearners(totalLearners: number, passwordHash: string) {
@@ -39,6 +38,7 @@ function buildLearners(totalLearners: number, passwordHash: string) {
       password: passwordHash,
       timezone: faker.helpers.arrayElement(seedTimezones),
       notes: faker.datatype.boolean(0.45) ? fakerAR.lorem.sentence() : null,
+      details: Prisma.DbNull,
     };
   });
 }

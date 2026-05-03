@@ -6,6 +6,7 @@ import {
   GroupDto,
   GroupMemberDto,
   ISODateOnlyString,
+  LearnerDetailsDto,
   QueryGroupsResponseDto,
   ScheduleImageDto,
   TimeZoneType,
@@ -19,7 +20,7 @@ import {
   dateOnlyToUTC,
   formatDate,
 } from '@wirdi/shared';
-import type { User as PrismaUser } from 'generated/prisma/client';
+import type { Prisma, User as PrismaUser } from 'generated/prisma/client';
 
 @Injectable()
 export class GroupService {
@@ -35,7 +36,12 @@ export class GroupService {
       actor.role === 'ADMIN'
         ? {}
         : actor.role === 'MODERATOR'
-          ? { moderatorId: actor.id }
+          ? {
+              OR: [
+                { moderatorId: actor.id },
+                { members: { some: { studentId: actor.id, removedAt: null } } },
+              ],
+            }
           : { members: { some: { studentId: actor.id, removedAt: null } } };
 
     const groups = await this.db.group.findMany({
@@ -219,6 +225,7 @@ export class GroupService {
             username: true,
             timezone: true,
             notes: true,
+            details: true,
             excusesAsStudent: {
               where: { groupId, expiresAt: { gt: now } },
               orderBy: { expiresAt: 'desc' },
@@ -412,6 +419,7 @@ export class GroupService {
         username: string;
         timezone: string;
         notes: string | null;
+        details: Prisma.JsonValue | null;
         excusesAsStudent?: { expiresAt: Date }[];
       };
       mate: { name: string } | null;
@@ -428,6 +436,7 @@ export class GroupService {
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
+      details: (m.student.details as LearnerDetailsDto) ?? undefined,
       status: m.status as 'ACTIVE' | 'INACTIVE',
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       activeExcuseExpiresAt,

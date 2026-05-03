@@ -75,7 +75,9 @@ export function WirdTrackingTable({
       <Table className='rounded-lg border bg-card shadow-sm'>
         <TableHeader className='bg-muted/40'>
           <TableRow>
-            <TableHead className='px-4 py-3 text-right text-xs'>اسم الطالب</TableHead>
+            <TableHead className='px-4 py-3 text-right text-xs sticky right-0 z-10 bg-muted/40'>
+              اسم الطالب
+            </TableHead>
             {canManage && <TableHead className='px-3 py-3 text-right text-xs'>الرفيق</TableHead>}
             {canManage && (
               <TableHead className='px-3 py-3 text-center text-xs'>تعديل يدوي</TableHead>

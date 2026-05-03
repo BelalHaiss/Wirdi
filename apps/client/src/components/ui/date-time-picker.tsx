@@ -56,13 +56,11 @@ export function DateTimePicker({
   // timezone to extract the correct calendar date.
   const handleDateSelect = (day: Date | undefined) => {
     if (day && onDateChange) {
-      console.log('Selected date (local):', day);
       const newDateStr = formatDate({
         date: day,
         token: 'yyyy-MM-dd',
         timezone: browserTimezone,
       }) as ISODateOnlyString;
-      console.log('Formatted date string (ISO):', newDateStr);
       onDateChange(newDateStr);
     }
     onDateBlur?.();

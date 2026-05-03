@@ -111,7 +111,8 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       switch (exception.code) {
         case 'P2002':
           defaultError.statusCode = HttpStatus.CONFLICT;
-          defaultError.message = exception.message;
+          defaultError.message = 'تاكد من عدم وجود سجل آخر بنفس البيانات';
+
           if (exception.meta && exception.meta.target) {
             if (typeof exception.meta.target === 'string') {
               defaultError.message = `Unique constraint failed on the field: ${exception.meta.target}`;

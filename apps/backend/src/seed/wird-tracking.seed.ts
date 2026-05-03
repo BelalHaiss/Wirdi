@@ -530,7 +530,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
       timezone: groupTimezone,
       moderatorId,
       status: 'ACTIVE',
-      awrad: ['حفظ', 'مراجعة', 'تلاوة'],
+      awrad: ['حفظ', 'المراجعة (القريبة والبعيدة)', 'الاستماع (مرتين للمشايخ المتفق عليها)'],
       description: 'حلقة لاختبار سياسات التتبع',
     },
   });
@@ -541,7 +541,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
       timezone: groupTimezone,
       moderatorId,
       status: 'ACTIVE',
-      awrad: ['حفظ', 'مراجعة'],
+      awrad: ['حفظ', 'المراجعة (القريبة والبعيدة)', 'الاستماع (مرتين للمشايخ المتفق عليها)'],
       description: 'مجموعة لاختبار عرض المجموعات السابقة',
     },
   });

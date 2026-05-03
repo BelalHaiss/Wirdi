@@ -20,34 +20,39 @@ export function StatsCountCard({
 }: StatsCountCardProps) {
   return (
     <Card className={cn('relative overflow-hidden border ring-1 shadow-sm', className)}>
-      <CardContent className='space-y-4 p-5'>
-        <div className='flex items-center justify-between'>
-          <Typography
-            as='div'
-            size='xs'
-            className='rounded-md bg-muted px-2 py-0.5 text-muted-foreground'
-          >
-            مؤشرات سريعة
-          </Typography>
+      <CardContent className='p-2.5 md:space-y-4 md:p-5'>
+        <div className='flex items-center justify-between gap-2'>
           <div
             className={cn(
-              'rounded-xl bg-muted p-2.5 text-muted-foreground ring-1 ring-current/10',
+              'rounded-lg bg-muted p-1.5 text-muted-foreground ring-1 ring-current/10 md:p-2.5',
               iconClassName
             )}
           >
-            <Icon className='h-5 w-5' />
+            <Icon className='h-3.5 w-3.5 md:h-5 md:w-5' />
           </div>
+          {isLoading ? (
+            <Loader2 className='h-3.5 w-3.5 animate-spin text-muted-foreground' />
+          ) : (
+            <div className='text-end md:hidden'>
+              <Typography as='div' size='sm' weight='bold'>
+                {data.count}
+              </Typography>
+              <Typography as='div' size='xs' className='text-muted-foreground leading-tight'>
+                {data.title}
+              </Typography>
+            </div>
+          )}
         </div>
 
         {isLoading ? (
-          <div className='flex items-center gap-2'>
+          <div className='hidden md:flex items-center gap-2'>
             <Loader2 className='h-4 w-4 animate-spin' />
             <Typography as='div' size='sm' className='text-muted-foreground'>
               جاري التحميل...
             </Typography>
           </div>
         ) : (
-          <div className='space-y-1'>
+          <div className='hidden space-y-1 md:block'>
             <Typography as='div' size='2xl' weight='bold'>
               {data.count}
             </Typography>

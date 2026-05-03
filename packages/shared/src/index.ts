@@ -2,6 +2,7 @@ export * from './types/api.types';
 export * from './types/client-error-log.types';
 export * from './user.types';
 export * from './learner.types';
+export * from './learner-details.constants';
 export * from './group.types';
 export * from './notification.types';
 export * from './request.types';

@@ -5,8 +5,19 @@ import { nameSchema, notesSchema, usernameAccountSchema } from './fields.schema'
 import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 import { paginationSchema } from './api.schema';
 
+const learnerDetailsSchema = z.object({
+  age: z.string().trim().optional(),
+  country: z.string().trim().optional(),
+  platform: z.string().trim().optional(),
+  schedule: z.string().trim().optional(),
+  recitation: z.string().trim().optional(),
+});
+
 const learnerContactSchema = (locale: ValidationLocale = 'ar') =>
-  z.object({ notes: notesSchema(locale).optional() });
+  z.object({
+    notes: notesSchema(locale).optional(),
+    details: learnerDetailsSchema.optional(),
+  });
 
 export const createLearnerSchema = (locale: ValidationLocale = 'ar') =>
   z.intersection(

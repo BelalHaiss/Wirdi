@@ -1,4 +1,4 @@
-import { LearnerDto, UpdateLearnerDto } from '@wirdi/shared';
+import { LearnerDto, UpdateLearnerDto, LEARNER_DETAIL_FIELDS } from '@wirdi/shared';
 import { UserCircle2 } from 'lucide-react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { TimezoneDisplay } from '@/components/ui/timezone-display';
@@ -58,6 +58,15 @@ export function StudentTableItem({
           {learner.groupCount ?? 0}
         </div>
       </TableCell>
+      {LEARNER_DETAIL_FIELDS.map(({ key }) => (
+        <TableCell key={key} className='px-4 py-3'>
+          <div className='text-sm text-gray-700 dark:text-gray-300 truncate max-w-28'>
+            {learner.contact.details?.[key] ?? (
+              <span className='text-muted-foreground text-xs'>-</span>
+            )}
+          </div>
+        </TableCell>
+      ))}
       <TableCell className='px-4 py-3 text-right'>
         {showActions ? (
           <div className='flex items-center justify-end gap-2'>
