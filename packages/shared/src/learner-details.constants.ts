@@ -7,10 +7,9 @@
  */
 
 export interface LearnerDetailsDto {
-  age?: string;
-  country?: string;
+  age?: number;
   platform?: string;
-  schedule?: string;
+  schedule?: number;
   recitation?: string;
 }
 
@@ -21,7 +20,6 @@ export const LEARNER_DETAIL_FIELDS: {
   excelColumn: string;
 }[] = [
   { key: 'age', label: 'السن', excelColumn: 'السن' },
-  { key: 'country', label: 'البلد', excelColumn: 'البلد' },
   { key: 'platform', label: 'الوسيلة', excelColumn: 'الوسيلة' },
   { key: 'schedule', label: 'الموعد', excelColumn: 'الموعد' },
   { key: 'recitation', label: 'الرواية', excelColumn: 'الرواية' },

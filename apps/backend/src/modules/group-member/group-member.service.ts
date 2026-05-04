@@ -6,13 +6,12 @@ import {
   AssignLearnersToGroupDto,
   CreateAndAssignLearnersDto,
   GroupMemberDto,
-  LearnerDetailsDto,
   LearnerDto,
   UpdateMemberMateDto,
   TimeZoneType,
   normalizeArabic,
 } from '@wirdi/shared';
-import { Prisma, UserRole } from 'generated/prisma/client';
+import { UserRole } from 'generated/prisma/client';
 
 @Injectable()
 export class GroupMemberService {
@@ -40,7 +39,10 @@ export class GroupMemberService {
             timezone: learnerData.timezone,
             role: UserRole.STUDENT,
             notes: learnerData.notes,
-            details: (learnerData.details as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+            age: learnerData.age,
+            platform: learnerData.platform,
+            schedule: learnerData.schedule,
+            recitation: learnerData.recitation,
           },
         });
 
@@ -48,7 +50,16 @@ export class GroupMemberService {
           data: { groupId: dto.groupId, studentId: student.id },
           include: {
             student: {
-              select: { name: true, username: true, timezone: true, notes: true, details: true },
+              select: {
+                name: true,
+                username: true,
+                timezone: true,
+                notes: true,
+                age: true,
+                platform: true,
+                schedule: true,
+                recitation: true,
+              },
             },
             mate: { select: { name: true } },
           },
@@ -64,7 +75,10 @@ export class GroupMemberService {
           mateId: member.mateId ?? undefined,
           mateName: member.mate?.name ?? undefined,
           notes: member.student.notes ?? undefined,
-          details: (member.student.details as LearnerDetailsDto) ?? undefined,
+          age: member.student.age ?? undefined,
+          platform: member.student.platform ?? undefined,
+          schedule: member.student.schedule ?? undefined,
+          recitation: member.student.recitation ?? undefined,
           joinedAt: member.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
           status: member.status,
           activeExcuseExpiresAt: undefined,
@@ -95,7 +109,16 @@ export class GroupMemberService {
           },
           include: {
             student: {
-              select: { name: true, username: true, timezone: true, notes: true, details: true },
+              select: {
+                name: true,
+                username: true,
+                timezone: true,
+                notes: true,
+                age: true,
+                platform: true,
+                schedule: true,
+                recitation: true,
+              },
             },
             mate: { select: { name: true } },
           },
@@ -113,7 +136,10 @@ export class GroupMemberService {
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
-      details: (m.student.details as LearnerDetailsDto) ?? undefined,
+      age: m.student.age ?? undefined,
+      platform: m.student.platform ?? undefined,
+      schedule: m.student.schedule ?? undefined,
+      recitation: m.student.recitation ?? undefined,
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       status: m.status,
       activeExcuseExpiresAt: undefined,
@@ -129,7 +155,16 @@ export class GroupMemberService {
       data: { mateId: dto.mateId },
       include: {
         student: {
-          select: { name: true, username: true, timezone: true, notes: true, details: true },
+          select: {
+            name: true,
+            username: true,
+            timezone: true,
+            notes: true,
+            age: true,
+            platform: true,
+            schedule: true,
+            recitation: true,
+          },
         },
         mate: { select: { name: true } },
       },
@@ -145,7 +180,10 @@ export class GroupMemberService {
       mateId: updated.mateId ?? undefined,
       mateName: updated.mate?.name ?? undefined,
       notes: updated.student.notes ?? undefined,
-      details: (updated.student.details as LearnerDetailsDto) ?? undefined,
+      age: updated.student.age ?? undefined,
+      platform: updated.student.platform ?? undefined,
+      schedule: updated.student.schedule ?? undefined,
+      recitation: updated.student.recitation ?? undefined,
       joinedAt: updated.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       status: updated.status,
       activeExcuseExpiresAt: undefined,
@@ -255,7 +293,10 @@ export class GroupMemberService {
       timezone: u.timezone as TimeZoneType,
       contact: {
         notes: u.notes ?? undefined,
-        details: (u.details as LearnerDetailsDto) ?? undefined,
+        age: u.age ?? undefined,
+        platform: u.platform ?? undefined,
+        schedule: u.schedule ?? undefined,
+        recitation: u.recitation ?? undefined,
       },
       createdAt: u.createdAt.toISOString() as LearnerDto['createdAt'],
       updatedAt: u.updatedAt.toISOString() as LearnerDto['updatedAt'],
@@ -268,7 +309,16 @@ export class GroupMemberService {
       orderBy: { removedAt: 'desc' },
       include: {
         student: {
-          select: { name: true, username: true, timezone: true, notes: true, details: true },
+          select: {
+            name: true,
+            username: true,
+            timezone: true,
+            notes: true,
+            age: true,
+            platform: true,
+            schedule: true,
+            recitation: true,
+          },
         },
         mate: { select: { name: true } },
       },
@@ -284,7 +334,10 @@ export class GroupMemberService {
       mateId: member.mateId ?? undefined,
       mateName: member.mate?.name ?? undefined,
       notes: member.student.notes ?? undefined,
-      details: (member.student.details as LearnerDetailsDto) ?? undefined,
+      age: member.student.age ?? undefined,
+      platform: member.student.platform ?? undefined,
+      schedule: member.student.schedule ?? undefined,
+      recitation: member.student.recitation ?? undefined,
       joinedAt: member.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       status: member.status,
       removedAt: member.removedAt

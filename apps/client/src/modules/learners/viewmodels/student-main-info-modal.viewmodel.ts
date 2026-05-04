@@ -1,13 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DEFAULT_TIMEZONE, LEARNER_DETAIL_FIELDS } from '@wirdi/shared';
-import type {
-  CreateLearnerDto,
-  LearnerDetailsDto,
-  LearnerDto,
-  UpdateLearnerDto,
-} from '@wirdi/shared';
+import { DEFAULT_TIMEZONE } from '@wirdi/shared';
+import type { CreateLearnerDto, LearnerDto, UpdateLearnerDto } from '@wirdi/shared';
 import {
   studentMainInfoFormSchema,
   type StudentMainInfoFormValues,
@@ -55,11 +50,10 @@ export function useStudentMainInfoModal({
       timezone: learner && !isCreateMode ? learner.timezone || DEFAULT_TIMEZONE : DEFAULT_TIMEZONE,
       notes: learner && !isCreateMode ? learner.contact.notes || '' : '',
       details: {
-        age: (!isCreateMode && learner?.contact.details?.age) || '',
-        country: (!isCreateMode && learner?.contact.details?.country) || '',
-        platform: (!isCreateMode && learner?.contact.details?.platform) || '',
-        schedule: (!isCreateMode && learner?.contact.details?.schedule) || '',
-        recitation: (!isCreateMode && learner?.contact.details?.recitation) || '',
+        age: !isCreateMode && learner?.contact.age != null ? String(learner.contact.age) : '',
+        platform: (!isCreateMode && learner?.contact.platform) || '',
+        schedule: !isCreateMode ? (learner?.contact.schedule ?? undefined) : undefined,
+        recitation: (!isCreateMode && learner?.contact.recitation) || '',
       },
     }),
     [learner, isCreateMode]
@@ -73,11 +67,13 @@ export function useStudentMainInfoModal({
     mode: 'onTouched',
   });
 
-  const buildDetails = (d: StudentMainInfoFormValues['details']): LearnerDetailsDto | undefined => {
-    const result = Object.fromEntries(
-      LEARNER_DETAIL_FIELDS.map(({ key }) => [key, d[key].trim()]).filter(([, val]) => val !== '')
-    ) as LearnerDetailsDto;
-    return Object.keys(result).length > 0 ? result : undefined;
+  const buildContact = (values: StudentMainInfoFormValues) => {
+    const notes = values.notes.trim() || undefined;
+    const age = values.details.age.trim() ? Number(values.details.age) : undefined;
+    const platform = values.details.platform.trim() || undefined;
+    const schedule = values.details.schedule;
+    const recitation = values.details.recitation.trim() || undefined;
+    return { notes, age, platform, schedule, recitation };
   };
 
   const handleFormSubmit = (values: StudentMainInfoFormValues) => {
@@ -86,8 +82,7 @@ export function useStudentMainInfoModal({
       return;
     }
 
-    const notes = values.notes.trim() || undefined;
-    const details = buildDetails(values.details);
+    const contact = buildContact(values);
 
     const submitData: StudentMainInfoSubmitArgs = isCreateMode
       ? {
@@ -97,7 +92,7 @@ export function useStudentMainInfoModal({
             name: values.name.trim(),
             username: values.username.trim(),
             timezone: values.timezone,
-            contact: notes || details ? { notes, details } : undefined,
+            contact: Object.values(contact).some((v) => v !== undefined) ? contact : undefined,
           },
         }
       : {
@@ -107,7 +102,7 @@ export function useStudentMainInfoModal({
             name: values.name.trim(),
             username: values.username.trim(),
             timezone: values.timezone,
-            contact: { notes, details },
+            contact,
           },
         };
 

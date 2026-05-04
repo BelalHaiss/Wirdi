@@ -104,3 +104,11 @@ export const timeMinutesSchema = (locale: ValidationLocale = 'ar') => {
     { message: m.invalidTime }
   );
 };
+
+export const contactDetailsSchema = (locale: ValidationLocale = 'ar') =>
+  z.object({
+    age: z.coerce.number().int().min(0).max(255).optional(),
+    platform: z.string().trim().optional(),
+    schedule: timeMinutesSchema(locale).optional(),
+    recitation: z.string().trim().optional(),
+  });

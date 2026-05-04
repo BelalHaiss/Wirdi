@@ -6,7 +6,6 @@ import {
   GroupDto,
   GroupMemberDto,
   ISODateOnlyString,
-  LearnerDetailsDto,
   QueryGroupsResponseDto,
   ScheduleImageDto,
   TimeZoneType,
@@ -20,7 +19,7 @@ import {
   dateOnlyToUTC,
   formatDate,
 } from '@wirdi/shared';
-import type { Prisma, User as PrismaUser } from 'generated/prisma/client';
+import type { User as PrismaUser } from 'generated/prisma/client';
 
 @Injectable()
 export class GroupService {
@@ -225,7 +224,10 @@ export class GroupService {
             username: true,
             timezone: true,
             notes: true,
-            details: true,
+            age: true,
+            platform: true,
+            schedule: true,
+            recitation: true,
             excusesAsStudent: {
               where: { groupId, expiresAt: { gt: now } },
               orderBy: { expiresAt: 'desc' },
@@ -419,7 +421,10 @@ export class GroupService {
         username: string;
         timezone: string;
         notes: string | null;
-        details: Prisma.JsonValue | null;
+        age?: number | null;
+        platform?: string | null;
+        schedule?: number | null;
+        recitation?: string | null;
         excusesAsStudent?: { expiresAt: Date }[];
       };
       mate: { name: string } | null;
@@ -436,7 +441,10 @@ export class GroupService {
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
       notes: m.student.notes ?? undefined,
-      details: (m.student.details as LearnerDetailsDto) ?? undefined,
+      age: m.student.age ?? undefined,
+      platform: m.student.platform ?? undefined,
+      schedule: m.student.schedule ?? undefined,
+      recitation: m.student.recitation ?? undefined,
       status: m.status as 'ACTIVE' | 'INACTIVE',
       joinedAt: m.joinedAt.toISOString() as GroupMemberDto['joinedAt'],
       activeExcuseExpiresAt,

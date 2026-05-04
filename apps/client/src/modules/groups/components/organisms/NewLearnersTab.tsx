@@ -86,14 +86,14 @@ export function NewLearnersTab({
                   <div key={key} className='w-28 shrink-0'>
                     <FormField
                       control={control}
-                      name={`learners.${index}.details.${key}`}
+                      name={`learners.${index}.${key}`}
                       label={label}
-                      type='text'
-                      placeholder='-'
+                      type={key === 'schedule' ? 'time' : 'text'}
+                      placeholder={key === 'schedule' ? undefined : '-'}
                     />
                   </div>
                 ))}
-                {!readonlyRows && fields.length > 1 && (
+                {!!onRemoveLearner && fields.length > 1 && (
                   <Button
                     type='button'
                     variant='ghost'

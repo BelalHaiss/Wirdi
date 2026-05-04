@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ChangeOwnPasswordDto,
@@ -26,11 +26,15 @@ export const useUserProfileViewModel = ({ user, setUser }: UseUserProfileViewMod
   const [confirmPasswordOpen, setConfirmPasswordOpen] = useState(false);
 
   const profileForm = useForm<UpdateOwnProfileDto>({
-    resolver: zodResolver(updateOwnProfileSchema()),
+    resolver: zodResolver(updateOwnProfileSchema()) as unknown as Resolver<UpdateOwnProfileDto>,
     defaultValues: {
       name: user?.name || '',
       username: user?.username || '',
       timezone: user?.timezone || DEFAULT_TIMEZONE,
+      age: user?.age,
+      platform: user?.platform || '',
+      schedule: user?.schedule,
+      recitation: user?.recitation || '',
     },
     mode: 'onTouched',
   });

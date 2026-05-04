@@ -1,6 +1,7 @@
 import { apiClient } from '@/services';
 import {
   CreateStaffUserDto,
+  PromoteLearnersToModeratorDto,
   StaffUserDto,
   StaffUsersResponseDto,
   UnifiedApiResponse,
@@ -26,5 +27,12 @@ export const userService = {
       success: true,
       data: null,
     };
+  },
+
+  promoteLearners: async (
+    data: PromoteLearnersToModeratorDto
+  ): Promise<UnifiedApiResponse<null>> => {
+    await apiClient.post<void>('/user/learner/promote', data);
+    return { success: true, data: null };
   },
 };

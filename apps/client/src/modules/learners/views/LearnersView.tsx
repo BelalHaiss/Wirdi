@@ -45,16 +45,30 @@ export default function LearnersView() {
         enableSorting: true,
       },
       {
-        id: 'groupCount',
-        accessorFn: (row) => row.groupCount ?? 0,
-        header: 'عدد المجموعات',
-        enableSorting: true,
+        id: 'groups',
+        accessorFn: (row) =>
+          row.groups
+            ?.filter((g) => !g.removedAt)
+            .map((g) => g.name)
+            .join(' / ') ?? '-',
+        header: 'المجموعات',
+        enableSorting: false,
       },
       ...LEARNER_DETAIL_FIELDS.map(({ key, label }) => ({
         id: key,
-        accessorFn: (row: LearnerDto) => row.contact.details?.[key] ?? '-',
-        header: label,
-        enableSorting: false,
+        accessorFn: (row: LearnerDto) => row.contact[key as keyof typeof row.contact] ?? '-',
+        header:
+          key === 'schedule'
+            ? () => (
+                <div className='flex flex-col gap-0.5'>
+                  <span>الموعد</span>
+                  <span className='text-[10px] font-normal text-muted-foreground tracking-wide'>
+                    🇸🇦 KSA
+                  </span>
+                </div>
+              )
+            : label,
+        enableSorting: key === 'age',
       })),
       {
         id: 'actions',

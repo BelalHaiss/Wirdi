@@ -181,6 +181,7 @@ export function ImportLearnersTab({
         fields={vm.fields}
         errors={vm.formState.errors}
         readonlyRows
+        onRemoveLearner={vm.removeLearner}
         onSubmit={vm.handleSubmit}
         onClose={vm.handleClose}
         learnersCount={vm.learnersCount}

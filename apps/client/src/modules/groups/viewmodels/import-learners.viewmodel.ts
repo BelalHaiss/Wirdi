@@ -9,8 +9,10 @@ import {
   DEFAULT_TIMEZONE,
   LEARNER_DETAIL_FIELDS,
   normalizeArabic,
+  timeStringToMinutes,
+  TIMEZONES,
 } from '@wirdi/shared';
-import type { CreateAndAssignLearnersDto, LearnerDetailsDto } from '@wirdi/shared';
+import type { CreateAndAssignLearnersDto, TimeZoneType } from '@wirdi/shared';
 
 type FormValues = Pick<CreateAndAssignLearnersDto, 'learners'>;
 
@@ -60,18 +62,22 @@ export function useImportLearnersViewModel({
       return val != null && val !== '' ? String(val).trim() : undefined;
     };
 
-    const details: LearnerDetailsDto = {};
-    for (const field of LEARNER_DETAIL_FIELDS) {
-      const val = get(field.excelColumn);
-      if (val) details[field.key] = val;
-    }
+    const timezone = (TIMEZONES.find(
+      (tz) => normalizeArabic(tz.label) === normalizeArabic(get('البلد') ?? '')
+    )?.value ?? DEFAULT_TIMEZONE) as TimeZoneType;
+
+    const age = get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'age')!.excelColumn);
+    const schedule = get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'schedule')!.excelColumn);
 
     return {
       name: get('الاسم') ?? '',
       username: get('رقم الهاتف') ?? '',
-      timezone: DEFAULT_TIMEZONE,
+      timezone,
       notes: undefined,
-      details: Object.keys(details).length > 0 ? details : undefined,
+      age: age ? Number(age) : undefined,
+      platform: get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'platform')!.excelColumn),
+      schedule: schedule ? timeStringToMinutes(schedule) : undefined,
+      recitation: get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'recitation')!.excelColumn),
     };
   };
 
@@ -115,6 +121,7 @@ export function useImportLearnersViewModel({
       });
 
       form.reset({ learners });
+      await form.trigger();
       setStep('preview');
     },
     [form]
@@ -128,7 +135,10 @@ export function useImportLearnersViewModel({
         username: l.username,
         timezone: l.timezone,
         notes: l.notes || undefined,
-        details: l.details,
+        age: l.age,
+        platform: l.platform,
+        schedule: l.schedule,
+        recitation: l.recitation,
       })),
     });
     handleClose();
@@ -158,5 +168,6 @@ export function useImportLearnersViewModel({
     handleSubmit,
     handleClose,
     handleBack,
+    removeLearner: fieldArray.remove,
   };
 }

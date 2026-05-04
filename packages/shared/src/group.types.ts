@@ -1,4 +1,3 @@
-import { LearnerDetailsDto } from './learner-details.constants';
 import type { ISODateOnlyString, ISODateString, TimeZoneType } from './types/api.types';
 
 // ============================================================================
@@ -100,7 +99,10 @@ export interface GroupMemberDto {
   mateId?: string;
   mateName?: string;
   notes?: string;
-  details?: LearnerDetailsDto;
+  age?: number;
+  platform?: string;
+  schedule?: number;
+  recitation?: string;
   status: 'ACTIVE' | 'INACTIVE';
   joinedAt: ISODateString;
   removedAt?: ISODateString;
@@ -123,7 +125,10 @@ export interface CreateAndAssignLearnersDto {
     username: string;
     timezone: TimeZoneType;
     notes?: string;
-    details?: LearnerDetailsDto;
+    age?: number;
+    platform?: string;
+    schedule?: number;
+    recitation?: string;
   }[];
 }
 

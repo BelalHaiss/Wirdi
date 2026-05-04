@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { User, Lock, AlertCircle } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { TIMEZONES } from '@wirdi/shared';
+import { LEARNER_DETAIL_FIELDS, TIMEZONES } from '@wirdi/shared';
 import { FormField } from '@/components/forms/form-field';
 import { TimezoneDisplay } from '@/components/ui/timezone-display';
 import { UserBadge } from '../components/UserBadge';
@@ -106,6 +106,18 @@ export function UserProfileView() {
                   disabled={vm.isUpdatingProfile}
                   options={TIMEZONES}
                 />
+
+                {LEARNER_DETAIL_FIELDS.map(({ key, label }) => (
+                  <FormField
+                    key={key}
+                    control={vm.profileForm.control}
+                    name={key}
+                    label={label}
+                    type={key === 'schedule' ? 'time' : 'text'}
+                    placeholder={key === 'schedule' ? undefined : label}
+                    disabled={vm.isUpdatingProfile}
+                  />
+                ))}
 
                 <Button
                   type='submit'

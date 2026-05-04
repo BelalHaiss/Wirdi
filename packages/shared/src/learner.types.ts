@@ -6,11 +6,13 @@ import {
   TimeZoneType,
 } from './types/api.types';
 import type { UserRole } from './user.types';
-import type { LearnerDetailsDto } from './learner-details.constants';
 
 export interface LearnerContactDto {
   notes?: string;
-  details?: LearnerDetailsDto;
+  age?: number;
+  platform?: string;
+  schedule?: number;
+  recitation?: string;
 }
 
 export interface LearnerGroupSummaryDto {

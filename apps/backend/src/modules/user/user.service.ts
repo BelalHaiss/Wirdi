@@ -13,7 +13,6 @@ import {
   CreateLearnerDto,
   DEFAULT_TIMEZONE,
   ISODateString,
-  LearnerDetailsDto,
   LearnerDto,
   normalizeArabic,
   QueryLearnersDto,
@@ -187,6 +186,10 @@ export class UserService {
         nameNormalized: normalizeArabic(dto.name),
         username: dto.username,
         timezone: dto.timezone,
+        ...(dto.age !== undefined ? { age: dto.age } : {}),
+        ...(dto.platform !== undefined ? { platform: dto.platform } : {}),
+        ...(dto.schedule !== undefined ? { schedule: dto.schedule } : {}),
+        ...(dto.recitation !== undefined ? { recitation: dto.recitation } : {}),
       },
     });
 
@@ -240,7 +243,10 @@ export class UserService {
         password: await argon.hash('12345678'),
         timezone: dto.timezone ?? DEFAULT_TIMEZONE,
         notes: dto.contact?.notes,
-        details: (dto.contact?.details as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        age: dto.contact?.age,
+        platform: dto.contact?.platform,
+        schedule: dto.contact?.schedule,
+        recitation: dto.contact?.recitation,
       },
     });
 
@@ -268,6 +274,7 @@ export class UserService {
       'timezone',
       'notes',
       'createdAt',
+      'age',
     ]);
 
     const orderBy: Prisma.UserOrderByWithRelationInput =
@@ -288,7 +295,10 @@ export class UserService {
           role: true,
           timezone: true,
           notes: true,
-          details: true,
+          age: true,
+          platform: true,
+          schedule: true,
+          recitation: true,
           createdAt: true,
           updatedAt: true,
           groupMemberships: {
@@ -325,7 +335,10 @@ export class UserService {
         role: true,
         timezone: true,
         notes: true,
-        details: true,
+        age: true,
+        platform: true,
+        schedule: true,
+        recitation: true,
         createdAt: true,
         updatedAt: true,
         groupMemberships: {
@@ -380,8 +393,20 @@ export class UserService {
       data.notes = dto.contact.notes;
     }
 
-    if (dto.contact?.details !== undefined) {
-      data.details = (dto.contact.details as Prisma.InputJsonValue) ?? Prisma.JsonNull;
+    if (dto.contact?.age !== undefined) {
+      data.age = dto.contact.age;
+    }
+
+    if (dto.contact?.platform !== undefined) {
+      data.platform = dto.contact.platform;
+    }
+
+    if (dto.contact?.schedule !== undefined) {
+      data.schedule = dto.contact.schedule;
+    }
+
+    if (dto.contact?.recitation !== undefined) {
+      data.recitation = dto.contact.recitation;
     }
 
     const updatedLearner = await this.prismaService.user.update({
@@ -405,6 +430,13 @@ export class UserService {
     if (deletedLearnersCount.count === 0) {
       throw new NotFoundException('Learner not found');
     }
+  }
+
+  async promoteLearnersToModerator(studentIds: string[]): Promise<void> {
+    await this.prismaService.user.updateMany({
+      where: { id: { in: studentIds }, role: UserRole.STUDENT },
+      data: { role: UserRole.MODERATOR },
+    });
   }
 
   private assertActorCanManageStaff(actor: User): void {
@@ -459,6 +491,10 @@ export class UserService {
     name: string;
     role: UserRole;
     timezone: string;
+    age?: number | null;
+    platform?: string | null;
+    schedule?: number | null;
+    recitation?: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): UserAuthType {
@@ -468,6 +504,10 @@ export class UserService {
       name: user.name,
       role: user.role,
       timezone: user.timezone as TimeZoneType,
+      age: user.age ?? undefined,
+      platform: user.platform ?? undefined,
+      schedule: user.schedule ?? undefined,
+      recitation: user.recitation ?? undefined,
       createdAt: user.createdAt.toISOString() as ISODateString,
       updatedAt: user.updatedAt.toISOString() as ISODateString,
     };
@@ -480,7 +520,10 @@ export class UserService {
     role: UserRole;
     timezone: string;
     notes: string | null;
-    details?: Prisma.JsonValue | null;
+    age?: number | null;
+    platform?: string | null;
+    schedule?: number | null;
+    recitation?: string | null;
     createdAt: Date;
     updatedAt: Date;
     groupMemberships?: { removedAt: Date | null; group: { id: string; name: string } }[];
@@ -499,7 +542,10 @@ export class UserService {
       timezone: user.timezone as TimeZoneType,
       contact: {
         notes: user.notes ?? undefined,
-        details: (user.details as LearnerDetailsDto) ?? undefined,
+        age: user.age ?? undefined,
+        platform: user.platform ?? undefined,
+        schedule: user.schedule ?? undefined,
+        recitation: user.recitation ?? undefined,
       },
       groupCount: groups.filter((group) => !group.removedAt).length,
       groups,

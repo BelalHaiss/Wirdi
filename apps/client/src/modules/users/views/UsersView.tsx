@@ -2,6 +2,7 @@ import { DEFAULT_TIMEZONE, TIMEZONES } from '@wirdi/shared';
 import { withRole } from '@/hoc/withRole';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { PageHeader } from '@/components/ui/page-header';
 import {
   Dialog,
@@ -23,7 +24,7 @@ import {
 } from '@/components/ui/table';
 import { TimezoneDisplay } from '@/components/ui/timezone-display';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Edit2, Loader2, Trash2, UserPlus } from 'lucide-react';
+import { Edit2, Loader2, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
 import { useUsersViewModel } from '../viewmodels/users.viewmodel';
 import { ROLE_CONFIG } from '../utils/user.util';
 import { UserBadge } from '../components/UserBadge';
@@ -50,12 +51,25 @@ function UsersView() {
           title='إدارة المستخدمين'
           description='إدارة المشرفين والمعلمين والصلاحيات'
           actions={
-            <DialogTrigger asChild>
-              <Button onClick={vm.openCreateDialog} className='gap-2' size='sm'>
-                <UserPlus className='w-4 h-4' />
-                <span>إضافة مستخدم</span>
-              </Button>
-            </DialogTrigger>
+            <div className='flex items-center gap-2'>
+              {vm.user?.role === 'ADMIN' && (
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='gap-2'
+                  onClick={() => vm.setIsPromoteModalOpen(true)}
+                >
+                  <ShieldCheck className='w-4 h-4' />
+                  <span>ترقية متعلمين</span>
+                </Button>
+              )}
+              <DialogTrigger asChild>
+                <Button onClick={vm.openCreateDialog} className='gap-2' size='sm'>
+                  <UserPlus className='w-4 h-4' />
+                  <span>إضافة مستخدم</span>
+                </Button>
+              </DialogTrigger>
+            </div>
           }
         />
         <DialogContent className='w-full sm:max-w-md'>
@@ -247,6 +261,50 @@ function UsersView() {
         intent='destructive'
         onConfirm={vm.confirmDelete}
       />
+
+      {/* Promote Learners to Moderator Modal — admin only */}
+      {vm.user?.role === 'ADMIN' && (
+        <Dialog open={vm.isPromoteModalOpen} onOpenChange={vm.setIsPromoteModalOpen}>
+          <DialogContent className='w-full sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>ترقية متعلمين إلى مشرف</DialogTitle>
+              <DialogDescription>
+                اختر المتعلمين الذين تريد ترقيتهم إلى مشرف — سينتقلون من قائمة الطلاب ويحتفظون
+                بعضويتهم في المجموعات.
+              </DialogDescription>
+            </DialogHeader>
+            <div className='py-4'>
+              <MultiSelect
+                value={vm.selectedStudentIds}
+                onChange={vm.setSelectedStudentIds}
+                options={vm.learners.map((l) => ({ value: l.id, label: l.name }))}
+                placeholder='اختر متعلمين...'
+                searchPlaceholder='بحث بالاسم...'
+                disabled={vm.isLearnersLoading || vm.isPromoting}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type='button'
+                variant='outline'
+                color='muted'
+                onClick={() => vm.setIsPromoteModalOpen(false)}
+                disabled={vm.isPromoting}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type='button'
+                color='success'
+                disabled={vm.selectedStudentIds.length === 0 || vm.isPromoting}
+                onClick={vm.onPromote}
+              >
+                {vm.isPromoting ? 'جاري الترقية...' : `ترقية (${vm.selectedStudentIds.length})`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

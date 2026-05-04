@@ -1,22 +1,18 @@
 import z, { ZodType } from 'zod';
 import { CreateLearnerDto, QueryLearnersDto, UpdateLearnerDto } from '../learner.types';
 import { getMessages, ValidationLocale } from './messages';
-import { nameSchema, notesSchema, usernameAccountSchema } from './fields.schema';
+import {
+  contactDetailsSchema,
+  nameSchema,
+  notesSchema,
+  usernameAccountSchema,
+} from './fields.schema';
 import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 import { paginationSchema } from './api.schema';
 
-const learnerDetailsSchema = z.object({
-  age: z.string().trim().optional(),
-  country: z.string().trim().optional(),
-  platform: z.string().trim().optional(),
-  schedule: z.string().trim().optional(),
-  recitation: z.string().trim().optional(),
-});
-
 const learnerContactSchema = (locale: ValidationLocale = 'ar') =>
-  z.object({
+  contactDetailsSchema(locale).extend({
     notes: notesSchema(locale).optional(),
-    details: learnerDetailsSchema.optional(),
   });
 
 export const createLearnerSchema = (locale: ValidationLocale = 'ar') =>
@@ -48,6 +44,6 @@ export const updateLearnerSchema = (locale: ValidationLocale = 'ar') => {
 export const queryLearnersSchema = (locale: ValidationLocale = 'ar') =>
   paginationSchema(locale).extend({
     search: z.string().trim().min(1).optional(),
-    sortBy: z.enum(['name', 'timezone', 'notes', 'groupCount', 'createdAt']).optional(),
+    sortBy: z.enum(['name', 'timezone', 'notes', 'groupCount', 'createdAt', 'age']).optional(),
     sortOrder: z.enum(['asc', 'desc']).optional(),
   }) satisfies ZodType<QueryLearnersDto>;

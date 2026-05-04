@@ -21,6 +21,7 @@ import {
   nameSchema,
   nonEmptyIdSchema,
   notesSchema,
+  timeMinutesSchema,
   usernameAccountSchema,
 } from './fields.schema';
 import { timezoneSchema } from './timezone.schema';
@@ -88,15 +89,10 @@ export const createAndAssignLearnersSchema = (locale: ValidationLocale = 'ar') =
           username: usernameAccountSchema(locale),
           timezone: timezoneSchema(locale),
           notes: notesSchema(locale).optional(),
-          details: z
-            .object({
-              age: z.string().trim().optional(),
-              country: z.string().trim().optional(),
-              platform: z.string().trim().optional(),
-              schedule: z.string().trim().optional(),
-              recitation: z.string().trim().optional(),
-            })
-            .optional(),
+          age: z.coerce.number().int().positive().optional(),
+          platform: z.string().trim().optional(),
+          schedule: timeMinutesSchema(locale).optional(),
+          recitation: z.string().trim().optional(),
         })
       )
       .min(1, locale === 'ar' ? 'يجب إضافة متعلم واحد على الأقل' : 'At least one learner required'),

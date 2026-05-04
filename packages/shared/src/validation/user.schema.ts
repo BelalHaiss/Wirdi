@@ -2,12 +2,18 @@ import z, { ZodType } from 'zod';
 import {
   ChangeOwnPasswordDto,
   CreateStaffUserDto,
+  PromoteLearnersToModeratorDto,
   UpdateOwnProfileDto,
   UpdateStaffUserDto,
   UserAuthRole,
 } from '../user.types';
 import { getMessages, ValidationLocale } from './messages';
-import { nameSchema, passwordSchema, usernameAccountSchema } from './fields.schema';
+import {
+  contactDetailsSchema,
+  nameSchema,
+  passwordSchema,
+  usernameAccountSchema,
+} from './fields.schema';
 import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 
 const staffRoleSchema = z.enum(['ADMIN', 'MODERATOR']) satisfies ZodType<UserAuthRole>;
@@ -41,12 +47,21 @@ export const updateStaffSchema = (locale: ValidationLocale = 'ar') => {
 
 export const updateOwnProfileSchema = (locale: ValidationLocale = 'ar') =>
   z.intersection(
-    z.object({
-      name: nameSchema(locale),
-      username: usernameAccountSchema(locale),
-    }),
+    z
+      .object({
+        name: nameSchema(locale),
+        username: usernameAccountSchema(locale),
+      })
+      .merge(contactDetailsSchema(locale)),
     timezoneFieldSchema(locale)
   ) satisfies ZodType<UpdateOwnProfileDto>;
+
+export const promoteLearnersToModeratorSchema = (locale: ValidationLocale = 'ar') => {
+  void locale;
+  return z.object({
+    studentIds: z.array(z.string().min(1)).min(1),
+  }) satisfies ZodType<PromoteLearnersToModeratorDto>;
+};
 
 export const changeOwnPasswordSchema = (locale: ValidationLocale = 'ar') => {
   const m = getMessages(locale);

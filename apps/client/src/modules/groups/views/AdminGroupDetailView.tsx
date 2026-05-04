@@ -172,7 +172,13 @@ export default function AdminGroupDetailView({ groupId }: Props) {
             name: learnerForEdit.studentName,
             username: learnerForEdit.studentUsername,
             timezone: learnerForEdit.studentTimezone,
-            contact: { notes: learnerForEdit.notes, details: learnerForEdit.details },
+            contact: {
+              notes: learnerForEdit.notes,
+              age: learnerForEdit.age,
+              platform: learnerForEdit.platform,
+              schedule: learnerForEdit.schedule,
+              recitation: learnerForEdit.recitation,
+            },
             groupCount: undefined,
             groups: undefined,
           }}

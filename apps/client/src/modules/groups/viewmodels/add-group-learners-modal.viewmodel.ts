@@ -24,7 +24,7 @@ export function useAddGroupLearnersModal({
       createAndAssignLearnersSchema('ar').omit({ groupId: true })
     ) as unknown as Resolver<FormValues>,
     defaultValues: {
-      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '', details: {} }],
+      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
     },
   });
 
@@ -38,12 +38,15 @@ export function useAddGroupLearnersModal({
   const handleSubmit = form.handleSubmit(async (values) => {
     await onSubmit({
       groupId,
-      learners: values.learners.map((l) => ({
+      learners: values.learners.map((l: FormValues['learners'][number]) => ({
         name: l.name,
         username: l.username,
         timezone: l.timezone,
         notes: l.notes || undefined,
-        details: l.details && Object.values(l.details).some(Boolean) ? l.details : undefined,
+        age: l.age,
+        platform: l.platform,
+        schedule: l.schedule,
+        recitation: l.recitation,
       })),
     });
     form.reset();
@@ -55,7 +58,6 @@ export function useAddGroupLearnersModal({
       username: '',
       timezone: DEFAULT_TIMEZONE,
       notes: '',
-      details: {},
     });
 
   return {

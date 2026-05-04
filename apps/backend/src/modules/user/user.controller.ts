@@ -5,6 +5,7 @@ import type {
   CreateStaffUserDto,
   CreateLearnerDto,
   LearnerDto,
+  PromoteLearnersToModeratorDto,
   StaffUserDto,
   StaffUsersResponseDto,
   QueryLearnersDto,
@@ -14,6 +15,7 @@ import type {
   UpdateLearnerDto,
   UserAuthType,
 } from '@wirdi/shared';
+import { minutesToInputTimeString, TimeMinutes, TIMEZONES } from '@wirdi/shared';
 import { UserRole } from 'generated/prisma/client';
 import type { User as UserEntity } from 'generated/prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
@@ -27,6 +29,7 @@ import {
   updateStaffSchema,
   changeOwnPasswordSchema,
   updateOwnProfileSchema,
+  promoteLearnersToModeratorSchema,
 } from '@wirdi/shared';
 import { UserService } from './user.service';
 import { ExportService } from '../export/export.service';
@@ -70,6 +73,10 @@ export class UserController {
         name: true,
         timezone: true,
         notes: true,
+        age: true,
+        platform: true,
+        schedule: true,
+        recitation: true,
         groupMemberships: {
           select: { group: { select: { name: true } } },
         },
@@ -79,20 +86,29 @@ export class UserController {
     const rows = learners.map((learner) => ({
       name: learner.name,
       username: learner.username ?? '',
-      timezone: learner.timezone,
+      timezone: TIMEZONES.find((tz) => tz.value === learner.timezone)?.label ?? learner.timezone,
       groups: (learner.groupMemberships ?? [])
         .map((m) => m.group?.name)
         .filter(Boolean)
         .join('; '),
       notes: learner.notes ?? '',
+      age: learner.age != null ? String(learner.age) : '',
+      platform: learner.platform ?? '',
+      schedule:
+        learner.schedule != null ? minutesToInputTimeString(learner.schedule as TimeMinutes) : '',
+      recitation: learner.recitation ?? '',
     }));
 
     const file = this.exportService.toCsv(rows, [
       { key: 'name', label: 'اسم الطالب' },
       { key: 'username', label: 'اسم المستخدم' },
-      { key: 'timezone', label: 'المنطقة الزمنية' },
+      { key: 'timezone', label: 'البلد' },
       { key: 'groups', label: 'المجموعات' },
       { key: 'notes', label: 'الملاحظات' },
+      { key: 'age', label: 'السن' },
+      { key: 'platform', label: 'الوسيلة' },
+      { key: 'schedule', label: 'الموعد' },
+      { key: 'recitation', label: 'الرواية' },
     ]);
 
     response.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -114,6 +130,15 @@ export class UserController {
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
   async deleteLearner(@Param('id') id: string): Promise<void> {
     await this.userService.deleteLearner(id);
+  }
+
+  @Post('learner/promote')
+  @Roles([UserRole.ADMIN])
+  async promoteLearnersToModerator(
+    @Body(new ZodValidationPipe(promoteLearnersToModeratorSchema('en')))
+    dto: PromoteLearnersToModeratorDto
+  ): Promise<void> {
+    await this.userService.promoteLearnersToModerator(dto.studentIds);
   }
 
   @Get('staff')

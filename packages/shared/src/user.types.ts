@@ -21,6 +21,10 @@ export interface User {
   email?: string;
   role: UserRole;
   timezone: TimeZoneType;
+  age?: number;
+  platform?: string;
+  schedule?: number;
+  recitation?: string;
   createdAt: ISODateString;
   updatedAt: ISODateString;
   profile?: UserProfile;
@@ -39,6 +43,10 @@ export type UserAuthType = {
   createdAt: ISODateString;
   updatedAt: ISODateString;
   timezone: TimeZoneType;
+  age?: number;
+  platform?: string;
+  schedule?: number;
+  recitation?: string;
 };
 
 export interface LoginCredentialsDto {
@@ -59,16 +67,6 @@ export interface CreateUserDto {
     telegram?: string;
     notes?: string;
   };
-}
-
-export interface UpdateUserDto {
-  id: string;
-  username?: string;
-  name?: string;
-  email?: string;
-  role?: UserRole;
-  timezone?: TimeZoneType;
-  password?: string;
 }
 
 export interface StaffUserDto {
@@ -102,12 +100,20 @@ export interface UpdateOwnProfileDto {
   name: string;
   username: string;
   timezone: string;
+  age?: number;
+  platform?: string;
+  schedule?: number;
+  recitation?: string;
 }
 
 export interface ChangeOwnPasswordDto {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+}
+
+export interface PromoteLearnersToModeratorDto {
+  studentIds: string[];
 }
 
 export interface UpdateUserProfileDto {

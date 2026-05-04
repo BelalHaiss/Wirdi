@@ -19,7 +19,10 @@ model User {
   role           UserRole
   timezone       String   @default("Africa/Cairo") @db.VarChar(50)
   notes          String?  @db.Text
-  details        Json?    @map("details")
+  age            Int?     @map("age") @db.UnsignedTinyInt
+  platform       String?  @map("platform") @db.VarChar(100)
+  schedule       Int?     @map("schedule") @db.UnsignedSmallInt
+  recitation     String?  @map("recitation") @db.VarChar(100)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

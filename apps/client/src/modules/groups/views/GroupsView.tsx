@@ -59,16 +59,16 @@ export default function GroupsView() {
     <div className='space-y-6'>
       {/* Stats summary */}
       {!vm.isStudent ? (
-        <section className='space-y-3 rounded-2xl border border-primary/20 bg-linear-to-l from-primary/5 via-background to-success/5 p-4'>
-          <div className='flex flex-wrap items-center justify-between gap-2'>
-            <Typography as='h2' size='lg' weight='semibold'>
+        <section className='space-y-2 rounded-xl border border-primary/20 bg-linear-to-l from-primary/5 via-background to-success/5 p-3 md:space-y-3 md:rounded-2xl md:p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-1'>
+            <Typography as='h2' size='sm' weight='semibold' className='md:text-lg'>
               ملخص المجموعات
             </Typography>
-            <Typography as='div' size='xs' className='text-muted-foreground'>
+            <Typography as='div' size='xs' className='text-muted-foreground hidden sm:block'>
               إحصائيات مباشرة عن الطلاب والمجموعات
             </Typography>
           </div>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+          <div className='grid grid-cols-3 gap-1.5 md:gap-4'>
             <StatsCountCard
               icon={GraduationCap}
               data={{ count: vm.learnersCount, title: 'إجمالي الطلاب' }}
@@ -129,20 +129,25 @@ export default function GroupsView() {
                   className='block transition-shadow hover:shadow-md h-full'
                 >
                   <Card className='h-full flex flex-col'>
-                    <CardContent className='space-y-3 p-4 flex-1 flex flex-col'>
+                    <CardContent className='space-y-2 p-3 flex-1 flex flex-col md:space-y-3 md:p-4'>
                       <div className='flex items-start justify-between'>
-                        <div className='rounded-lg bg-primary/10 p-2'>
-                          <Users className='h-5 w-5 text-primary' />
+                        <div className='rounded-md bg-primary/10 p-1.5 md:rounded-lg md:p-2'>
+                          <Users className='h-4 w-4 text-primary md:h-5 md:w-5' />
                         </div>
                         <GroupStatusBadge status={group.status} />
                       </div>
 
-                      <Typography as='h3' size='lg' weight='semibold' className='line-clamp-1'>
+                      <Typography
+                        as='h3'
+                        size='md'
+                        weight='semibold'
+                        className='line-clamp-1 md:text-lg'
+                      >
                         {group.name}
                       </Typography>
 
                       {group.description && (
-                        <div className='rounded-md bg-muted/50 px-3 py-2 border-s-2 border-primary/30 min-h-14'>
+                        <div className='rounded-md bg-muted/50 px-2 py-1.5 border-s-2 border-primary/30 md:px-3 md:py-2 md:min-h-14'>
                           <Typography
                             as='p'
                             size='xs'
@@ -153,7 +158,7 @@ export default function GroupsView() {
                         </div>
                       )}
 
-                      <div className='space-y-1.5 flex-1'>
+                      <div className='space-y-1 flex-1 md:space-y-1.5'>
                         <div className='flex items-center justify-between'>
                           <Typography as='div' size='xs' className='text-muted-foreground'>
                             الطلاب
@@ -173,21 +178,35 @@ export default function GroupsView() {
                         </div>
 
                         {group.moderatorName ? (
-                          <div className='flex items-center justify-between'>
-                            <Typography as='div' size='xs' className='text-muted-foreground'>
+                          <div className='flex items-center justify-between gap-2'>
+                            <Typography
+                              as='div'
+                              size='xs'
+                              className='text-muted-foreground shrink-0'
+                            >
                               المشرف
                             </Typography>
-                            <Typography as='div' size='xs' weight='medium'>
+                            <Typography
+                              as='div'
+                              size='xs'
+                              weight='medium'
+                              className='truncate text-end'
+                            >
                               {group.moderatorName}
                             </Typography>
                           </div>
                         ) : null}
 
                         {group.awrad.length > 0 ? (
-                          <div className='border-t border-border pt-1.5'>
+                          <div className='border-t border-border pt-1'>
                             <div className='flex flex-wrap gap-1'>
                               {group.awrad.map((w) => (
-                                <Badge key={w} variant='soft' color='muted'>
+                                <Badge
+                                  key={w}
+                                  variant='soft'
+                                  color='muted'
+                                  className='text-xs px-1.5 py-0'
+                                >
                                   {w}
                                 </Badge>
                               ))}

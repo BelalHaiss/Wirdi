@@ -114,6 +114,19 @@ export function startMinutesToTime(startMinutes: MinutesFromMidnight): TimeHHMMS
   return minutesToTimeString(startMinutes as TimeMinutes);
 }
 
+/** Convert minutes-from-midnight from one timezone to another using today as the reference date */
+export function convertMinutesToTimezone(
+  minutes: TimeMinutes,
+  fromTimezone: string,
+  toTimezone: string
+): TimeMinutes {
+  const dt = DateTime.now()
+    .setZone(fromTimezone)
+    .set({ hour: Math.floor(minutes / 60), minute: minutes % 60, second: 0, millisecond: 0 });
+  const converted = dt.setZone(toTimezone);
+  return (converted.hour * 60 + converted.minute) as TimeMinutes;
+}
+
 // ─── Session / Timezone ────────────────────────────────────────────────────────
 
 /** Converts a UTC datetime → { date, time } in the given timezone */

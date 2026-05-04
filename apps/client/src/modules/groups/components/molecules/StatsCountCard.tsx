@@ -20,30 +20,46 @@ export function StatsCountCard({
 }: StatsCountCardProps) {
   return (
     <Card className={cn('relative overflow-hidden border ring-1 shadow-sm', className)}>
-      <CardContent className='p-2.5 md:space-y-4 md:p-5'>
-        <div className='flex items-center justify-between gap-2'>
+      <CardContent className='p-2 md:space-y-4 md:p-5'>
+        {/* Mobile layout: column */}
+        <div className='flex flex-col items-center gap-1.5 md:hidden'>
           <div
             className={cn(
-              'rounded-lg bg-muted p-1.5 text-muted-foreground ring-1 ring-current/10 md:p-2.5',
+              'rounded-md bg-muted p-1 text-muted-foreground ring-1 ring-current/10',
               iconClassName
             )}
           >
-            <Icon className='h-3.5 w-3.5 md:h-5 md:w-5' />
+            <Icon className='h-3 w-3' />
           </div>
           {isLoading ? (
-            <Loader2 className='h-3.5 w-3.5 animate-spin text-muted-foreground' />
+            <Loader2 className='h-3 w-3 animate-spin text-muted-foreground' />
           ) : (
-            <div className='text-end md:hidden'>
-              <Typography as='div' size='sm' weight='bold'>
+            <div className='text-center'>
+              <Typography as='div' size='sm' weight='bold' className='leading-none'>
                 {data.count}
               </Typography>
-              <Typography as='div' size='xs' className='text-muted-foreground leading-tight'>
+              <Typography
+                as='div'
+                size='xs'
+                className='text-muted-foreground leading-tight mt-0.5 line-clamp-2 text-center'
+              >
                 {data.title}
               </Typography>
             </div>
           )}
         </div>
 
+        {/* Desktop layout */}
+        <div className='hidden items-center justify-between gap-2 md:flex'>
+          <div
+            className={cn(
+              'rounded-lg bg-muted p-2.5 text-muted-foreground ring-1 ring-current/10',
+              iconClassName
+            )}
+          >
+            <Icon className='h-5 w-5' />
+          </div>
+        </div>
         {isLoading ? (
           <div className='hidden md:flex items-center gap-2'>
             <Loader2 className='h-4 w-4 animate-spin' />

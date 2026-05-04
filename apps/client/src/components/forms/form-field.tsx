@@ -12,6 +12,7 @@ import { PasswordInput } from '../ui/password-input';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { TimeInput } from '../ui/time-input';
 
 export interface SelectOption {
   value: string;
@@ -21,7 +22,7 @@ export interface SelectOption {
 export interface IFormField {
   name: string;
   label?: string | ReactNode;
-  type: 'text' | 'email' | 'password' | 'checkbox' | 'select' | 'textarea';
+  type: 'text' | 'email' | 'password' | 'checkbox' | 'select' | 'textarea' | 'time';
   placeholder?: string;
   disabled?: boolean;
   id?: string;
@@ -128,6 +129,22 @@ function FormFieldComponent<T extends FieldValues>({
       );
     }
 
+    if (type === 'time') {
+      return (
+        <TimeInput
+          id={fieldId}
+          value={value}
+          onChange={(minutes) => {
+            onChange(minutes);
+            onBlur();
+          }}
+          disabled={disabled}
+          aria-invalid={invalid}
+          className={inputClassName}
+        />
+      );
+    }
+
     const commonProps = {
       id: fieldId,
       placeholder,
@@ -162,7 +179,7 @@ function FormFieldComponent<T extends FieldValues>({
             ) : (
               <>
                 {label && <FieldLabel htmlFor={fieldId}>{label}</FieldLabel>}
-                {renderInput(value || '', onChange, onBlur, invalid)}
+                {renderInput(type === 'time' ? value : value || '', onChange, onBlur, invalid)}
               </>
             )}
             {showError && error && <FieldErrorComponent errors={[error as FieldError]} />}

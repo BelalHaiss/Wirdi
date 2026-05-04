@@ -2,6 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CreateStaffUserDto,
   DEFAULT_TIMEZONE,
+  LearnerDto,
+  PromoteLearnersToModeratorDto,
   StaffUserDto,
   UpdateStaffUserDto,
   UserAuthRole,
@@ -15,6 +17,7 @@ import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { queryClient, queryKeys } from '@/lib/query-client';
 import { createStaffSchema, updateStaffSchema } from '@wirdi/shared';
 import { userService } from '../services/user.service';
+import { learnerService } from '@/modules/learners/services/learner.service';
 
 const createStaffUserSchema = createStaffSchema();
 const updateStaffUserSchema = updateStaffSchema();
@@ -40,6 +43,8 @@ export function useUsersViewModel() {
   } | null>(null);
   const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
   const [pendingDeleteUser, setPendingDeleteUser] = useState<StaffUserDto | null>(null);
+  const [isPromoteModalOpen, setIsPromoteModalOpen] = useState(false);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const staffUsersQuery = useApiQuery<StaffUserDto[]>({
     queryKey: queryKeys.users.list({ scope: 'staff' }),
@@ -97,6 +102,31 @@ export function useUsersViewModel() {
       toast.error(error.message || 'فشل حذف المستخدم');
     },
   });
+
+  const learnersQuery = useApiQuery<LearnerDto[]>({
+    queryKey: queryKeys.learners.list({ limit: 100 }),
+    queryFn: () => learnerService.queryLearners({ page: 1, limit: 100 }),
+    enabled: isPromoteModalOpen,
+  });
+
+  const promoteMutation = useApiMutation<PromoteLearnersToModeratorDto, null>({
+    mutationFn: userService.promoteLearners,
+    onSuccess: async () => {
+      toast.success('تم ترقية المتعلمين بنجاح');
+      await queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.learners.all });
+      setIsPromoteModalOpen(false);
+      setSelectedStudentIds([]);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'فشل ترقية المتعلمين');
+    },
+  });
+
+  const onPromote = async () => {
+    if (selectedStudentIds.length === 0) return;
+    await promoteMutation.mutateAsync({ studentIds: selectedStudentIds });
+  };
 
   const isAdmin = user?.role === 'ADMIN';
   const isModerator = user?.role === 'MODERATOR';
@@ -231,5 +261,14 @@ export function useUsersViewModel() {
     canSubmitForm: form.formState.isDirty && form.formState.isValid,
 
     isDeleting: deleteMutation.isPending,
+
+    isPromoteModalOpen,
+    setIsPromoteModalOpen,
+    selectedStudentIds,
+    setSelectedStudentIds,
+    learners: learnersQuery.data?.data ?? [],
+    isLearnersLoading: learnersQuery.isPending,
+    onPromote,
+    isPromoting: promoteMutation.isPending,
   };
 }

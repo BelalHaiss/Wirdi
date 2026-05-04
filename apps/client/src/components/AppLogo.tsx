@@ -6,8 +6,8 @@ type AppLogoProps = React.ComponentProps<'div'> & {
 };
 
 const sizeClasses = {
-  md: 'h-20',
-  lg: 'h-32',
+  md: 'h-32',
+  lg: 'h-40',
 };
 
 export function AppLogo({ className, size = 'md', ...props }: AppLogoProps) {
