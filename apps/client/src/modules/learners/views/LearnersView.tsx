@@ -13,12 +13,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { StudentTableItem } from '@/modules/learners/components/student-table-item';
 import { StudentMainInfoModal } from '@/modules/learners/components/student-main-info-modal';
 import type { StudentMainInfoSubmitArgs } from '@/modules/learners/components/student-main-info-modal';
 import type { LearnerDto } from '@wirdi/shared';
-import { LEARNER_DETAIL_FIELDS } from '@wirdi/shared';
+import {
+  LEARNER_DETAIL_FIELDS,
+  PLATFORM_OPTIONS,
+  RECITATION_OPTIONS,
+  TIMEZONES,
+} from '@wirdi/shared';
 import { useLearnersViewModel } from '../viewmodels/learners.viewmodel';
 
 export default function LearnersView() {
@@ -68,7 +80,7 @@ export default function LearnersView() {
                 </div>
               )
             : label,
-        enableSorting: key === 'age',
+        enableSorting: key === 'age' || key === 'schedule',
       })),
       {
         id: 'actions',
@@ -82,10 +94,12 @@ export default function LearnersView() {
   const table = useReactTable({
     data: vm.learners,
     columns,
-    state: { sorting: vm.sorting },
+    state: { sorting: vm.sorting, columnFilters: vm.columnFilters },
     onSortingChange: vm.setSortingTable,
+    onColumnFiltersChange: vm.setColumnFiltersTable,
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
+    manualFiltering: true,
   });
 
   if (vm.queryError) {
@@ -121,7 +135,7 @@ export default function LearnersView() {
                 ) : (
                   <Download className='w-4 h-4' />
                 )}
-                تصدير CSV
+                تصدير XLS
               </Button>
               <Button onClick={vm.openCreateModal} className='gap-2'>
                 <UserPlus className='w-4 h-4' />
@@ -138,6 +152,74 @@ export default function LearnersView() {
         placeholder='بحث بالاسم فقط'
         className='w-full sm:max-w-md'
       />
+
+      <div className='flex flex-wrap items-end gap-3'>
+        <div className='flex flex-col gap-1'>
+          <span className='text-xs font-medium text-muted-foreground px-0.5'>المنطقة الزمنية</span>
+          <Select
+            value={(table.getColumn('timezone')?.getFilterValue() as string | undefined) ?? 'all'}
+            onValueChange={(val) =>
+              table.getColumn('timezone')?.setFilterValue(val === 'all' ? undefined : val)
+            }
+          >
+            <SelectTrigger className='w-48'>
+              <SelectValue placeholder='الكل' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>الكل</SelectItem>
+              {TIMEZONES.map((tz) => (
+                <SelectItem key={tz.value} value={tz.value}>
+                  {tz.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='flex flex-col gap-1'>
+          <span className='text-xs font-medium text-muted-foreground px-0.5'>الرواية</span>
+          <Select
+            value={(table.getColumn('recitation')?.getFilterValue() as string | undefined) ?? 'all'}
+            onValueChange={(val) =>
+              table.getColumn('recitation')?.setFilterValue(val === 'all' ? undefined : val)
+            }
+          >
+            <SelectTrigger className='w-36'>
+              <SelectValue placeholder='الكل' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>الكل</SelectItem>
+              {RECITATION_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='flex flex-col gap-1'>
+          <span className='text-xs font-medium text-muted-foreground px-0.5'>الوسيلة</span>
+          <Select
+            value={(table.getColumn('platform')?.getFilterValue() as string | undefined) ?? 'all'}
+            onValueChange={(val) =>
+              table.getColumn('platform')?.setFilterValue(val === 'all' ? undefined : val)
+            }
+          >
+            <SelectTrigger className='w-44'>
+              <SelectValue placeholder='الكل' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>الكل</SelectItem>
+              {PLATFORM_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       <Table className='rounded-lg border bg-card shadow-sm'>
         <TableHeader className='bg-muted/40'>

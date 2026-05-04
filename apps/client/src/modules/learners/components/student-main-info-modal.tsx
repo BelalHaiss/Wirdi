@@ -121,9 +121,14 @@ export function StudentMainInfoModal({
                 name={`details.${field.key}`}
                 id={`student-details-${field.key}`}
                 label={field.label}
-                type={field.key === 'schedule' ? 'time' : 'text'}
-                placeholder={field.key === 'schedule' ? undefined : field.label}
+                type={field.inputType}
+                placeholder={
+                  field.inputType === 'select' || field.inputType === 'time'
+                    ? undefined
+                    : field.label
+                }
                 disabled={vm.isViewMode || isLoading}
+                options={field.options}
               />
             ))}
 

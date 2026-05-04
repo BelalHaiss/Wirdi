@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { ISODateString, TimeZoneType } from './types/api.types';
+import type { PlatformType, RecitationType } from './learner-details.constants';
 
 export type UserRole = 'ADMIN' | 'MODERATOR' | 'STUDENT';
 export type UserAuthRole = Exclude<UserRole, 'STUDENT'>;
@@ -22,9 +23,9 @@ export interface User {
   role: UserRole;
   timezone: TimeZoneType;
   age?: number;
-  platform?: string;
+  platform?: PlatformType;
   schedule?: number;
-  recitation?: string;
+  recitation?: RecitationType;
   createdAt: ISODateString;
   updatedAt: ISODateString;
   profile?: UserProfile;
@@ -44,9 +45,9 @@ export type UserAuthType = {
   updatedAt: ISODateString;
   timezone: TimeZoneType;
   age?: number;
-  platform?: string;
+  platform?: PlatformType;
   schedule?: number;
-  recitation?: string;
+  recitation?: RecitationType;
 };
 
 export interface LoginCredentialsDto {
@@ -101,9 +102,9 @@ export interface UpdateOwnProfileDto {
   username: string;
   timezone: string;
   age?: number;
-  platform?: string;
+  platform?: PlatformType;
   schedule?: number;
-  recitation?: string;
+  recitation?: RecitationType;
 }
 
 export interface ChangeOwnPasswordDto {

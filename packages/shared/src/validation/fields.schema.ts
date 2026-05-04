@@ -105,10 +105,15 @@ export const timeMinutesSchema = (locale: ValidationLocale = 'ar') => {
   );
 };
 
+export const recitationSchema = () => z.enum(['HAFS', 'WARSH'] as const).optional();
+
+export const platformSchema = () =>
+  z.enum(['MOBILE_NETWORKS', 'INTERNET', 'BOTH'] as const).optional();
+
 export const contactDetailsSchema = (locale: ValidationLocale = 'ar') =>
   z.object({
     age: z.coerce.number().int().min(0).max(255).optional(),
-    platform: z.string().trim().optional(),
+    platform: platformSchema(),
     schedule: timeMinutesSchema(locale).optional(),
-    recitation: z.string().trim().optional(),
+    recitation: recitationSchema(),
   });

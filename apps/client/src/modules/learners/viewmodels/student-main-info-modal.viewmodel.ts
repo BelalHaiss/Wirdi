@@ -51,9 +51,9 @@ export function useStudentMainInfoModal({
       notes: learner && !isCreateMode ? learner.contact.notes || '' : '',
       details: {
         age: !isCreateMode && learner?.contact.age != null ? String(learner.contact.age) : '',
-        platform: (!isCreateMode && learner?.contact.platform) || '',
+        platform: (!isCreateMode && learner?.contact.platform) || undefined,
         schedule: !isCreateMode ? (learner?.contact.schedule ?? undefined) : undefined,
-        recitation: (!isCreateMode && learner?.contact.recitation) || '',
+        recitation: (!isCreateMode && learner?.contact.recitation) || undefined,
       },
     }),
     [learner, isCreateMode]
@@ -70,9 +70,9 @@ export function useStudentMainInfoModal({
   const buildContact = (values: StudentMainInfoFormValues) => {
     const notes = values.notes.trim() || undefined;
     const age = values.details.age.trim() ? Number(values.details.age) : undefined;
-    const platform = values.details.platform.trim() || undefined;
+    const platform = values.details.platform || undefined;
     const schedule = values.details.schedule;
-    const recitation = values.details.recitation.trim() || undefined;
+    const recitation = values.details.recitation || undefined;
     return { notes, age, platform, schedule, recitation };
   };
 

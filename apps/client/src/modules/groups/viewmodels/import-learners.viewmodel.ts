@@ -8,11 +8,18 @@ import {
   createAndAssignLearnersSchema,
   DEFAULT_TIMEZONE,
   LEARNER_DETAIL_FIELDS,
+  PLATFORM_OPTIONS,
+  RECITATION_OPTIONS,
   normalizeArabic,
   timeStringToMinutes,
   TIMEZONES,
 } from '@wirdi/shared';
-import type { CreateAndAssignLearnersDto, TimeZoneType } from '@wirdi/shared';
+import type {
+  CreateAndAssignLearnersDto,
+  PlatformType,
+  RecitationType,
+  TimeZoneType,
+} from '@wirdi/shared';
 
 type FormValues = Pick<CreateAndAssignLearnersDto, 'learners'>;
 
@@ -69,15 +76,29 @@ export function useImportLearnersViewModel({
     const age = get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'age')!.excelColumn);
     const schedule = get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'schedule')!.excelColumn);
 
+    const rawPlatform = get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'platform')!.excelColumn);
+    const platform = rawPlatform
+      ? (PLATFORM_OPTIONS.find((o) => normalizeArabic(o.label) === normalizeArabic(rawPlatform))
+          ?.value as PlatformType | undefined)
+      : undefined;
+
+    const rawRecitation = get(
+      LEARNER_DETAIL_FIELDS.find((f) => f.key === 'recitation')!.excelColumn
+    );
+    const recitation = rawRecitation
+      ? (RECITATION_OPTIONS.find((o) => normalizeArabic(o.label) === normalizeArabic(rawRecitation))
+          ?.value as RecitationType | undefined)
+      : undefined;
+
     return {
       name: get('الاسم') ?? '',
       username: get('رقم الهاتف') ?? '',
       timezone,
       notes: undefined,
       age: age ? Number(age) : undefined,
-      platform: get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'platform')!.excelColumn),
+      platform,
       schedule: schedule ? timeStringToMinutes(schedule) : undefined,
-      recitation: get(LEARNER_DETAIL_FIELDS.find((f) => f.key === 'recitation')!.excelColumn),
+      recitation,
     };
   };
 

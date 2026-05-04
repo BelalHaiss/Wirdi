@@ -15,8 +15,10 @@ import {
   ISODateString,
   LearnerDto,
   normalizeArabic,
+  PlatformType,
   QueryLearnersDto,
   QueryLearnersResponseDto,
+  RecitationType,
   StaffUserDto,
   StaffUsersResponseDto,
   UpdateOwnProfileDto,
@@ -267,6 +269,9 @@ export class UserService {
             },
           }
         : {}),
+      ...(query.timezone ? { timezone: query.timezone } : {}),
+      ...(query.recitation ? { recitation: query.recitation } : {}),
+      ...(query.platform ? { platform: query.platform } : {}),
     };
 
     const sortingClause = this.prismaService.handleSortingClause(query.sortBy, sortOrder, [
@@ -275,6 +280,7 @@ export class UserService {
       'notes',
       'createdAt',
       'age',
+      'schedule',
     ]);
 
     const orderBy: Prisma.UserOrderByWithRelationInput =
@@ -505,9 +511,9 @@ export class UserService {
       role: user.role,
       timezone: user.timezone as TimeZoneType,
       age: user.age ?? undefined,
-      platform: user.platform ?? undefined,
+      platform: (user.platform ?? undefined) as PlatformType | undefined,
       schedule: user.schedule ?? undefined,
-      recitation: user.recitation ?? undefined,
+      recitation: (user.recitation ?? undefined) as RecitationType | undefined,
       createdAt: user.createdAt.toISOString() as ISODateString,
       updatedAt: user.updatedAt.toISOString() as ISODateString,
     };
@@ -543,9 +549,9 @@ export class UserService {
       contact: {
         notes: user.notes ?? undefined,
         age: user.age ?? undefined,
-        platform: user.platform ?? undefined,
+        platform: (user.platform ?? undefined) as PlatformType | undefined,
         schedule: user.schedule ?? undefined,
-        recitation: user.recitation ?? undefined,
+        recitation: (user.recitation ?? undefined) as RecitationType | undefined,
       },
       groupCount: groups.filter((group) => !group.removedAt).length,
       groups,

@@ -2,6 +2,8 @@ import {
   LearnerDto,
   UpdateLearnerDto,
   LEARNER_DETAIL_FIELDS,
+  PLATFORM_OPTIONS,
+  RECITATION_OPTIONS,
   minutesToTimeString,
   convertMinutesToTimezone,
 } from '@wirdi/shared';
@@ -99,10 +101,17 @@ export function StudentTableItem({
         }
 
         const display = raw;
+        // Resolve enum label for select fields
+        const label =
+          key === 'platform'
+            ? (PLATFORM_OPTIONS.find((o) => o.value === display)?.label ?? display)
+            : key === 'recitation'
+              ? (RECITATION_OPTIONS.find((o) => o.value === display)?.label ?? display)
+              : display;
         return (
           <TableCell key={key} className='px-4 py-3'>
             <div className='text-sm text-gray-700 dark:text-gray-300 truncate max-w-28'>
-              {display ?? <span className='text-muted-foreground text-xs'>-</span>}
+              {label ?? <span className='text-muted-foreground text-xs'>-</span>}
             </div>
           </TableCell>
         );

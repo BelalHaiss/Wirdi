@@ -8,7 +8,7 @@ import { RouteErrorElement } from '@/modules/observability';
 import { ProtectedLayout } from '@/components/ProtectedLayout';
 import { withRole } from '@/hoc/withRole';
 
-const ProtectedUsersView = withRole(UsersView, ['ADMIN', 'MODERATOR']);
+const ProtectedUsersView = withRole(UsersView, ['ADMIN']);
 const ProtectedLearnersView = withRole(LearnersView, ['ADMIN', 'MODERATOR']);
 
 export const router = createBrowserRouter([

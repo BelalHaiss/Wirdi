@@ -1,5 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res } from '@nestjs/common';
-import type { Response } from 'express';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import type {
   ChangeOwnPasswordDto,
   CreateStaffUserDto,
@@ -15,7 +14,7 @@ import type {
   UpdateLearnerDto,
   UserAuthType,
 } from '@wirdi/shared';
-import { minutesToInputTimeString, TimeMinutes, TIMEZONES } from '@wirdi/shared';
+
 import { UserRole } from 'generated/prisma/client';
 import type { User as UserEntity } from 'generated/prisma/client';
 import { Roles } from 'src/decorators/roles.decorator';
@@ -32,16 +31,10 @@ import {
   promoteLearnersToModeratorSchema,
 } from '@wirdi/shared';
 import { UserService } from './user.service';
-import { ExportService } from '../export/export.service';
-import { DatabaseService } from '../database/database.service';
 
 @Controller('user')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly exportService: ExportService,
-    private readonly prismaService: DatabaseService
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @Post('learner')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
@@ -63,57 +56,8 @@ export class UserController {
 
   @Get('learner/export')
   @Roles([UserRole.ADMIN, UserRole.MODERATOR])
-  async exportLearnersCsv(@Res() response: Response): Promise<void> {
-    // Fetch raw data with group memberships
-    const learners = await this.prismaService.user.findMany({
-      where: { role: UserRole.STUDENT },
-      orderBy: { name: 'asc' },
-      select: {
-        username: true,
-        name: true,
-        timezone: true,
-        notes: true,
-        age: true,
-        platform: true,
-        schedule: true,
-        recitation: true,
-        groupMemberships: {
-          select: { group: { select: { name: true } } },
-        },
-      },
-    });
-
-    const rows = learners.map((learner) => ({
-      name: learner.name,
-      username: learner.username ?? '',
-      timezone: TIMEZONES.find((tz) => tz.value === learner.timezone)?.label ?? learner.timezone,
-      groups: (learner.groupMemberships ?? [])
-        .map((m) => m.group?.name)
-        .filter(Boolean)
-        .join('; '),
-      notes: learner.notes ?? '',
-      age: learner.age != null ? String(learner.age) : '',
-      platform: learner.platform ?? '',
-      schedule:
-        learner.schedule != null ? minutesToInputTimeString(learner.schedule as TimeMinutes) : '',
-      recitation: learner.recitation ?? '',
-    }));
-
-    const file = this.exportService.toCsv(rows, [
-      { key: 'name', label: 'اسم الطالب' },
-      { key: 'username', label: 'اسم المستخدم' },
-      { key: 'timezone', label: 'البلد' },
-      { key: 'groups', label: 'المجموعات' },
-      { key: 'notes', label: 'الملاحظات' },
-      { key: 'age', label: 'السن' },
-      { key: 'platform', label: 'الوسيلة' },
-      { key: 'schedule', label: 'الموعد' },
-      { key: 'recitation', label: 'الرواية' },
-    ]);
-
-    response.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    response.setHeader('Content-Disposition', 'attachment; filename="learners.csv"');
-    response.send(file);
+  exportLearners(): Promise<LearnerDto[]> {
+    return this.userService.exportLearners();
   }
 
   @Patch('learner/:id')

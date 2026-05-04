@@ -32,9 +32,9 @@ export const useUserProfileViewModel = ({ user, setUser }: UseUserProfileViewMod
       username: user?.username || '',
       timezone: user?.timezone || DEFAULT_TIMEZONE,
       age: user?.age,
-      platform: user?.platform || '',
+      platform: user?.platform || undefined,
       schedule: user?.schedule,
-      recitation: user?.recitation || '',
+      recitation: user?.recitation || undefined,
     },
     mode: 'onTouched',
   });

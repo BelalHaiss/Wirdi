@@ -47,7 +47,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
       name: 'المستخدمون',
       href: '/users',
       icon: UserCog,
-      roles: ['ADMIN', 'MODERATOR'],
+      roles: ['ADMIN'],
     },
     {
       name: 'الطلاب',

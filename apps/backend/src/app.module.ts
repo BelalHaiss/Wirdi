@@ -21,7 +21,6 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { AlertModule } from './modules/alert/alert.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { RequestModule } from './modules/request/request.module';
-import { ExportModule } from './modules/export/export.module';
 
 @Module({
   imports: [
@@ -55,7 +54,6 @@ import { ExportModule } from './modules/export/export.module';
     AlertModule,
     StatsModule,
     RequestModule,
-    ExportModule,
   ],
   providers: [
     {

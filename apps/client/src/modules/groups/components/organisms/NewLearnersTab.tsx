@@ -82,14 +82,15 @@ export function NewLearnersTab({
                     options={TIMEZONES.map((tz) => ({ value: tz.value, label: tz.label }))}
                   />
                 </div>
-                {LEARNER_DETAIL_FIELDS.map(({ key, label }) => (
+                {LEARNER_DETAIL_FIELDS.map(({ key, label, inputType, options }) => (
                   <div key={key} className='w-28 shrink-0'>
                     <FormField
                       control={control}
                       name={`learners.${index}.${key}`}
                       label={label}
-                      type={key === 'schedule' ? 'time' : 'text'}
-                      placeholder={key === 'schedule' ? undefined : '-'}
+                      type={inputType}
+                      placeholder={inputType === 'select' || inputType === 'time' ? undefined : '-'}
+                      options={options}
                     />
                   </div>
                 ))}

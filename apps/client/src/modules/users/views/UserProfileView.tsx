@@ -107,15 +107,16 @@ export function UserProfileView() {
                   options={TIMEZONES}
                 />
 
-                {LEARNER_DETAIL_FIELDS.map(({ key, label }) => (
+                {LEARNER_DETAIL_FIELDS.map(({ key, label, inputType, options }) => (
                   <FormField
                     key={key}
                     control={vm.profileForm.control}
                     name={key}
                     label={label}
-                    type={key === 'schedule' ? 'time' : 'text'}
-                    placeholder={key === 'schedule' ? undefined : label}
+                    type={inputType}
+                    placeholder={inputType === 'select' || inputType === 'time' ? undefined : label}
                     disabled={vm.isUpdatingProfile}
+                    options={options}
                   />
                 ))}
 

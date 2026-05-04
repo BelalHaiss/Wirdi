@@ -21,12 +21,22 @@ export const learnerService = {
     if (query.sortOrder) {
       params.set('sortOrder', query.sortOrder);
     }
+    if (query.timezone) {
+      params.set('timezone', query.timezone);
+    }
+    if (query.recitation) {
+      params.set('recitation', query.recitation);
+    }
+    if (query.platform) {
+      params.set('platform', query.platform);
+    }
 
     return apiClient.get<LearnerDto[]>(`/user/learner?${params.toString()}`);
   },
 
-  exportLearnersCsv: async (): Promise<Blob> => {
-    return apiClient.getBlob('/user/learner/export');
+  exportLearnersData: async (): Promise<LearnerDto[]> => {
+    const response = await apiClient.get<LearnerDto[]>('/user/learner/export');
+    return response.data;
   },
 
   createLearner: async (data: CreateLearnerDto): Promise<UnifiedApiResponse<LearnerDto>> => {

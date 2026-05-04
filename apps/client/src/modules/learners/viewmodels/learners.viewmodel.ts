@@ -1,10 +1,22 @@
 import { useState } from 'react';
-import type { SortingState } from '@tanstack/react-table';
+import type { ColumnFiltersState, SortingState } from '@tanstack/react-table';
+import writeXlsxFile from 'write-excel-file/browser';
+import type { Column } from 'write-excel-file/browser';
 import {
   formatDate,
   getNowAsUTC,
+  LEARNER_DETAIL_FIELDS,
+  PLATFORM_OPTIONS,
+  RECITATION_OPTIONS,
+  TIMEZONES,
+  minutesToInputTimeString,
   type CreateLearnerDto,
   type LearnerDto,
+  type PlatformType,
+  type QueryLearnersDto,
+  type RecitationType,
+  type TimeZoneType,
+  type TimeMinutes,
   type UpdateLearnerDto,
 } from '@wirdi/shared';
 import { toast } from 'sonner';
@@ -24,14 +36,25 @@ export function useLearnersViewModel() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [isExporting, setIsExporting] = useState(false);
   const [selectedLearner, setSelectedLearner] = useState<LearnerDto | null>(null);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [studentModalMode, setStudentModalMode] = useState<LearnerModalMode>('view');
 
   const activeSort = sorting[0];
-  const sortBy = activeSort?.id;
+  const sortBy = activeSort?.id as QueryLearnersDto['sortBy'] | undefined;
   const sortOrder = activeSort ? (activeSort.desc ? 'desc' : 'asc') : undefined;
+
+  const timezoneFilter = columnFilters.find((f) => f.id === 'timezone')?.value as
+    | TimeZoneType
+    | undefined;
+  const recitationFilter = columnFilters.find((f) => f.id === 'recitation')?.value as
+    | RecitationType
+    | undefined;
+  const platformFilter = columnFilters.find((f) => f.id === 'platform')?.value as
+    | PlatformType
+    | undefined;
 
   const learnersQuery = useApiQuery<LearnerDto[]>({
     queryKey: queryKeys.learners.list({
@@ -40,6 +63,9 @@ export function useLearnersViewModel() {
       search: searchQuery || undefined,
       sortBy,
       sortOrder,
+      timezone: timezoneFilter,
+      recitation: recitationFilter,
+      platform: platformFilter,
     }),
     queryFn: () =>
       learnerService.queryLearners({
@@ -48,6 +74,9 @@ export function useLearnersViewModel() {
         search: searchQuery || undefined,
         sortBy,
         sortOrder,
+        timezone: timezoneFilter,
+        recitation: recitationFilter,
+        platform: platformFilter,
       }),
     placeholderData: (previousData) => previousData,
   });
@@ -91,7 +120,7 @@ export function useLearnersViewModel() {
     setPage(1);
   };
 
-  // TanStack Table compatible updater function
+  // TanStack Table compatible updater function for sorting
   const handleSortingChangeTable = (
     updaterOrValue: SortingState | ((old: SortingState) => SortingState)
   ) => {
@@ -101,21 +130,75 @@ export function useLearnersViewModel() {
     setPage(1);
   };
 
+  // TanStack Table compatible updater function for column filters
+  const handleColumnFiltersChangeTable = (
+    updaterOrValue: ColumnFiltersState | ((old: ColumnFiltersState) => ColumnFiltersState)
+  ) => {
+    const next =
+      typeof updaterOrValue === 'function' ? updaterOrValue(columnFilters) : updaterOrValue;
+    setColumnFilters(next);
+    setPage(1);
+  };
+
   const handleExportLearners = async () => {
     if (!canManageLearners) return;
 
     try {
       setIsExporting(true);
-      const csvBlob = await learnerService.exportLearnersCsv();
-      const url = URL.createObjectURL(csvBlob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
+      const learners = await learnerService.exportLearnersData();
+
+      type LearnerRow = {
+        name: string;
+        username: string;
+        timezone: string;
+        groups: string;
+        notes: string;
+        age: string;
+        platform: string;
+        schedule: string;
+        recitation: string;
+      };
+
+      const columns: Column<LearnerRow>[] = [
+        { header: 'الاسم', cell: (r) => r.name },
+        { header: 'رقم الهاتف', cell: (r) => r.username },
+        { header: 'البلد', cell: (r) => r.timezone },
+        { header: 'المجموعات', cell: (r) => r.groups },
+        { header: 'الملاحظات', cell: (r) => r.notes },
+        ...LEARNER_DETAIL_FIELDS.map((field) => ({
+          header: field.excelColumn,
+          cell: (r: LearnerRow) => r[field.key as keyof LearnerRow],
+        })),
+      ];
+
+      const rows: LearnerRow[] = learners.map((learner) => ({
+        name: learner.name,
+        username: learner.username ?? '',
+        timezone: TIMEZONES.find((tz) => tz.value === learner.timezone)?.label ?? learner.timezone,
+        groups: (learner.groups ?? [])
+          .filter((g) => !g.removedAt)
+          .map((g) => g.name)
+          .join('; '),
+        notes: learner.contact.notes ?? '',
+        age: learner.contact.age != null ? String(learner.contact.age) : '',
+        platform:
+          PLATFORM_OPTIONS.find((o) => o.value === learner.contact.platform)?.label ??
+          learner.contact.platform ??
+          '',
+        schedule:
+          learner.contact.schedule != null
+            ? minutesToInputTimeString(learner.contact.schedule as TimeMinutes)
+            : '',
+        recitation:
+          RECITATION_OPTIONS.find((o) => o.value === learner.contact.recitation)?.label ??
+          learner.contact.recitation ??
+          '',
+      }));
+
       const exportDate = formatDate({ date: getNowAsUTC(), token: 'yyyy-MM-dd' });
-      anchor.download = `learners-${exportDate}.csv`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
+      const result = writeXlsxFile<LearnerRow>(rows, { columns });
+      await result.toFile(`learners-${exportDate}.xlsx`);
+
       toast.success('تم تصدير بيانات الطلاب بنجاح');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'تعذر تصدير بيانات الطلاب';
@@ -166,6 +249,8 @@ export function useLearnersViewModel() {
     sorting,
     setSorting: handleSortingChange,
     setSortingTable: handleSortingChangeTable,
+    columnFilters,
+    setColumnFiltersTable: handleColumnFiltersChangeTable,
     searchQuery,
     onSearchQueryChange: handleSearchQueryChange,
 

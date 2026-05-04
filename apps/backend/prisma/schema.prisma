@@ -18,11 +18,11 @@ model User {
   password       String   @db.VarChar(255)
   role           UserRole
   timezone       String   @default("Africa/Cairo") @db.VarChar(50)
-  notes          String?  @db.Text
-  age            Int?     @map("age") @db.UnsignedTinyInt
-  platform       String?  @map("platform") @db.VarChar(100)
-  schedule       Int?     @map("schedule") @db.UnsignedSmallInt
-  recitation     String?  @map("recitation") @db.VarChar(100)
+  notes          String?   @db.Text
+  age            Int?      @map("age") @db.UnsignedTinyInt
+  platform       PlatformType? @map("platform")
+  schedule       Int?      @map("schedule") @db.UnsignedSmallInt
+  recitation     RecitationType? @map("recitation")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -270,4 +270,15 @@ enum NotificationType {
   LEARNER_REMOVED
   REQUEST_CREATED
   REQUEST_UPDATED
+}
+
+enum RecitationType {
+  HAFS
+  WARSH
+}
+
+enum PlatformType {
+  MOBILE_NETWORKS
+  INTERNET
+  BOTH
 }

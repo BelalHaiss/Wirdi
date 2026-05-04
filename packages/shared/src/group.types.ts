@@ -1,4 +1,5 @@
 import type { ISODateOnlyString, ISODateString, TimeZoneType } from './types/api.types';
+import type { PlatformType, RecitationType } from './learner-details.constants';
 
 // ============================================================================
 // Enums
@@ -100,9 +101,9 @@ export interface GroupMemberDto {
   mateName?: string;
   notes?: string;
   age?: number;
-  platform?: string;
+  platform?: PlatformType;
   schedule?: number;
-  recitation?: string;
+  recitation?: RecitationType;
   status: 'ACTIVE' | 'INACTIVE';
   joinedAt: ISODateString;
   removedAt?: ISODateString;
@@ -126,9 +127,9 @@ export interface CreateAndAssignLearnersDto {
     timezone: TimeZoneType;
     notes?: string;
     age?: number;
-    platform?: string;
+    platform?: PlatformType;
     schedule?: number;
-    recitation?: string;
+    recitation?: RecitationType;
   }[];
 }
 

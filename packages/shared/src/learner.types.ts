@@ -2,17 +2,17 @@ import {
   ISODateString,
   PaginationQueryType,
   PaginationResponseMeta,
-  SortingQueryType,
   TimeZoneType,
 } from './types/api.types';
 import type { UserRole } from './user.types';
+import type { PlatformType, RecitationType } from './learner-details.constants';
 
 export interface LearnerContactDto {
   notes?: string;
   age?: number;
-  platform?: string;
+  platform?: PlatformType;
   schedule?: number;
-  recitation?: string;
+  recitation?: RecitationType;
 }
 
 export interface LearnerGroupSummaryDto {
@@ -50,7 +50,12 @@ export interface UpdateLearnerDto {
 
 export type QueryLearnersDto = PaginationQueryType & {
   search?: string;
-} & SortingQueryType;
+  sortBy?: 'name' | 'timezone' | 'notes' | 'groupCount' | 'createdAt' | 'age' | 'schedule';
+  sortOrder?: 'asc' | 'desc';
+  timezone?: TimeZoneType;
+  recitation?: RecitationType;
+  platform?: PlatformType;
+};
 
 export type QueryLearnersResponseDto = {
   data: LearnerDto[];

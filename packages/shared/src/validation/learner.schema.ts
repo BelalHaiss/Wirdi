@@ -9,6 +9,8 @@ import {
 } from './fields.schema';
 import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 import { paginationSchema } from './api.schema';
+import { TIMEZONE_VALUES } from '../utils/timezones.util';
+import type { TimeZoneType } from '../types/api.types';
 
 const learnerContactSchema = (locale: ValidationLocale = 'ar') =>
   contactDetailsSchema(locale).extend({
@@ -44,6 +46,15 @@ export const updateLearnerSchema = (locale: ValidationLocale = 'ar') => {
 export const queryLearnersSchema = (locale: ValidationLocale = 'ar') =>
   paginationSchema(locale).extend({
     search: z.string().trim().min(1).optional(),
-    sortBy: z.enum(['name', 'timezone', 'notes', 'groupCount', 'createdAt', 'age']).optional(),
+    sortBy: z
+      .enum(['name', 'timezone', 'notes', 'groupCount', 'createdAt', 'age', 'schedule'])
+      .optional(),
     sortOrder: z.enum(['asc', 'desc']).optional(),
+    timezone: z
+      .string()
+      .refine((v) => TIMEZONE_VALUES.includes(v), { message: 'Invalid timezone' })
+      .transform((v) => v as TimeZoneType)
+      .optional(),
+    recitation: z.enum(['HAFS', 'WARSH']).optional(),
+    platform: z.enum(['MOBILE_NETWORKS', 'INTERNET', 'BOTH']).optional(),
   }) satisfies ZodType<QueryLearnersDto>;
