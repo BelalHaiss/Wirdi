@@ -289,7 +289,7 @@ export class UserService {
     ]);
 
     const orderBy: Prisma.UserOrderByWithRelationInput =
-      query.sortBy === 'groupCount'
+      query.sortBy === 'groupCount' || query.sortBy === 'groups'
         ? { groupMemberships: { _count: sortOrder } }
         : (sortingClause ?? { createdAt: 'desc' });
 

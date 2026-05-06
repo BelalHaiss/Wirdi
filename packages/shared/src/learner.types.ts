@@ -55,6 +55,7 @@ export type QueryLearnersDto = PaginationQueryType & {
     | 'timezone'
     | 'notes'
     | 'groupCount'
+    | 'groups'
     | 'createdAt'
     | 'age'
     | 'schedule'

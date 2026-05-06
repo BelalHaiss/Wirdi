@@ -47,6 +47,7 @@ export const queryLearnersSchema = (locale: ValidationLocale = 'ar') =>
         'timezone',
         'notes',
         'groupCount',
+        'groups',
         'createdAt',
         'age',
         'schedule',
