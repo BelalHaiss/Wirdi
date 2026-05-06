@@ -7,17 +7,10 @@ import type { PlatformType, RecitationType } from './learner-details.constants';
 
 export type UserRole = 'ADMIN' | 'MODERATOR' | 'STUDENT';
 export type UserAuthRole = Exclude<UserRole, 'STUDENT'>;
-export interface UserProfile {
-  userId: string;
-  phone?: string;
-  whatsapp?: string;
-  telegram?: string;
-  notes?: string;
-}
 
 export interface User {
   id: string;
-  username: string;
+  phone: string;
   name: string;
   email?: string;
   role: UserRole;
@@ -28,7 +21,6 @@ export interface User {
   recitation?: RecitationType;
   createdAt: ISODateString;
   updatedAt: ISODateString;
-  profile?: UserProfile;
 }
 
 export interface AuthResponseDto {
@@ -38,7 +30,7 @@ export interface AuthResponseDto {
 
 export type UserAuthType = {
   id: string;
-  username: string;
+  phone: string;
   name: string;
   role: UserRole;
   createdAt: ISODateString;
@@ -51,28 +43,22 @@ export type UserAuthType = {
 };
 
 export interface LoginCredentialsDto {
-  username: string;
+  phone: string;
   password: string;
 }
 
 export interface CreateUserDto {
-  username: string;
+  phone: string;
   name: string;
   email?: string;
   role: UserRole;
   timezone: TimeZoneType;
   password: string;
-  profile?: {
-    phone?: string;
-    whatsapp?: string;
-    telegram?: string;
-    notes?: string;
-  };
 }
 
 export interface StaffUserDto {
   id: string;
-  username: string;
+  phone: string;
   name: string;
   role: UserAuthRole;
   timezone: TimeZoneType;
@@ -81,7 +67,7 @@ export interface StaffUserDto {
 }
 
 export interface CreateStaffUserDto {
-  username: string;
+  phone: string;
   name: string;
   role: UserAuthRole;
   password: string;
@@ -89,7 +75,7 @@ export interface CreateStaffUserDto {
 }
 
 export interface UpdateStaffUserDto {
-  username?: string;
+  phone?: string;
   name?: string;
   role?: UserAuthRole;
   timezone?: string;
@@ -99,7 +85,7 @@ export type StaffUsersResponseDto = StaffUserDto[];
 
 export interface UpdateOwnProfileDto {
   name: string;
-  username: string;
+  phone: string;
   timezone: string;
   age?: number;
   platform?: PlatformType;
@@ -117,14 +103,6 @@ export interface PromoteLearnersToModeratorDto {
   studentIds: string[];
 }
 
-export interface UpdateUserProfileDto {
-  userId: string;
-  phone?: string;
-  whatsapp?: string;
-  telegram?: string;
-  notes?: string;
-}
-
 export interface UserFilterDto {
   role?: UserRole;
   search?: string;
@@ -134,27 +112,27 @@ export type UserWithOptionalCredentials = {
   id: string;
   name: string;
   role: UserRole;
-  username?: string | null;
+  phone?: string | null;
   password?: string | null;
   timezone?: string;
 };
 
 export type LearnerUser = UserWithOptionalCredentials & {
   role: 'STUDENT';
-  username?: null;
+  phone?: null;
   password?: null;
 };
 
 export type NonLearnerUserWithCredentials = UserWithOptionalCredentials & {
   role: UserAuthRole;
-  username: string;
+  phone: string;
   password: string;
 };
 
 export const isLearnerUser = (user: UserWithOptionalCredentials): user is LearnerUser => {
   return (
     user.role === 'STUDENT' &&
-    (user.username === null || user.username === undefined) &&
+    (user.phone === null || user.phone === undefined) &&
     (user.password === null || user.password === undefined)
   );
 };
@@ -164,8 +142,8 @@ export const isNonLearnerUserWithCredentials = (
 ): user is NonLearnerUserWithCredentials => {
   return (
     user.role !== 'STUDENT' &&
-    typeof user.username === 'string' &&
-    user.username.length > 0 &&
+    typeof user.phone === 'string' &&
+    user.phone.length > 0 &&
     typeof user.password === 'string' &&
     user.password.length > 0
   );

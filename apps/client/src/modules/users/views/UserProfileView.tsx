@@ -89,13 +89,10 @@ export function UserProfileView() {
 
                 <FormField
                   control={vm.profileForm.control}
-                  name='username'
-                  label='اسم المستخدم'
-                  type='text'
-                  placeholder='username'
+                  name='phone'
+                  label='رقم الهاتف'
+                  type='phone'
                   disabled={vm.isUpdatingProfile}
-                  inputClassName='text-left'
-                  dir='ltr'
                 />
 
                 <FormField

@@ -11,20 +11,20 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(ulid())
-  username       String   @unique @db.VarChar(50)
-  name           String   @db.VarChar(100)
-  nameNormalized String   @map("name_normalized") @db.VarChar(100)
-  password       String   @db.VarChar(255)
+  id             String          @id @default(ulid())
+  phone          String          @unique @db.VarChar(20)
+  name           String          @db.VarChar(100)
+  nameNormalized String          @map("name_normalized") @db.VarChar(100)
+  password       String          @db.VarChar(255)
   role           UserRole
-  timezone       String   @default("Africa/Cairo") @db.VarChar(50)
-  notes          String?   @db.Text
-  age            Int?      @map("age") @db.UnsignedTinyInt
-  platform       PlatformType? @map("platform")
-  schedule       Int?      @map("schedule") @db.UnsignedSmallInt
+  timezone       String          @default("Africa/Cairo") @db.VarChar(50)
+  notes          String?         @db.Text
+  age            Int?            @map("age") @db.UnsignedTinyInt
+  platform       PlatformType?   @map("platform")
+  schedule       Int?            @map("schedule") @db.UnsignedSmallInt
   recitation     RecitationType? @map("recitation")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   // Group moderator relation
   moderatedGroups Group[] @relation("GroupModerator")

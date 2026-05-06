@@ -5,6 +5,7 @@ import {
   CreateGroupDto,
   GroupDto,
   GroupMemberDto,
+  GroupNameDto,
   ISODateOnlyString,
   PlatformType,
   QueryGroupsResponseDto,
@@ -31,6 +32,14 @@ export class GroupService {
   ) {}
 
   // ─── Groups CRUD ────────────────────────────────────────────────────────────
+
+  async getGroupNames(): Promise<GroupNameDto[]> {
+    const groups = await this.db.group.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    });
+    return groups;
+  }
 
   async queryGroups(actor: PrismaUser): Promise<QueryGroupsResponseDto> {
     const where =
@@ -223,7 +232,7 @@ export class GroupService {
         student: {
           select: {
             name: true,
-            username: true,
+            phone: true,
             timezone: true,
             notes: true,
             age: true,
@@ -420,7 +429,7 @@ export class GroupService {
       joinedAt: Date;
       student: {
         name: string;
-        username: string;
+        phone: string;
         timezone: string;
         notes: string | null;
         age?: number | null;
@@ -438,7 +447,7 @@ export class GroupService {
       groupId: m.groupId,
       studentId: m.studentId,
       studentName: m.student.name,
-      studentUsername: m.student.username,
+      studentPhone: m.student.phone,
       studentTimezone: m.student.timezone as TimeZoneType,
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,

@@ -24,7 +24,7 @@ export function useAddGroupLearnersModal({
       createAndAssignLearnersSchema('ar').omit({ groupId: true })
     ) as unknown as Resolver<FormValues>,
     defaultValues: {
-      learners: [{ name: '', username: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
+      learners: [{ name: '', phone: '', timezone: DEFAULT_TIMEZONE, notes: '' }],
     },
   });
 
@@ -40,7 +40,7 @@ export function useAddGroupLearnersModal({
       groupId,
       learners: values.learners.map((l: FormValues['learners'][number]) => ({
         name: l.name,
-        username: l.username,
+        phone: l.phone,
         timezone: l.timezone,
         notes: l.notes || undefined,
         age: l.age,
@@ -55,7 +55,7 @@ export function useAddGroupLearnersModal({
   const addLearner = () =>
     fieldArray.append({
       name: '',
-      username: '',
+      phone: '',
       timezone: DEFAULT_TIMEZONE,
       notes: '',
     });

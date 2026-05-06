@@ -13,7 +13,7 @@ import { useAuthViewModel } from '../viewmodels/auth.viewmodel';
 export const LoginView = () => {
   const { user } = useApp();
   const { loginForm, onLoginSubmit, canSubmit, isLoading, error, isError } = useAuthViewModel();
-
+  console.log(loginForm.watch('phone'));
   const highlights = [
     {
       title: 'تسجيل الوِرْد اليومي',
@@ -59,14 +59,11 @@ export const LoginView = () => {
               <div className='space-y-4 rounded-xl border border-border bg-background/80 p-4'>
                 <FormField
                   control={loginForm.control}
-                  name='username'
-                  label='اسم المستخدم'
-                  type='text'
-                  placeholder='admin'
+                  name='phone'
+                  label='رقم الهاتف'
+                  type='phone'
                   disabled={isLoading}
-                  id='username'
-                  inputClassName='text-left'
-                  dir='ltr'
+                  id='phone'
                 />
 
                 <FormField

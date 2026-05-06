@@ -13,6 +13,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { TimeInput } from '../ui/time-input';
+import { PhoneInput } from '../ui/phone-input';
 
 export interface SelectOption {
   value: string;
@@ -22,7 +23,7 @@ export interface SelectOption {
 export interface IFormField {
   name: string;
   label?: string | ReactNode;
-  type: 'text' | 'email' | 'password' | 'checkbox' | 'select' | 'textarea' | 'time';
+  type: 'text' | 'email' | 'password' | 'checkbox' | 'select' | 'textarea' | 'time' | 'phone';
   placeholder?: string;
   disabled?: boolean;
   id?: string;
@@ -138,6 +139,22 @@ function FormFieldComponent<T extends FieldValues>({
             onChange(minutes);
             onBlur();
           }}
+          disabled={disabled}
+          aria-invalid={invalid}
+          className={inputClassName}
+        />
+      );
+    }
+
+    if (type === 'phone') {
+      return (
+        <PhoneInput
+          id={fieldId}
+          value={value || ''}
+          onChange={(v) => {
+            onChange(v ?? '');
+          }}
+          onBlur={onBlur}
           disabled={disabled}
           aria-invalid={invalid}
           className={inputClassName}

@@ -3,6 +3,7 @@ import type {
   CreateGroupDto,
   CreateWeekScheduleDto,
   GroupDto,
+  GroupNameDto,
   GroupStatsDto,
   LearnerDto,
   QueryGroupsResponseDto,
@@ -22,6 +23,10 @@ export const groupService = {
 
   queryGroups: async (): Promise<UnifiedApiResponse<QueryGroupsResponseDto>> => {
     return apiClient.get<QueryGroupsResponseDto>('/group');
+  },
+
+  getGroupNames: async (): Promise<UnifiedApiResponse<GroupNameDto[]>> => {
+    return apiClient.get<GroupNameDto[]>('/group/names');
   },
 
   getGroup: async (id: string): Promise<UnifiedApiResponse<GroupDto>> => {

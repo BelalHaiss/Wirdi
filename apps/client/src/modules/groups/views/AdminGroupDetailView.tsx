@@ -170,7 +170,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
           learner={{
             id: learnerForEdit.studentId,
             name: learnerForEdit.studentName,
-            username: learnerForEdit.studentUsername,
+            phone: learnerForEdit.studentPhone,
             timezone: learnerForEdit.studentTimezone,
             contact: {
               notes: learnerForEdit.notes,

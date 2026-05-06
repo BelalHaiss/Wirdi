@@ -7,15 +7,15 @@ import {
   type TimeMinutes,
 } from '@wirdi/shared';
 
-type UsernameMap = Record<string, { id: string; role: UserRole }>;
+type PhoneMap = Record<string, { id: string; role: UserRole }>;
 type WeekDayNumber = 6 | 0 | 1 | 2 | 3 | 4;
 type MembershipStatus = 'ACTIVE' | 'INACTIVE';
 type WirdSeedStatus = 'ATTENDED' | 'MISSED';
 
 type MembershipSeed = {
-  username: string;
+  phone: string;
   status?: MembershipStatus;
-  mateUsername?: string;
+  matePhone?: string;
   joinedOffsetDays?: number;
   removed?: boolean;
 };
@@ -31,7 +31,7 @@ type RecordingSeed = {
   offsetDaysFromTarget?: number;
   hour: number;
   minute?: number;
-  readOnMateUsername?: string;
+  readOnMatePhone?: string;
 };
 
 type WirdEntrySeed = {
@@ -89,7 +89,7 @@ function recordOn(
     offsetDaysFromTarget?: number;
     hour?: number;
     minute?: number;
-    readOnMateUsername?: string;
+    readOnMatePhone?: string;
   }
 ): RecordingSeed {
   return {
@@ -97,7 +97,7 @@ function recordOn(
     offsetDaysFromTarget: options?.offsetDaysFromTarget,
     hour: options?.hour ?? 10,
     minute: options?.minute ?? 0,
-    readOnMateUsername: options?.readOnMateUsername,
+    readOnMatePhone: options?.readOnMatePhone,
   };
 }
 
@@ -199,7 +199,7 @@ function buildRecordingDate(
   });
 }
 
-function simulateWeekPolicy(input: SimulatedWeekInput, users: UsernameMap): SimulatedWeekResult {
+function simulateWeekPolicy(input: SimulatedWeekInput, users: PhoneMap): SimulatedWeekResult {
   const asOf = getDateAtPoint(input.weekStartDateStr, input.timezone, input.asOf);
   const activeExcuseUntil = input.activeExcuseUntil
     ? getDateAtPoint(input.weekStartDateStr, input.timezone, input.activeExcuseUntil)
@@ -258,8 +258,8 @@ function simulateWeekPolicy(input: SimulatedWeekInput, users: UsernameMap): Simu
         dayNumber: event.recording.dayNumber,
         status: 'ATTENDED',
         recordedAt: event.at,
-        readOnMateId: event.recording.readOnMateUsername
-          ? users[event.recording.readOnMateUsername]?.id
+        readOnMateId: event.recording.readOnMatePhone
+          ? users[event.recording.readOnMatePhone]?.id
           : undefined,
       });
 
@@ -309,30 +309,30 @@ function simulateWeekPolicy(input: SimulatedWeekInput, users: UsernameMap): Simu
   };
 }
 
-async function loadScenarioUsers(prisma: PrismaClient): Promise<UsernameMap> {
-  const scenarioUsernames = [
-    'admin',
-    'moderator',
-    'moderator2',
-    ...Array.from({ length: 25 }, (_, i) => `student${i + 1}`),
+async function loadScenarioUsers(prisma: PrismaClient): Promise<PhoneMap> {
+  const scenarioPhones = [
+    '+966500000001',
+    '+966500000002',
+    '+966500000003',
+    ...Array.from({ length: 25 }, (_, i) => `+9665${String(i + 1).padStart(8, '0')}`),
   ];
 
   const users = await prisma.user.findMany({
-    where: { username: { in: scenarioUsernames } },
-    select: { id: true, username: true, role: true },
+    where: { phone: { in: scenarioPhones } },
+    select: { id: true, phone: true, role: true },
   });
 
-  const byUsername: UsernameMap = {};
+  const byPhone: PhoneMap = {};
   for (const user of users) {
-    byUsername[user.username] = { id: user.id, role: user.role };
+    byPhone[user.phone] = { id: user.id, role: user.role };
   }
 
-  const missing = scenarioUsernames.filter((username) => !byUsername[username]);
+  const missing = scenarioPhones.filter((phone) => !byPhone[phone]);
   if (missing.length > 0) {
     throw new Error(`Missing users for wird tracking seed: ${missing.join(', ')}`);
   }
 
-  return byUsername;
+  return byPhone;
 }
 
 async function createWeek(
@@ -369,14 +369,14 @@ async function createMemberships(
   input: {
     groupId: string;
     members: MembershipSeed[];
-    users: UsernameMap;
+    users: PhoneMap;
     joinedBaseDate: Date;
     actorId: string;
   }
 ) {
   for (const member of input.members) {
-    const user = input.users[member.username];
-    const mate = member.mateUsername ? input.users[member.mateUsername] : null;
+    const user = input.users[member.phone];
+    const mate = member.matePhone ? input.users[member.matePhone] : null;
 
     const joinedAt = new Date(input.joinedBaseDate);
     if (member.joinedOffsetDays) {
@@ -447,7 +447,7 @@ async function applyWeekSimulation(
     groupId: string;
     weekId: string;
     userId: string;
-    users: UsernameMap;
+    users: PhoneMap;
     weekStartDateStr: ISODateOnlyString;
     timezone: string;
     asOf: SeedClockPoint;
@@ -519,8 +519,8 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   console.log('🌱 Seeding wird tracking scenarios...');
 
   const users = await loadScenarioUsers(prisma);
-  const adminId = users['admin'].id;
-  const moderatorId = users['moderator'].id;
+  const adminId = users['+966500000001'].id;
+  const moderatorId = users['+966500000002'].id;
   const anchors = getWeekAnchors();
   const groupTimezone = 'Asia/Riyadh';
 
@@ -582,30 +582,28 @@ export async function seedWirdTracking(prisma: PrismaClient) {
     joinedBaseDate: anchors.currentSaturday,
     actorId: adminId,
     members: [
-      { username: 'student1', mateUsername: 'student2' },
-      { username: 'student2', mateUsername: 'student1' },
-      { username: 'student3' },
-      { username: 'student4' },
-      { username: 'student5' },
-      { username: 'student6' },
-      { username: 'student7', joinedOffsetDays: 2 },
-      { username: 'student8', mateUsername: 'student9' },
-      { username: 'student9' },
-      { username: 'student10', status: 'INACTIVE' },
-      { username: 'admin' },
-      { username: 'moderator' },
-      { username: 'student15' },
-      { username: 'student16' },
-      { username: 'student17' },
-      { username: 'student18', removed: true, mateUsername: 'student8' },
-      { username: 'student19', status: 'INACTIVE' },
-      { username: 'student20', removed: true },
-      { username: 'student21', removed: true },
-      { username: 'student22' },
-      { username: 'student23', removed: true },
-      { username: 'student24', status: 'INACTIVE' },
-      { username: 'student25' },
-      { username: 'student14', removed: true },
+      { phone: '+966500000001', matePhone: '+966500000002' },
+      { phone: '+966500000002', matePhone: '+966500000001' },
+      { phone: '+966500000003' },
+      { phone: '+966500000004' },
+      { phone: '+966500000005' },
+      { phone: '+966500000006' },
+      { phone: '+966500000007', joinedOffsetDays: 2 },
+      { phone: '+966500000008', matePhone: '+966500000009' },
+      { phone: '+966500000009' },
+      { phone: '+966500000010', status: 'INACTIVE' },
+      { phone: '+966500000015' },
+      { phone: '+966500000016' },
+      { phone: '+966500000017' },
+      { phone: '+966500000018', removed: true, matePhone: '+966500000008' },
+      { phone: '+966500000019', status: 'INACTIVE' },
+      { phone: '+966500000020', removed: true },
+      { phone: '+966500000021', removed: true },
+      { phone: '+966500000022' },
+      { phone: '+966500000023', removed: true },
+      { phone: '+966500000024', status: 'INACTIVE' },
+      { phone: '+966500000025' },
+      { phone: '+966500000014', removed: true },
     ],
   });
 
@@ -615,17 +613,17 @@ export async function seedWirdTracking(prisma: PrismaClient) {
     joinedBaseDate: anchors.currentSaturday,
     actorId: adminId,
     members: [
-      { username: 'student25', removed: true },
-      { username: 'student14', removed: true },
-      { username: 'student11' },
-      { username: 'student12' },
-      { username: 'student13' },
+      { phone: '+966500000025', removed: true },
+      { phone: '+966500000014', removed: true },
+      { phone: '+966500000011' },
+      { phone: '+966500000012' },
+      { phone: '+966500000013' },
     ],
   });
 
   await prisma.excuse.create({
     data: {
-      studentId: users['student4'].id,
+      studentId: users['+966500000004'].id,
       groupId: mainGroup.id,
       createdBy: adminId,
       expiresAt: getDateAtPoint(anchors.currentSaturdayStr, groupTimezone, at(7, 0)),
@@ -634,7 +632,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
 
   await prisma.excuse.create({
     data: {
-      studentId: users['student10'].id,
+      studentId: users['+966500000010'].id,
       groupId: mainGroup.id,
       createdBy: adminId,
       expiresAt: getDateAtPoint(anchors.currentSaturdayStr, groupTimezone, at(3, 23)),
@@ -643,7 +641,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
 
   await prisma.excuse.create({
     data: {
-      studentId: users['student20'].id,
+      studentId: users['+966500000020'].id,
       groupId: mainGroup.id,
       createdBy: adminId,
       expiresAt: getDateAtPoint(anchors.currentSaturdayStr, groupTimezone, at(10, 0)),
@@ -653,7 +651,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student1'].id,
+    userId: users['+966500000001'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -664,7 +662,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student2'].id,
+    userId: users['+966500000002'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -675,7 +673,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student3'].id,
+    userId: users['+966500000003'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -686,7 +684,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student4'].id,
+    userId: users['+966500000004'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -698,7 +696,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student5'].id,
+    userId: users['+966500000005'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -709,7 +707,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: previousWeek.id,
-    userId: users['student6'].id,
+    userId: users['+966500000006'].id,
     users,
     weekStartDateStr: anchors.previousSaturdayStr,
     timezone: groupTimezone,
@@ -720,7 +718,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student6'].id,
+    userId: users['+966500000006'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -732,7 +730,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student7'].id,
+    userId: users['+966500000007'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -744,18 +742,18 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student8'].id,
+    userId: users['+966500000008'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
     asOf: at(3, 12),
-    recordings: [recordOn(6, { readOnMateUsername: 'student9' })],
+    recordings: [recordOn(6, { readOnMatePhone: '+966500000009' })],
   });
 
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student9'].id,
+    userId: users['+966500000009'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -765,36 +763,14 @@ export async function seedWirdTracking(prisma: PrismaClient) {
 
   await addWirds(prisma, {
     weekId: currentWeek.id,
-    userId: users['student10'].id,
+    userId: users['+966500000010'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6, 0]),
   });
 
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['admin'].id,
-    users,
-    weekStartDateStr: anchors.currentSaturdayStr,
-    timezone: groupTimezone,
-    asOf: at(2, 12),
-    recordings: [recordOn(6), recordOn(0)],
-  });
-
-  await applyWeekSimulation(prisma, {
-    groupId: mainGroup.id,
-    weekId: currentWeek.id,
-    userId: users['moderator'].id,
-    users,
-    weekStartDateStr: anchors.currentSaturdayStr,
-    timezone: groupTimezone,
-    asOf: at(2, 12),
-    recordings: [recordOn(6)],
-  });
-
-  await applyWeekSimulation(prisma, {
-    groupId: mainGroup.id,
-    weekId: currentWeek.id,
-    userId: users['student15'].id,
+    userId: users['+966500000015'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -804,7 +780,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student16'].id,
+    userId: users['+966500000016'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -814,7 +790,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student17'].id,
+    userId: users['+966500000017'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -824,20 +800,20 @@ export async function seedWirdTracking(prisma: PrismaClient) {
 
   await addWirds(prisma, {
     weekId: currentWeek.id,
-    userId: users['student14'].id,
+    userId: users['+966500000014'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6, 0]),
   });
 
   await addWirds(prisma, {
     weekId: currentWeek.id,
-    userId: users['student20'].id,
+    userId: users['+966500000020'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
   });
 
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student21'].id,
+    userId: users['+966500000021'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -848,7 +824,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student22'].id,
+    userId: users['+966500000022'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -858,20 +834,20 @@ export async function seedWirdTracking(prisma: PrismaClient) {
 
   await addWirds(prisma, {
     weekId: currentWeek.id,
-    userId: users['student23'].id,
+    userId: users['+966500000023'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
   });
 
   await addWirds(prisma, {
     weekId: currentWeek.id,
-    userId: users['student24'].id,
+    userId: users['+966500000024'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
   });
 
   await applyWeekSimulation(prisma, {
     groupId: mainGroup.id,
     weekId: currentWeek.id,
-    userId: users['student25'].id,
+    userId: users['+966500000025'].id,
     users,
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
@@ -881,13 +857,13 @@ export async function seedWirdTracking(prisma: PrismaClient) {
 
   await addWirds(prisma, {
     weekId: historicalWeek.id,
-    userId: users['student25'].id,
+    userId: users['+966500000025'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
   });
 
   await addWirds(prisma, {
     weekId: historicalWeek.id,
-    userId: users['student14'].id,
+    userId: users['+966500000014'].id,
     entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6]),
   });
 

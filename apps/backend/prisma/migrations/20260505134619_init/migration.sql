@@ -1,17 +1,23 @@
 -- CreateTable
 CREATE TABLE `users` (
     `id` VARCHAR(191) NOT NULL,
-    `username` VARCHAR(50) NOT NULL,
+    `phone` VARCHAR(20) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
+    `name_normalized` VARCHAR(100) NOT NULL,
     `password` VARCHAR(255) NOT NULL,
     `role` ENUM('ADMIN', 'MODERATOR', 'STUDENT') NOT NULL,
     `timezone` VARCHAR(50) NOT NULL DEFAULT 'Africa/Cairo',
     `notes` TEXT NULL,
+    `age` TINYINT UNSIGNED NULL,
+    `platform` ENUM('MOBILE_NETWORKS', 'INTERNET', 'BOTH') NULL,
+    `schedule` SMALLINT UNSIGNED NULL,
+    `recitation` ENUM('HAFS', 'WARSH') NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `users_username_key`(`username`),
+    UNIQUE INDEX `users_phone_key`(`phone`),
     INDEX `users_role_idx`(`role`),
+    INDEX `users_name_normalized_idx`(`name_normalized`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -19,7 +25,7 @@ CREATE TABLE `users` (
 CREATE TABLE `groups` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(100) NOT NULL,
-    `timezone` VARCHAR(50) NOT NULL,
+    `timezone` VARCHAR(50) NOT NULL DEFAULT 'Asia/Riyadh',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `awrad` JSON NOT NULL,
     `moderator_id` VARCHAR(191) NULL,
@@ -37,10 +43,15 @@ CREATE TABLE `group_members` (
     `group_id` VARCHAR(191) NOT NULL,
     `student_id` VARCHAR(191) NOT NULL,
     `mate_id` VARCHAR(191) NULL,
+    `status` ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
     `joined_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `removed_at` DATETIME(3) NULL,
+    `removed_by` VARCHAR(191) NULL,
 
     INDEX `group_members_student_id_idx`(`student_id`),
     INDEX `group_members_mate_id_idx`(`mate_id`),
+    INDEX `group_members_removed_at_idx`(`removed_at`),
+    INDEX `group_members_removed_by_idx`(`removed_by`),
     UNIQUE INDEX `group_members_group_id_student_id_key`(`group_id`, `student_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -80,6 +91,7 @@ CREATE TABLE `student_wirds` (
     `week_id` VARCHAR(191) NOT NULL,
     `day_number` TINYINT NOT NULL,
     `status` ENUM('ATTENDED', 'MISSED', 'LATE') NOT NULL,
+    `read_source` ENUM('DEFAULT_GROUP_MATE', 'DIFFERENT_GROUP_MATE', 'OUTSIDE_GROUP') NOT NULL DEFAULT 'DEFAULT_GROUP_MATE',
     `read_on_mate_id` VARCHAR(191) NULL,
     `recorded_at` DATETIME(3) NOT NULL,
 
@@ -95,7 +107,7 @@ CREATE TABLE `requests` (
     `student_id` VARCHAR(191) NOT NULL,
     `group_id` VARCHAR(191) NOT NULL,
     `type` ENUM('EXCUSE', 'ACTIVATION') NOT NULL,
-    `reason` TEXT NULL,
+    `payload` JSON NOT NULL,
     `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
     `reviewed_by` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -135,6 +147,20 @@ CREATE TABLE `alerts` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `notifications` (
+    `id` VARCHAR(191) NOT NULL,
+    `recipient_id` VARCHAR(191) NOT NULL,
+    `type` ENUM('ALERT_ASSIGNED', 'LEARNER_DEACTIVATED', 'LEARNER_REMOVED', 'REQUEST_CREATED', 'REQUEST_UPDATED') NOT NULL,
+    `payload` JSON NOT NULL,
+    `read_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `notifications_recipient_id_idx`(`recipient_id`),
+    INDEX `notifications_recipient_id_read_at_idx`(`recipient_id`, `read_at`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `groups` ADD CONSTRAINT `groups_moderator_id_fkey` FOREIGN KEY (`moderator_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -146,6 +172,9 @@ ALTER TABLE `group_members` ADD CONSTRAINT `group_members_student_id_fkey` FOREI
 
 -- AddForeignKey
 ALTER TABLE `group_members` ADD CONSTRAINT `group_members_mate_id_fkey` FOREIGN KEY (`mate_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `group_members` ADD CONSTRAINT `group_members_removed_by_fkey` FOREIGN KEY (`removed_by`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `weeks` ADD CONSTRAINT `weeks_group_id_fkey` FOREIGN KEY (`group_id`) REFERENCES `groups`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -191,3 +220,6 @@ ALTER TABLE `alerts` ADD CONSTRAINT `alerts_group_id_fkey` FOREIGN KEY (`group_i
 
 -- AddForeignKey
 ALTER TABLE `alerts` ADD CONSTRAINT `alerts_week_id_fkey` FOREIGN KEY (`week_id`) REFERENCES `weeks`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `notifications` ADD CONSTRAINT `notifications_recipient_id_fkey` FOREIGN KEY (`recipient_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

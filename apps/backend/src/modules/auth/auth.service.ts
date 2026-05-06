@@ -15,7 +15,7 @@ export class AuthService {
   ) {}
 
   async login(loginDTO: LoginCredentialsDto) {
-    const foundUser = await this.userService.findByUsername(loginDTO.username);
+    const foundUser = await this.userService.findByPhone(loginDTO.phone);
 
     if (!foundUser) {
       throw new UnauthorizedException('Invalid credentials');
@@ -32,7 +32,7 @@ export class AuthService {
       accessToken,
       user: {
         id: foundUser.id,
-        username: foundUser.username,
+        phone: foundUser.phone,
         name: foundUser.name,
         role: foundUser.role,
         timezone: foundUser.timezone as TimeZoneType,

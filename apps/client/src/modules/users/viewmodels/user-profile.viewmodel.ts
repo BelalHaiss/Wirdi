@@ -29,7 +29,7 @@ export const useUserProfileViewModel = ({ user, setUser }: UseUserProfileViewMod
     resolver: zodResolver(updateOwnProfileSchema()) as unknown as Resolver<UpdateOwnProfileDto>,
     defaultValues: {
       name: user?.name || '',
-      username: user?.username || '',
+      phone: user?.phone || '',
       timezone: user?.timezone || DEFAULT_TIMEZONE,
       age: user?.age,
       platform: user?.platform || undefined,
@@ -66,7 +66,7 @@ export const useUserProfileViewModel = ({ user, setUser }: UseUserProfileViewMod
         setUser({
           ...user,
           ...response.data,
-          username: response.data.username ?? '',
+          phone: response.data.phone ?? '',
         });
       }
       toast.success('تم تحديث الملف الشخصي بنجاح');

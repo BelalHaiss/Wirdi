@@ -4,21 +4,29 @@ import { prismaSeedClient } from './seed.util';
 async function bootstrapAdmin() {
   const hashedPassword = await argon.hash('12345678');
 
-  await prismaSeedClient.user.upsert({
-    where: { username: 'admin' },
-    create: {
-      username: 'admin',
-      name: 'System Admin',
-      nameNormalized: 'System Admin',
-      role: 'ADMIN',
-      password: hashedPassword,
-      timezone: 'Africa/Cairo',
-      notes: null,
-    },
-    update: {},
+  const adminExists = await prismaSeedClient.user.findFirst({
+    where: { role: 'ADMIN' },
   });
 
-  console.log('Bootstrap admin is ready (username: admin)');
+  if (!adminExists) {
+    await prismaSeedClient.user.create({
+      data: {
+        phone: '+201507770400',
+        name: 'System Admin',
+        nameNormalized: 'System Admin',
+        role: 'ADMIN',
+        password: hashedPassword,
+        timezone: 'Africa/Cairo',
+        notes: null,
+      },
+    });
+  }
+
+  console.log(
+    adminExists
+      ? 'Admin already exists, skipping.'
+      : 'Bootstrap admin created (phone: +201507770400)'
+  );
 }
 
 bootstrapAdmin()

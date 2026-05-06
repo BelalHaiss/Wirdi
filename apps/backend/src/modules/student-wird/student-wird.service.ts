@@ -364,7 +364,7 @@ export class StudentWirdService {
       joinedAt: Date;
       removedAt: Date | null;
       removedBy: string | null;
-      student: { name: string; username: string; timezone: string; notes: string | null };
+      student: { name: string; phone: string; timezone: string; notes: string | null };
       mate: { name: string } | null;
     };
 
@@ -415,7 +415,7 @@ export class StudentWirdService {
       joinedAt: Date;
       removedAt: Date | null;
       removedBy: string | null;
-      student: { name: string; username: string; timezone: string; notes: string | null };
+      student: { name: string; phone: string; timezone: string; notes: string | null };
       mate: { name: string } | null;
     }>;
 
@@ -430,7 +430,7 @@ export class StudentWirdService {
       removedBy: membership.removedBy,
       student: {
         name: membership.student.name,
-        username: membership.student.username,
+        phone: membership.student.phone,
         timezone: membership.student.timezone,
         notes: membership.student.notes,
       },
@@ -498,7 +498,7 @@ export class StudentWirdService {
       groupId: trackedMember.groupId,
       studentId: trackedMember.studentId,
       studentName: trackedMember.student.name,
-      studentUsername: trackedMember.student.username,
+      studentPhone: trackedMember.student.phone,
       studentTimezone: trackedMember.student.timezone as TimeZoneType,
       mateId: trackedMember.mateId ?? undefined,
       mateName: trackedMember.mate?.name ?? undefined,

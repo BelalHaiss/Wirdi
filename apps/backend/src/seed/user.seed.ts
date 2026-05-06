@@ -11,7 +11,7 @@ const seedTimezones = [
   'America/New_York',
 ];
 
-export const seedAppUser = async (username: string, role: UserRole) => {
+export const seedAppUser = async (phone: string, role: UserRole) => {
   const name = fakerAR.person.fullName();
   const normalizedName = normalizeArabic(name).toLocaleLowerCase();
   return {
@@ -19,13 +19,13 @@ export const seedAppUser = async (username: string, role: UserRole) => {
     nameNormalized: normalizedName,
     role,
     password: await argon.hash('12345678'),
-    username,
+    phone,
     timezone: faker.helpers.arrayElement(seedTimezones),
     notes: faker.datatype.boolean(0.2) ? fakerAR.lorem.sentence() : null,
   };
 };
 
-function buildLearners(totalLearners: number, passwordHash: string) {
+function buildLearners(totalLearners: number, passwordHash: string, startOffset: number) {
   return Array.from({ length: totalLearners }, (_, index) => {
     const name = fakerAR.person.fullName();
     const normalizedName = normalizeArabic(name);
@@ -33,7 +33,7 @@ function buildLearners(totalLearners: number, passwordHash: string) {
       name,
       nameNormalized: normalizedName,
       role: 'STUDENT' as const,
-      username: `student${index + 1}`,
+      phone: `+9665${String(startOffset + index).padStart(8, '0')}`,
       password: passwordHash,
       timezone: faker.helpers.arrayElement(seedTimezones),
       notes: faker.datatype.boolean(0.45) ? fakerAR.lorem.sentence() : null,
@@ -43,10 +43,11 @@ function buildLearners(totalLearners: number, passwordHash: string) {
 
 async function buildStaffUsers(totalModerators: number) {
   return Promise.all([
-    seedAppUser('admin', 'ADMIN'),
-    seedAppUser('moderator', 'MODERATOR'),
+    seedAppUser('+201032758989', 'ADMIN'),
+    seedAppUser('+201507770400', 'ADMIN'),
+    seedAppUser('+966500000001', 'MODERATOR'),
     ...Array.from({ length: totalModerators - 1 }, (_, index) =>
-      seedAppUser(`moderator${index + 2}`, 'MODERATOR')
+      seedAppUser(`+9665${String(index + 2).padStart(8, '0')}`, 'MODERATOR')
     ),
   ]);
 }
@@ -59,7 +60,9 @@ export async function seedUsers(args: {
   const defaultPassword = await argon.hash('12345678');
 
   const staffUsers = await buildStaffUsers(args.totalModerators);
-  const learners = buildLearners(args.totalLearners, defaultPassword);
+  // Learners start after all moderators: +966500000001..00{totalModerators}
+  const learnerStartOffset = args.totalModerators + 1;
+  const learners = buildLearners(args.totalLearners, defaultPassword, learnerStartOffset);
 
   await args.prisma.user.createMany({
     data: [...staffUsers, ...learners],

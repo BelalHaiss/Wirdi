@@ -3,7 +3,7 @@ import {
   nameSchema,
   notesSchema,
   timezoneFieldSchema,
-  usernameAccountSchema,
+  phoneSchema,
   TIME_MINUTES_MAX,
   recitationSchema,
   platformSchema,
@@ -11,7 +11,7 @@ import {
 import type { PlatformType, RecitationType } from '@wirdi/shared';
 import { z, type ZodType } from 'zod';
 
-export type StudentMainInfoFormValues = Pick<CreateLearnerDto, 'name' | 'username' | 'timezone'> & {
+export type StudentMainInfoFormValues = Pick<CreateLearnerDto, 'name' | 'phone' | 'timezone'> & {
   notes: string;
   details: {
     age: string;
@@ -24,7 +24,7 @@ export type StudentMainInfoFormValues = Pick<CreateLearnerDto, 'name' | 'usernam
 export const studentMainInfoFormSchema = z.intersection(
   z.object({
     name: nameSchema(),
-    username: usernameAccountSchema(),
+    phone: phoneSchema(),
     notes: notesSchema(),
     details: z.object({
       age: z.string().trim(),

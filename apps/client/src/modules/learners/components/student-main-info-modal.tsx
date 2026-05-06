@@ -80,13 +80,11 @@ export function StudentMainInfoModal({
 
             <FormField
               control={vm.form.control}
-              name='username'
-              id='student-username'
-              label='اسم المستخدم'
-              type='text'
-              placeholder='اسم المستخدم لتسجيل الدخول'
+              name='phone'
+              id='student-phone'
+              label='رقم الهاتف'
+              type='phone'
               disabled={vm.isViewMode || isLoading}
-              dir='ltr'
             />
 
             <FormField

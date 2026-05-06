@@ -35,7 +35,7 @@ async function main() {
 
     console.log('\n✨ Test seed completed!\n');
     console.log('📝 Next steps:');
-    console.log('  1. Login: username=admin, password=12345678');
+    console.log('  1. Login: phone=+966500000001, password=12345678');
     console.log('  2. Navigate to group "حلقة الاختبار"');
     console.log('  3. Check different student scenarios');
     console.log('  4. Wait for cron (4PM Riyadh) or manually trigger it');

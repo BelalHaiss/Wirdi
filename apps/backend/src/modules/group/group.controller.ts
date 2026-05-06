@@ -25,6 +25,7 @@ import {
   updateGroupSchema,
   updateScheduleImageSchema,
   type GroupDto,
+  type GroupNameDto,
   type CreateGroupDto,
   type CreateWeekScheduleDto,
   type UpdateGroupDto,
@@ -36,6 +37,12 @@ export class GroupController {
   constructor(private readonly groupService: GroupService) {}
 
   // ─── Groups CRUD ─────────────────────────────────────────────────────────
+
+  @Get('names')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  getGroupNames(): Promise<GroupNameDto[]> {
+    return this.groupService.getGroupNames();
+  }
 
   @Get()
   @Roles([UserRole.ADMIN, UserRole.MODERATOR, UserRole.STUDENT])

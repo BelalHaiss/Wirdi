@@ -51,12 +51,6 @@ export default function LearnersView() {
         enableSorting: true,
       },
       {
-        id: 'notes',
-        accessorFn: (row) => row.contact.notes ?? '',
-        header: 'ملاحظات',
-        enableSorting: true,
-      },
-      {
         id: 'groups',
         accessorFn: (row) =>
           row.groups
@@ -64,7 +58,7 @@ export default function LearnersView() {
             .map((g) => g.name)
             .join(' / ') ?? '-',
         header: 'المجموعات',
-        enableSorting: false,
+        enableSorting: true,
       },
       ...LEARNER_DETAIL_FIELDS.map(({ key, label }) => ({
         id: key,
@@ -80,8 +74,14 @@ export default function LearnersView() {
                 </div>
               )
             : label,
-        enableSorting: key === 'age' || key === 'schedule',
+        enableSorting: true,
       })),
+      {
+        id: 'notes',
+        accessorFn: (row) => row.contact.notes ?? '',
+        header: 'ملاحظات',
+        enableSorting: true,
+      },
       {
         id: 'actions',
         header: 'الإجراءات',
@@ -219,6 +219,29 @@ export default function LearnersView() {
             </SelectContent>
           </Select>
         </div>
+
+        <div className='flex flex-col gap-1'>
+          <span className='text-xs font-medium text-muted-foreground px-0.5'>الحلقة</span>
+          <Select
+            value={(table.getColumn('groups')?.getFilterValue() as string | undefined) ?? 'all'}
+            onValueChange={(val) =>
+              table.getColumn('groups')?.setFilterValue(val === 'all' ? undefined : val)
+            }
+            disabled={vm.isGroupNamesLoading}
+          >
+            <SelectTrigger className='w-44'>
+              <SelectValue placeholder={vm.isGroupNamesLoading ? 'جاري التحميل...' : 'الكل'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>الكل</SelectItem>
+              {vm.groupNames.map((g) => (
+                <SelectItem key={g.id} value={g.id}>
+                  {g.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Table className='rounded-lg border bg-card shadow-sm'>
@@ -261,7 +284,7 @@ export default function LearnersView() {
         <TableBody>
           {vm.isLoading ? (
             <TableRow>
-              <TableCell colSpan={5}>
+              <TableCell colSpan={9}>
                 <div className='flex items-center justify-center py-8 gap-2 text-muted-foreground'>
                   <Loader2 className='w-4 h-4 animate-spin' />
                   جاري التحميل...
@@ -270,7 +293,7 @@ export default function LearnersView() {
             </TableRow>
           ) : vm.learners.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5}>
+              <TableCell colSpan={9}>
                 <div className='flex flex-col items-center justify-center py-10 text-muted-foreground gap-2'>
                   <Users className='w-6 h-6 opacity-70' />
                   <span>{vm.searchQuery ? 'لا توجد نتائج مطابقة' : 'لا يوجد طلاب حالياً'}</span>

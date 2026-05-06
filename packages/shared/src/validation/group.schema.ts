@@ -24,7 +24,7 @@ import {
   platformSchema,
   recitationSchema,
   timeMinutesSchema,
-  usernameAccountSchema,
+  phoneSchema,
 } from './fields.schema';
 import { timezoneSchema } from './timezone.schema';
 
@@ -88,7 +88,7 @@ export const createAndAssignLearnersSchema = (locale: ValidationLocale = 'ar') =
       .array(
         z.object({
           name: nameSchema(locale),
-          username: usernameAccountSchema(locale),
+          phone: phoneSchema(locale),
           timezone: timezoneSchema(locale),
           notes: notesSchema(locale).optional(),
           age: z.coerce.number().int().positive().optional(),

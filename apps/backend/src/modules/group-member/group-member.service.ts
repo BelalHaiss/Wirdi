@@ -36,7 +36,7 @@ export class GroupMemberService {
           data: {
             name: learnerData.name,
             nameNormalized: normalizeArabic(learnerData.name),
-            username: learnerData.username,
+            phone: learnerData.phone,
             password: defaultPasswordHash,
             timezone: learnerData.timezone,
             role: UserRole.STUDENT,
@@ -54,7 +54,7 @@ export class GroupMemberService {
             student: {
               select: {
                 name: true,
-                username: true,
+                phone: true,
                 timezone: true,
                 notes: true,
                 age: true,
@@ -72,7 +72,7 @@ export class GroupMemberService {
           groupId: member.groupId,
           studentId: member.studentId,
           studentName: member.student.name,
-          studentUsername: member.student.username,
+          studentPhone: member.student.phone,
           studentTimezone: member.student.timezone as TimeZoneType,
           mateId: member.mateId ?? undefined,
           mateName: member.mate?.name ?? undefined,
@@ -113,7 +113,7 @@ export class GroupMemberService {
             student: {
               select: {
                 name: true,
-                username: true,
+                phone: true,
                 timezone: true,
                 notes: true,
                 age: true,
@@ -133,7 +133,7 @@ export class GroupMemberService {
       groupId: m.groupId,
       studentId: m.studentId,
       studentName: m.student.name,
-      studentUsername: m.student.username,
+      studentPhone: m.student.phone,
       studentTimezone: m.student.timezone as TimeZoneType,
       mateId: m.mateId ?? undefined,
       mateName: m.mate?.name ?? undefined,
@@ -159,7 +159,7 @@ export class GroupMemberService {
         student: {
           select: {
             name: true,
-            username: true,
+            phone: true,
             timezone: true,
             notes: true,
             age: true,
@@ -177,7 +177,7 @@ export class GroupMemberService {
       groupId: updated.groupId,
       studentId: updated.studentId,
       studentName: updated.student.name,
-      studentUsername: updated.student.username,
+      studentPhone: updated.student.phone,
       studentTimezone: updated.student.timezone as TimeZoneType,
       mateId: updated.mateId ?? undefined,
       mateName: updated.mate?.name ?? undefined,
@@ -289,7 +289,7 @@ export class GroupMemberService {
 
     return learners.map((u) => ({
       id: u.id,
-      username: u.username,
+      phone: u.phone,
       name: u.name,
       role: u.role,
       timezone: u.timezone as TimeZoneType,
@@ -313,7 +313,7 @@ export class GroupMemberService {
         student: {
           select: {
             name: true,
-            username: true,
+            phone: true,
             timezone: true,
             notes: true,
             age: true,
@@ -331,7 +331,7 @@ export class GroupMemberService {
       groupId: member.groupId,
       studentId: member.studentId,
       studentName: member.student.name,
-      studentUsername: member.student.username,
+      studentPhone: member.student.phone,
       studentTimezone: member.student.timezone as TimeZoneType,
       mateId: member.mateId ?? undefined,
       mateName: member.mate?.name ?? undefined,

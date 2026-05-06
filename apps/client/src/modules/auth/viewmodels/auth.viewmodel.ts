@@ -15,7 +15,7 @@ export const useAuthViewModel = () => {
   const loginForm = useForm<LoginCredentialsDto>({
     resolver: zodResolver(loginSchema()),
     defaultValues: {
-      username: '',
+      phone: '',
       password: '',
     },
     mode: 'onTouched',
@@ -29,15 +29,15 @@ export const useAuthViewModel = () => {
 
         // Save to storage
         storageService.saveToken(accessToken);
-        const userWithUsername = {
+        const userWithPhone = {
           ...user,
-          username: user.username ?? '',
+          phone: user.phone ?? '',
         };
 
-        storageService.saveUser(userWithUsername);
+        storageService.saveUser(userWithPhone);
 
         // Update context
-        setUser(userWithUsername);
+        setUser(userWithPhone);
 
         // Show success message
         toast.success(`مرحباً، ${user.name}`);

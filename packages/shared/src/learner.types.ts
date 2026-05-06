@@ -23,7 +23,7 @@ export interface LearnerGroupSummaryDto {
 
 export interface LearnerDto {
   id: string;
-  username: string | null;
+  phone: string | null;
   name: string;
   role: UserRole;
   timezone: TimeZoneType;
@@ -36,25 +36,35 @@ export interface LearnerDto {
 
 export interface CreateLearnerDto {
   name: string;
-  username: string;
+  phone: string;
   timezone: TimeZoneType;
   contact?: LearnerContactDto;
 }
 
 export interface UpdateLearnerDto {
   name?: string;
-  username?: string;
+  phone?: string;
   timezone?: TimeZoneType;
   contact?: LearnerContactDto;
 }
 
 export type QueryLearnersDto = PaginationQueryType & {
   search?: string;
-  sortBy?: 'name' | 'timezone' | 'notes' | 'groupCount' | 'createdAt' | 'age' | 'schedule';
+  sortBy?:
+    | 'name'
+    | 'timezone'
+    | 'notes'
+    | 'groupCount'
+    | 'createdAt'
+    | 'age'
+    | 'schedule'
+    | 'recitation'
+    | 'platform';
   sortOrder?: 'asc' | 'desc';
   timezone?: TimeZoneType;
   recitation?: RecitationType;
   platform?: PlatformType;
+  groupId?: string;
 };
 
 export type QueryLearnersResponseDto = {

@@ -8,12 +8,7 @@ import {
   UserAuthRole,
 } from '../user.types';
 import { getMessages, ValidationLocale } from './messages';
-import {
-  contactDetailsSchema,
-  nameSchema,
-  passwordSchema,
-  usernameAccountSchema,
-} from './fields.schema';
+import { contactDetailsSchema, nameSchema, passwordSchema, phoneSchema } from './fields.schema';
 import { optionalTimezoneFieldSchema, timezoneFieldSchema } from './timezone.schema';
 
 const staffRoleSchema = z.enum(['ADMIN', 'MODERATOR']) satisfies ZodType<UserAuthRole>;
@@ -21,7 +16,7 @@ const staffRoleSchema = z.enum(['ADMIN', 'MODERATOR']) satisfies ZodType<UserAut
 export const createStaffSchema = (locale: ValidationLocale = 'ar') =>
   z.intersection(
     z.object({
-      username: usernameAccountSchema(locale),
+      phone: phoneSchema(locale),
       name: nameSchema(locale),
       role: staffRoleSchema,
       password: passwordSchema(locale),
@@ -34,7 +29,7 @@ export const updateStaffSchema = (locale: ValidationLocale = 'ar') => {
   return z
     .intersection(
       z.object({
-        username: usernameAccountSchema(locale).optional(),
+        phone: phoneSchema(locale).optional(),
         name: nameSchema(locale).optional(),
         role: staffRoleSchema.optional(),
       }),
@@ -50,7 +45,7 @@ export const updateOwnProfileSchema = (locale: ValidationLocale = 'ar') =>
     z
       .object({
         name: nameSchema(locale),
-        username: usernameAccountSchema(locale),
+        phone: phoneSchema(locale),
       })
       .merge(contactDetailsSchema(locale)),
     timezoneFieldSchema(locale)

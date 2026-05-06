@@ -93,13 +93,10 @@ function UsersView() {
 
               <FormField
                 control={vm.form.control}
-                name='username'
-                label='اسم الحساب'
-                type='text'
-                placeholder='username'
+                name='phone'
+                label='رقم الهاتف'
+                type='phone'
                 disabled={vm.isSubmitting}
-                inputClassName='text-left'
-                dir='ltr'
               />
 
               {!vm.editingUser && (
@@ -189,7 +186,7 @@ function UsersView() {
                   </TableCell>
                   <TableCell className='px-4 py-3'>
                     <div className='text-sm' dir='ltr'>
-                      {userItem.username}
+                      {userItem.phone}
                     </div>
                   </TableCell>
                   <TableCell className='px-4 py-3'>

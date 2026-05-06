@@ -44,6 +44,8 @@ export interface UpdateGroupDto {
 
 export type QueryGroupsResponseDto = GroupDto[];
 
+export type GroupNameDto = Pick<GroupDto, 'id' | 'name'>;
+
 export interface GroupStatsDto {
   groupsCount: number;
   learnersCount: number;
@@ -95,7 +97,7 @@ export interface GroupMemberDto {
   groupId: string;
   studentId: string;
   studentName: string;
-  studentUsername: string;
+  studentPhone: string;
   studentTimezone: TimeZoneType;
   mateId?: string;
   mateName?: string;
@@ -123,7 +125,7 @@ export interface CreateAndAssignLearnersDto {
   groupId: string;
   learners: {
     name: string;
-    username: string;
+    phone: string;
     timezone: TimeZoneType;
     notes?: string;
     age?: number;

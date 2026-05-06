@@ -14,6 +14,7 @@ export * from './utils/date.util';
 export * from './utils/date.constants';
 export * from './utils/object.util';
 export * from './utils/timezones.util';
+export * from './utils/phone.util';
 
 // Export validation schemas
 export * from './validation/messages';

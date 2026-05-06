@@ -30,6 +30,9 @@ export const learnerService = {
     if (query.platform) {
       params.set('platform', query.platform);
     }
+    if (query.groupId) {
+      params.set('groupId', query.groupId);
+    }
 
     return apiClient.get<LearnerDto[]>(`/user/learner?${params.toString()}`);
   },

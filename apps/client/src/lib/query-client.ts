@@ -34,6 +34,7 @@ export const queryKeys = {
     lists: () => [...queryKeys.groups.all, 'list'] as const,
     list: (query?: unknown) => [...queryKeys.groups.lists(), query] as const,
     options: () => [...queryKeys.groups.all, 'options'] as const,
+    names: () => [...queryKeys.groups.all, 'names'] as const,
     stats: (metric: 'groups-count' | 'learners-count' | 'tutors-count') =>
       [...queryKeys.groups.all, 'stats', metric] as const,
     tutors: () => [...queryKeys.groups.all, 'tutors'] as const,

@@ -11,6 +11,7 @@ import {
   PLATFORM_OPTIONS,
   RECITATION_OPTIONS,
   normalizeArabic,
+  normalizePhoneInput,
   timeStringToMinutes,
   TIMEZONES,
 } from '@wirdi/shared';
@@ -92,7 +93,7 @@ export function useImportLearnersViewModel({
 
     return {
       name: get('الاسم') ?? '',
-      username: get('رقم الهاتف') ?? '',
+      phone: normalizePhoneInput(normalized[normalizeArabic('رقم الهاتف')]),
       timezone,
       notes: undefined,
       age: age ? Number(age) : undefined,
@@ -153,7 +154,7 @@ export function useImportLearnersViewModel({
       groupId,
       learners: values.learners.map((l) => ({
         name: l.name,
-        username: l.username,
+        phone: l.phone,
         timezone: l.timezone,
         notes: l.notes || undefined,
         age: l.age,

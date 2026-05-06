@@ -3,9 +3,7 @@ export type ValidationLocale = 'ar' | 'en';
 type Messages = {
   nameTooShort: string;
   nameTooLong: string;
-  usernameTooShort: string;
-  usernameTooLong: string;
-  usernameInvalidChars: string;
+  phoneInvalid: string;
   passwordTooShort: string;
   passwordTooLong: string;
   notesTooLong: string;
@@ -33,9 +31,7 @@ export const validationMessages: Record<ValidationLocale, Messages> = {
   ar: {
     nameTooShort: 'الاسم يجب أن يكون حرفين على الأقل',
     nameTooLong: 'الاسم طويل جدًا',
-    usernameTooShort: 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل',
-    usernameTooLong: 'اسم المستخدم طويل جدًا',
-    usernameInvalidChars: 'يسمح فقط بالحروف الانجليزية والأرقام و _',
+    phoneInvalid: 'رقم الهاتف غير صحيح، يجب إدخاله بصيغة دولية مثل +966501234567',
     passwordTooShort: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
     passwordTooLong: 'كلمة المرور طويلة جدًا',
     notesTooLong: 'الملاحظات طويلة جدًا',
@@ -61,9 +57,7 @@ export const validationMessages: Record<ValidationLocale, Messages> = {
   en: {
     nameTooShort: 'Name must be at least 2 characters',
     nameTooLong: 'Name is too long',
-    usernameTooShort: 'Username must be at least 3 characters',
-    usernameTooLong: 'Username is too long',
-    usernameInvalidChars: 'Username can only contain letters, numbers, and _',
+    phoneInvalid: 'Invalid phone number, must be in international format e.g. +966501234567',
     passwordTooShort: 'Password must be at least 8 characters',
     passwordTooLong: 'Password is too long',
     notesTooLong: 'Notes are too long',

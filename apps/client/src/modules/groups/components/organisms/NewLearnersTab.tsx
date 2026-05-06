@@ -43,7 +43,7 @@ export function NewLearnersTab({
       <div className='space-y-3'>
         {fields.map((field, index) => {
           const rowErrors = errors?.learners?.[index];
-          const hasRequiredError = !!(rowErrors?.name || rowErrors?.username);
+          const hasRequiredError = !!(rowErrors?.name || rowErrors?.phone);
 
           return (
             <div
@@ -62,13 +62,12 @@ export function NewLearnersTab({
                     placeholder='اسم الطالب'
                   />
                 </div>
-                <div className='w-36 shrink-0'>
+                <div className='min-w-40 shrink-0'>
                   <FormField
                     control={control}
-                    name={`learners.${index}.username`}
+                    name={`learners.${index}.phone`}
                     label='رقم الهاتف'
-                    type='text'
-                    placeholder='لتسجيل الدخول'
+                    type='phone'
                   />
                 </div>
                 <div className='w-44 shrink-0'>

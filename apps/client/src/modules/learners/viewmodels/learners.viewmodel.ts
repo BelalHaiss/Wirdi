@@ -25,6 +25,7 @@ import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { queryClient, queryKeys } from '@/lib/query-client';
 import { learnerService } from '../services/learner.service';
+import { groupService } from '@/modules/groups/services/group.service';
 
 export type LearnerModalMode = 'view' | 'create';
 
@@ -55,6 +56,12 @@ export function useLearnersViewModel() {
   const platformFilter = columnFilters.find((f) => f.id === 'platform')?.value as
     | PlatformType
     | undefined;
+  const groupIdFilter = columnFilters.find((f) => f.id === 'groups')?.value as string | undefined;
+
+  const groupNamesQuery = useApiQuery({
+    queryKey: queryKeys.groups.names(),
+    queryFn: () => groupService.getGroupNames(),
+  });
 
   const learnersQuery = useApiQuery<LearnerDto[]>({
     queryKey: queryKeys.learners.list({
@@ -66,6 +73,7 @@ export function useLearnersViewModel() {
       timezone: timezoneFilter,
       recitation: recitationFilter,
       platform: platformFilter,
+      groupId: groupIdFilter,
     }),
     queryFn: () =>
       learnerService.queryLearners({
@@ -77,6 +85,7 @@ export function useLearnersViewModel() {
         timezone: timezoneFilter,
         recitation: recitationFilter,
         platform: platformFilter,
+        groupId: groupIdFilter,
       }),
     placeholderData: (previousData) => previousData,
   });
@@ -149,7 +158,7 @@ export function useLearnersViewModel() {
 
       type LearnerRow = {
         name: string;
-        username: string;
+        phone: string;
         timezone: string;
         groups: string;
         notes: string;
@@ -161,7 +170,7 @@ export function useLearnersViewModel() {
 
       const columns: Column<LearnerRow>[] = [
         { header: 'الاسم', cell: (r) => r.name },
-        { header: 'رقم الهاتف', cell: (r) => r.username },
+        { header: 'رقم الهاتف', cell: (r) => r.phone },
         { header: 'البلد', cell: (r) => r.timezone },
         { header: 'المجموعات', cell: (r) => r.groups },
         { header: 'الملاحظات', cell: (r) => r.notes },
@@ -173,7 +182,7 @@ export function useLearnersViewModel() {
 
       const rows: LearnerRow[] = learners.map((learner) => ({
         name: learner.name,
-        username: learner.username ?? '',
+        phone: learner.phone ?? '',
         timezone: TIMEZONES.find((tz) => tz.value === learner.timezone)?.label ?? learner.timezone,
         groups: (learner.groups ?? [])
           .filter((g) => !g.removedAt)
@@ -241,6 +250,9 @@ export function useLearnersViewModel() {
     isLoading: learnersQuery.isPending,
     isRefreshing: learnersQuery.isFetching,
     queryError: learnersQuery.error?.message ?? null,
+
+    groupNames: groupNamesQuery.data?.data ?? [],
+    isGroupNamesLoading: groupNamesQuery.isPending,
 
     page,
     setPage,

@@ -12,7 +12,7 @@ export type StudentMainInfoMode = 'view' | 'edit' | 'create';
 
 export type StudentMainInfoLearner = Pick<
   LearnerDto,
-  'id' | 'name' | 'username' | 'timezone' | 'contact' | 'groupCount' | 'groups'
+  'id' | 'name' | 'phone' | 'timezone' | 'contact' | 'groupCount' | 'groups'
 >;
 
 export type StudentMainInfoSubmitArgs =
@@ -46,7 +46,7 @@ export function useStudentMainInfoModal({
   const defaultValues = useMemo<StudentMainInfoFormValues>(
     () => ({
       name: learner && !isCreateMode ? learner.name : '',
-      username: learner && !isCreateMode ? (learner.username ?? '') : '',
+      phone: learner && !isCreateMode ? (learner.phone ?? '') : '',
       timezone: learner && !isCreateMode ? learner.timezone || DEFAULT_TIMEZONE : DEFAULT_TIMEZONE,
       notes: learner && !isCreateMode ? learner.contact.notes || '' : '',
       details: {
@@ -90,7 +90,7 @@ export function useStudentMainInfoModal({
           addToGroupId,
           data: {
             name: values.name.trim(),
-            username: values.username.trim(),
+            phone: values.phone.trim(),
             timezone: values.timezone,
             contact: Object.values(contact).some((v) => v !== undefined) ? contact : undefined,
           },
@@ -100,7 +100,7 @@ export function useStudentMainInfoModal({
           learnerId: learner?.id,
           data: {
             name: values.name.trim(),
-            username: values.username.trim(),
+            phone: values.phone.trim(),
             timezone: values.timezone,
             contact,
           },
