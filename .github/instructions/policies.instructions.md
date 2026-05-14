@@ -24,7 +24,7 @@ applyTo: '**'
 
 - **Cron runs daily at 4:00 PM (Asia/Riyadh)** — creates alerts for missed records from previous day
 - **Two deactivation thresholds with different timing**:
-  - **3 alerts in same week** → deactivate **immediately** when 3rd alert is created (any day)
+  - **3 consecutive missed days in the same week** → deactivate **immediately** when the 3rd alert is created (alerts must be on 3 sequential day numbers, e.g. day 1 → 2 → 3)
   - **1 alert in immediately previous week** → deactivate **next Saturday** after one-week grace period
 - **Exception via active excuse** — skip all alert creation and deactivation logic if learner has active excuse (`expiresAt > now` , same groupId )
 

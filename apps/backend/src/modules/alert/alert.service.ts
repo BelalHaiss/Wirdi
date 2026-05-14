@@ -75,7 +75,8 @@ export class AlertService {
   }
 
   /**
-   * Check for immediate deactivation threshold (>= 3 alerts in current week).
+   * Check for immediate deactivation threshold:
+   * 3 consecutive missed days (sequential dayNumbers) in the same week.
    * Called after every alert creation.
    * Returns true if deactivation occurred.
    */
@@ -92,9 +93,18 @@ export class AlertService {
     });
     if (activeExcuse) return false;
 
-    const weekAlertCount = await tx.alert.count({ where: { studentId, weekId } });
+    const weekAlerts = await tx.alert.findMany({
+      where: { studentId, weekId },
+      select: { dayNumber: true },
+      orderBy: { dayNumber: 'asc' },
+    });
 
-    if (weekAlertCount >= 3) {
+    const days = weekAlerts.map((a) => a.dayNumber);
+    const hasThreeConsecutive = days.some(
+      (day, i) => days[i + 1] === day + 1 && days[i + 2] === day + 2
+    );
+
+    if (hasThreeConsecutive) {
       await tx.groupMember.update({
         where: { groupId_studentId: { groupId, studentId } },
         data: { status: 'INACTIVE' },
