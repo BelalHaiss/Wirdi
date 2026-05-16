@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Typography } from '@/components/ui/typography';
 import { GroupInfoCard } from '../components/molecules/GroupInfoCard';
 import { ActivationRequestModal } from '@/modules/requests/components/organisms/ActivationRequestModal';
+import { ExcuseRequestModal } from '@/modules/requests/components/organisms/ExcuseRequestModal';
 import { useLearnerGroupViewModel } from '../viewmodels/learner-group.viewmodel';
 import { LearnerInactiveAlert } from '../components/molecules/LearnerInactiveAlert';
 import { GroupInactiveAlert } from '../components/molecules/GroupInactiveAlert';
@@ -18,6 +19,7 @@ type Props = { groupId: string };
 export default function LearnerGroupDetailView({ groupId }: Props) {
   const vm = useLearnerGroupViewModel(groupId);
   const [isExcuseModalOpen, setIsExcuseModalOpen] = useState(false);
+  const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
 
   if (vm.isLoading) {
     return (
@@ -69,7 +71,7 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
   const activeExcuseExpiresAt = overview.myMembership.activeExcuseExpiresAt;
 
   const handleRequestActivation = () => {
-    setIsExcuseModalOpen(true);
+    setIsActivationModalOpen(true);
   };
 
   return (
@@ -113,9 +115,17 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
       {!isInactive && <ExcuseRequestButton onClick={() => setIsExcuseModalOpen(true)} />}
 
       {/* Excuse modal */}
-      <ActivationRequestModal
+      <ExcuseRequestModal
         open={isExcuseModalOpen}
         onOpenChange={setIsExcuseModalOpen}
+        defaultGroupId={groupId}
+        hideGroupSelect
+      />
+
+      {/* Activation request modal */}
+      <ActivationRequestModal
+        open={isActivationModalOpen}
+        onOpenChange={setIsActivationModalOpen}
         defaultGroupId={groupId}
         hideGroupSelect
       />
