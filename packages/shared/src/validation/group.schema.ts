@@ -7,6 +7,7 @@ import {
   CreateGroupDto,
   CreateWeekScheduleDto,
   GroupStatus,
+  ReactivateMemberDto,
   RecordLearnerWirdDto,
   UpdateGroupDto,
   UpdateMemberMateDto,
@@ -72,6 +73,12 @@ export const updateScheduleImageSchema = () =>
   z.object({
     name: z.string().trim().min(1).optional(),
   }) satisfies ZodType<UpdateScheduleImageDto>;
+
+export const reactivateMemberSchema = (locale: ValidationLocale = 'ar') =>
+  z.object({
+    groupId: nonEmptyIdSchema(locale),
+    studentId: nonEmptyIdSchema(locale),
+  }) satisfies ZodType<ReactivateMemberDto>;
 
 export const assignLearnersToGroupSchema = (locale: ValidationLocale = 'ar') =>
   z.object({

@@ -197,6 +197,14 @@ export function getNextSaturdayFrom(saturdayDateStr: ISODateOnlyString): ISODate
   return addDaysToDateStr(saturdayDateStr, 7);
 }
 
+/** Returns today if today is Saturday, otherwise the next Saturday. UTC-based. */
+export function getUpcomingSaturday(): ISODateOnlyString {
+  const today = DateTime.utc().startOf('day');
+  // Luxon weekday: Mon=1 … Sat=6 … Sun=7
+  const daysUntilSaturday = (6 - today.weekday + 7) % 7;
+  return today.plus({ days: daysUntilSaturday }).toFormat('yyyy-MM-dd') as ISODateOnlyString;
+}
+
 export function isDateTodayOrFuture(dateStr: ISODateOnlyString): boolean {
   return DateTime.fromISO(dateStr, { zone: 'utc' }).startOf('day') >= DateTime.utc().startOf('day');
 }

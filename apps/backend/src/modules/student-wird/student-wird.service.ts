@@ -24,6 +24,7 @@ import {
   dateToISODateOnly,
   combineDateTime,
   getStartAndEndOfDay,
+  isSaturday,
 } from '@wirdi/shared';
 import { DatabaseService } from '../database/database.service';
 import { AlertService } from '../alert/alert.service';
@@ -107,6 +108,66 @@ export class StudentWirdService {
     });
   }
 
+  /**
+   * Selects which week to display for the learner overview.
+   *
+   * On Saturday the new week just started, but the learner may still have an
+   * unrecorded Thursday from the previous week (window extends to Sat 4 PM).
+   * In that case we keep showing the previous week until every applicable day
+   * has a DB record (ATTENDED, LATE, or MISSED).  Only then do we advance to
+   * the newly-started week.
+   *
+   * Any other day: return the most recent started week as before.
+   */
+  private async selectLearnerWeek(
+    groupId: string,
+    studentId: string,
+    memberJoinedAt: Date,
+    now: Date
+  ) {
+    const todayUTC = dateToISODateOnly(now);
+
+    if (!isSaturday(todayUTC)) {
+      return this.db.week.findFirst({
+        where: { groupId, startDate: { lte: now } },
+        include: { scheduleImage: true },
+        orderBy: { weekNumber: 'desc' },
+      });
+    }
+
+    // Saturday: fetch the two most recent started weeks
+    const recentWeeks = await this.db.week.findMany({
+      where: { groupId, startDate: { lte: now } },
+      include: { scheduleImage: true },
+      orderBy: { weekNumber: 'desc' },
+      take: 2,
+    });
+
+    const weeksWithImage = recentWeeks.filter((w) => w.scheduleImage);
+    const [currentWeek, prevWeek] = weeksWithImage;
+
+    // Only one week exists (first-ever Saturday of the group) — nothing to compare
+    if (!prevWeek) return currentWeek ?? null;
+
+    // Check if the previous week has any day with no DB record for this student
+    const prevWirds = await this.db.studentWird.findMany({
+      where: { weekId: prevWeek.id, studentId },
+      select: { dayNumber: true },
+    });
+
+    const recordedDays = new Set(prevWirds.map((w) => w.dayNumber));
+    const joinedAtStr = dateToISODateOnly(memberJoinedAt);
+    const prevStartStr = dateToISODateOnly(prevWeek.startDate);
+
+    const hasMissingRecord = DISPLAY_DAY_ORDER.some((dayNum) => {
+      const dayDate = addDaysToDateStr(prevStartStr, (dayNum + 1) % 7);
+      // Only days the student was already a member for
+      return dayDate >= joinedAtStr && !recordedDays.has(dayNum);
+    });
+
+    return hasMissingRecord ? prevWeek : (currentWeek ?? prevWeek);
+  }
+
   /** Finds the oldest EMPTY day still recordable within the allowed window. */
   private computeRecordableDay(
     days: DayWirdDto[],
@@ -185,11 +246,18 @@ export class StudentWirdService {
         };
       });
 
-    // Default priority: current week → first upcoming week → last week overall
+    // On Saturday (new week just started) and Friday (between weeks), the last
+    // completed week is always the most useful default — not the brand-new or
+    // upcoming one.  All other days use the current week as normal.
+    const isTodaySaturday = isSaturday(todayUTC);
+    const tomorrowUTC = addDaysToDateStr(todayUTC, 1);
+    const isTodayFriday = mapped.some((w) => w.startDate === tomorrowUTC);
+    const lastCompletedWeek = [...mapped].reverse().find((w) => w.endDate < todayUTC);
+
     const defaultWeek =
-      mapped.find((w) => w.isCurrent) ??
-      mapped.find((w) => w.isUpcoming) ??
-      mapped[mapped.length - 1];
+      isTodaySaturday || isTodayFriday
+        ? (lastCompletedWeek ?? mapped.find((w) => w.isCurrent) ?? mapped[mapped.length - 1])
+        : (mapped.find((w) => w.isCurrent) ?? lastCompletedWeek ?? mapped[mapped.length - 1]);
     if (defaultWeek) defaultWeek.isDefault = true;
 
     return mapped;
@@ -368,12 +436,9 @@ export class StudentWirdService {
       mate: { name: string } | null;
     };
 
-    // Most recent started week — covers current week or last past week in one query
-    const week = await this.db.week.findFirst({
-      where: { groupId, startDate: { lte: now } },
-      include: { scheduleImage: true },
-      orderBy: { weekNumber: 'desc' },
-    });
+    // Select the correct week for the learner.
+    // On Saturday, we prefer the previous week when it still has unrecorded days.
+    const week = await this.selectLearnerWeek(groupId, studentId, membership.joinedAt, now);
 
     if (!week?.scheduleImage) {
       return { type: 'nothing', reason: 'no_week' };

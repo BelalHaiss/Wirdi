@@ -152,7 +152,7 @@ function UsersView() {
         <TableHeader className='bg-muted/40'>
           <TableRow>
             <TableHead className='px-4 py-3 text-right text-xs'>الاسم</TableHead>
-            <TableHead className='px-4 py-3 text-right text-xs'>اسم الحساب</TableHead>
+            <TableHead className='px-4 py-3 text-right text-xs'>رقم الهاتف</TableHead>
             <TableHead className='px-4 py-3 text-right text-xs'>الدور</TableHead>
             <TableHead className='px-4 py-3 text-right text-xs'>المنطقة الزمنية</TableHead>
             <TableHead className='px-4 py-3 text-left text-xs'>الإجراءات</TableHead>

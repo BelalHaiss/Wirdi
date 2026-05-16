@@ -8,6 +8,7 @@ import {
   GroupMemberDto,
   LearnerDto,
   PlatformType,
+  ReactivateMemberDto,
   RecitationType,
   UpdateMemberMateDto,
   TimeZoneType,
@@ -268,6 +269,28 @@ export class GroupMemberService {
         },
       });
     }
+  }
+
+  /**
+   * Reactivate an INACTIVE group member by setting their status back to ACTIVE.
+   * Validates that the member belongs to the specified group.
+   */
+  async reactivateMember(groupId: string, dto: ReactivateMemberDto): Promise<void> {
+    await this.db.groupMember.update({
+      where: { groupId_studentId: { groupId, studentId: dto.studentId } },
+      data: { status: 'ACTIVE' },
+    });
+
+    const group = await this.db.group.findUniqueOrThrow({
+      where: { id: groupId },
+      select: { name: true },
+    });
+
+    this.typedEmitter.emit('notification.send', {
+      type: 'LEARNER_REACTIVATED',
+      recipientId: dto.studentId,
+      payload: { groupId, groupName: group.name },
+    });
   }
 
   /**

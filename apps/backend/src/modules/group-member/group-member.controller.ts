@@ -17,9 +17,11 @@ import { ZodValidationPipe } from 'src/pipes/zod-validation.pipe';
 import {
   assignLearnersToGroupSchema,
   createAndAssignLearnersSchema,
+  reactivateMemberSchema,
   updateMemberMateSchema,
   type AssignLearnersToGroupDto,
   type CreateAndAssignLearnersDto,
+  type ReactivateMemberDto,
   type UpdateMemberMateDto,
 } from '@wirdi/shared';
 import { GroupMemberService } from './group-member.service';
@@ -66,6 +68,15 @@ export class GroupMemberController {
     dto: UpdateMemberMateDto
   ) {
     return this.groupMemberService.updateMate(id, dto);
+  }
+
+  @Patch(':groupId/reactivate')
+  @Roles([UserRole.ADMIN, UserRole.MODERATOR])
+  reactivateMember(
+    @Param('groupId') groupId: string,
+    @Body(new ZodValidationPipe(reactivateMemberSchema('en'))) dto: ReactivateMemberDto
+  ) {
+    return this.groupMemberService.reactivateMember(groupId, dto);
   }
 
   @Delete(':id')

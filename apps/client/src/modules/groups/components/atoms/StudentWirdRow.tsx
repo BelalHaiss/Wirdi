@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { WirdStatusCell } from './WirdStatusCell';
 import { ExcuseModal } from '../organisms/ExcuseModal';
 import { EditAttendanceModal } from '../organisms/EditAttendanceModal';
+import { ReactivateLearnerButton } from './ReactivateLearnerButton';
 import type { GroupWirdTrackingRowDto, TimeZoneType } from '@wirdi/shared';
 
 type StudentWirdRowProps = {
@@ -46,14 +47,21 @@ export function StudentWirdRow({
     <>
       <TableRow>
         {/* Name */}
-        <TableCell className='px-4 py-3 font-medium text-right sticky right-0 z-10 bg-card'>
+        <TableCell className='px-4 py-3 font-medium text-right sticky right-0 z-10 '>
           <div className='flex items-center gap-2'>
             <span>{row.studentName}</span>
-            {row.studentStatus === 'INACTIVE' && (
-              <Badge variant='soft' color='muted' className='text-xs'>
-                متوقف
-              </Badge>
-            )}
+            {row.studentStatus === 'INACTIVE' &&
+              (canManage ? (
+                <ReactivateLearnerButton
+                  studentId={row.studentId}
+                  studentName={row.studentName}
+                  groupId={groupId}
+                />
+              ) : (
+                <Badge variant='soft' color='muted' className='text-xs'>
+                  متوقف
+                </Badge>
+              ))}
           </div>
         </TableCell>
 

@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Typography } from '@/components/ui/typography';
 import { GroupInfoCard } from '../components/molecules/GroupInfoCard';
-import { CreateRequestModal } from '@/modules/requests/components/organisms/CreateRequestModal';
+import { ActivationRequestModal } from '@/modules/requests/components/organisms/ActivationRequestModal';
 import { useLearnerGroupViewModel } from '../viewmodels/learner-group.viewmodel';
 import { LearnerInactiveAlert } from '../components/molecules/LearnerInactiveAlert';
 import { GroupInactiveAlert } from '../components/molecules/GroupInactiveAlert';
@@ -110,12 +110,10 @@ export default function LearnerGroupDetailView({ groupId }: Props) {
       {/* Recording card is self-contained and handles its own empty states */}
       <WirdRecordingCard groupId={groupId} />
 
-      {/* Excuse request button - visible when active */}
       {!isInactive && <ExcuseRequestButton onClick={() => setIsExcuseModalOpen(true)} />}
 
       {/* Excuse modal */}
-      <CreateRequestModal
-        type='EXCUSE'
+      <ActivationRequestModal
         open={isExcuseModalOpen}
         onOpenChange={setIsExcuseModalOpen}
         defaultGroupId={groupId}

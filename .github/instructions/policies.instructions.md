@@ -42,6 +42,8 @@ applyTo: '**'
 - **Thursday late submission** — the allowed window extends to Saturday 4:00 PM (next opening day after Friday off)
 - **Late record + existing alert in the same week** → remove the old alert from that week (yellow cancels the red)
 - **Active excuse as exception** — an active excuse (`expiresAt > now`, same `groupId`) is the only exception mechanism; it fully excludes the learner from alert creation and deactivation logic for its duration. There is no separate permanent exception flag.
+- **Saturday boundary (learner)** — on Saturday, always show the previous week if any of its applicable days lack a DB record (ATTENDED / LATE / MISSED); only advance to the newly-started Saturday week once the previous week is fully resolved.
+- **Saturday / Friday boundary (admin / moderator)** — the default tab is always the last **completed** week on Saturday and Friday; the brand-new Saturday week is never auto-selected as the default tab.
 
 ## important notes
 

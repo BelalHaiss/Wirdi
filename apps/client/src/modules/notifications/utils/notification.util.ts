@@ -11,6 +11,8 @@ export function getNotificationMessage(notification: NotificationDto): string {
       return `تم تسجيل تنبيه في مجموعة ${p.groupName}`;
     case 'LEARNER_DEACTIVATED':
       return `تم إلغاء تفعيل ${p.studentName} في مجموعة ${p.groupName}`;
+    case 'LEARNER_REACTIVATED':
+      return `تم تفعيل حسابك في مجموعة ${p.groupName}`;
     case 'LEARNER_REMOVED':
       return `تمت إزالة ${p.studentName} من مجموعة ${p.groupName}`;
     case 'REQUEST_CREATED':
@@ -30,6 +32,8 @@ export function getNotificationIcon(notification: NotificationDto): LucideIcon {
       return AlertTriangle;
     case 'LEARNER_DEACTIVATED':
       return AlertTriangle;
+    case 'LEARNER_REACTIVATED':
+      return CheckCircle;
     case 'LEARNER_REMOVED':
       return AlertTriangle;
     case 'REQUEST_CREATED':
@@ -47,6 +51,7 @@ export function getNotificationPath(notification: NotificationDto): string | nul
   switch (notification.type) {
     case 'ALERT_ASSIGNED':
     case 'LEARNER_DEACTIVATED':
+    case 'LEARNER_REACTIVATED':
     case 'LEARNER_REMOVED':
       return p.groupId ? `/groups/${p.groupId}` : '/groups';
     case 'REQUEST_CREATED':
@@ -63,6 +68,7 @@ export const NOTIFICATION_QUERY_INVALIDATION_MAP: Record<
 > = {
   ALERT_ASSIGNED: [queryKeys.wirds.all],
   LEARNER_DEACTIVATED: [queryKeys.groups.all],
+  LEARNER_REACTIVATED: [queryKeys.groups.all],
   LEARNER_REMOVED: [queryKeys.groups.all, queryKeys.learners.all],
   REQUEST_CREATED: [queryKeys.requests.all],
   REQUEST_UPDATED: [queryKeys.requests.all, queryKeys.requests.myList()],

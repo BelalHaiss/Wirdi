@@ -7,6 +7,7 @@ import type {
   GroupStatsDto,
   LearnerDto,
   QueryGroupsResponseDto,
+  ReactivateMemberDto,
   UpdateGroupDto,
   WeekDto,
   GroupMemberDto,
@@ -119,6 +120,14 @@ export const groupService = {
 
   removeMember: async (memberId: string): Promise<UnifiedApiResponse<null>> => {
     await apiClient.delete<void>(`/group-member/${memberId}`);
+    return { success: true, data: null };
+  },
+
+  reactivateMember: async (
+    groupId: string,
+    dto: ReactivateMemberDto
+  ): Promise<UnifiedApiResponse<null>> => {
+    await apiClient.patch<void>(`/group-member/${groupId}/reactivate`, dto);
     return { success: true, data: null };
   },
 

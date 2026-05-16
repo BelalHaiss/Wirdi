@@ -15,6 +15,10 @@ export type NotificationPayloadMap = {
     groupId: string;
     groupName: string;
   };
+  LEARNER_REACTIVATED: {
+    groupId: string;
+    groupName: string;
+  };
   LEARNER_REMOVED: {
     studentId: string;
     studentName: string;
@@ -47,6 +51,7 @@ export const NOTIFICATION_CHANNEL_CONFIG: Record<NotificationType, readonly Noti
   {
     ALERT_ASSIGNED: ['IN_APP'],
     LEARNER_DEACTIVATED: ['IN_APP'],
+    LEARNER_REACTIVATED: ['IN_APP'],
     LEARNER_REMOVED: ['IN_APP'],
     REQUEST_CREATED: ['IN_APP'],
     REQUEST_UPDATED: ['IN_APP'],

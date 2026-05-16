@@ -18,6 +18,7 @@ import {
   isSaturday,
   addDaysToDateStr,
   getNextSaturdayFrom,
+  getUpcomingSaturday,
   isDateTodayOrFuture,
   dateOnlyToUTC,
   formatDate,
@@ -340,9 +341,12 @@ export class GroupService {
       token: 'yyyy-MM-dd',
       timezone: 'utc',
     }) as ISODateOnlyString;
-    const nextStartStr = getNextSaturdayFrom(lastStartStr);
-    if (!isDateTodayOrFuture(nextStartStr))
-      throw new BadRequestException('تاريخ الأسبوع التالي يجب أن يكون في المستقبل');
+    const sequentialNext = getNextSaturdayFrom(lastStartStr);
+    // Use the sequential next Saturday if it hasn't passed yet;
+    // otherwise fall back to the nearest upcoming Saturday from today.
+    const nextStartStr = isDateTodayOrFuture(sequentialNext)
+      ? sequentialNext
+      : getUpcomingSaturday();
     const nextEndStr = addDaysToDateStr(nextStartStr, 5);
 
     return {

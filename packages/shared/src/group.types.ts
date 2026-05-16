@@ -141,6 +141,12 @@ export interface UpdateMemberMateDto {
   mateId: string | null;
 }
 
+/** Reactivate an INACTIVE member in a specific group */
+export interface ReactivateMemberDto {
+  groupId: string;
+  studentId: string;
+}
+
 // ============================================================================
 // Excuse DTOs
 // ============================================================================

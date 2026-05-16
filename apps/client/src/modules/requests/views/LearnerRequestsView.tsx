@@ -3,15 +3,17 @@ import { FileText, UserCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Typography } from '@/components/ui/typography';
 import { useApp } from '@/contexts/AppContext';
-import { CreateRequestModal } from '../components/organisms/CreateRequestModal';
+import { ExcuseRequestModal } from '../components/organisms/ExcuseRequestModal';
+import { ActivationRequestModal } from '../components/organisms/ActivationRequestModal';
 import { RequestsTable } from '../components/organisms/RequestsTable';
 import { useMyRequestsViewModel } from '../viewmodels/requests.viewmodel';
-import type { RequestType, TimeZoneType } from '@wirdi/shared';
+import type { TimeZoneType } from '@wirdi/shared';
 
 export function LearnerRequestsView() {
   const { user } = useApp();
   const vm = useMyRequestsViewModel();
-  const [modalType, setModalType] = useState<RequestType | null>(null);
+  const [isExcuseModalOpen, setIsExcuseModalOpen] = useState(false);
+  const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
 
   const hasPendingExcuse = vm.requests.some((r) => r.type === 'EXCUSE' && r.status === 'PENDING');
   const hasPendingActivation = vm.requests.some(
@@ -36,7 +38,7 @@ export function LearnerRequestsView() {
               color='warning'
               disabled={hasPendingExcuse}
               title={hasPendingExcuse ? 'لديك طلب عذر قيد المراجعة' : undefined}
-              onClick={() => setModalType('EXCUSE')}
+              onClick={() => setIsExcuseModalOpen(true)}
             >
               <FileText className='h-4 w-4' />
               طلب عذر
@@ -45,7 +47,7 @@ export function LearnerRequestsView() {
               color='primary'
               disabled={hasPendingActivation}
               title={hasPendingActivation ? 'لديك طلب تفعيل قيد المراجعة' : undefined}
-              onClick={() => setModalType('ACTIVATION')}
+              onClick={() => setIsActivationModalOpen(true)}
             >
               <UserCheck className='h-4 w-4' />
               طلب تفعيل
@@ -68,13 +70,11 @@ export function LearnerRequestsView() {
         </div>
       </div>
 
-      {modalType && (
-        <CreateRequestModal
-          type={modalType}
-          open={!!modalType}
-          onOpenChange={(open) => !open && setModalType(null)}
-        />
-      )}
+      <ExcuseRequestModal open={isExcuseModalOpen} onOpenChange={setIsExcuseModalOpen} />
+      <ActivationRequestModal
+        open={isActivationModalOpen}
+        onOpenChange={setIsActivationModalOpen}
+      />
     </div>
   );
 }

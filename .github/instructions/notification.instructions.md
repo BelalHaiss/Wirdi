@@ -93,6 +93,8 @@ export class AlertService {
    ```
 
 6. **Client**: Add type to `NOTIFICATION_QUERY_INVALIDATION_MAP` in `notification.util.ts`
+7. **Client**: Add message, icon, and path cases in `getNotificationMessage`, `getNotificationIcon`, and `getNotificationPath` in `notification.util.ts`
+8. **Client**: Add color scheme entry for the new type in the `colorScheme` map inside `NotificationItem.tsx`
 
 ## Adding a New Channel
 
