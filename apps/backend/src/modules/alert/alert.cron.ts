@@ -146,6 +146,7 @@ export class AlertCron {
 
     const now = new Date();
 
+    // Process attendance for the checkDay (e.g., Thursday on Saturday)
     for (const member of members) {
       await this.processMemberAlert(
         tx,
@@ -155,20 +156,22 @@ export class AlertCron {
         week.id,
         week.weekNumber,
         checkDayNumber,
-        isSaturday,
-        checkDateStr,
         now
       );
     }
 
-    // If Saturday, check grace period for previous week
+    // If Saturday, check grace period deactivations for the week that just ended
+    // On Saturday, 'week' is the previous week (contains Thursday we just checked)
+    // Policy: 1+ alert in immediately previous week → deactivate on next Saturday
     if (isSaturday) {
-      await this.processGracePeriodDeactivations(tx, groupId, week.startDate);
+      await this.processGracePeriodDeactivations(tx, groupId, week.id, week.weekNumber);
     }
   }
 
   /**
-   * Process alert logic for a single member.
+   * Process alert logic for a single member on a specific day.
+   * Creates MISSED record and alert if no attendance record exists.
+   * Checks for immediate deactivation (3 consecutive alerts in same week).
    */
   private async processMemberAlert(
     tx: Prisma.TransactionClient,
@@ -177,29 +180,27 @@ export class AlertCron {
     groupName: string,
     weekId: string,
     weekNumber: number,
-    checkDayNumber: number,
-    isSaturday: boolean,
-    checkDateStr: ISODateOnlyString,
+    dayNumber: number,
     now: Date
   ): Promise<void> {
     try {
-      // Check if student has active excuse
+      // Check if student has active excuse - skip if yes
       const activeExcuse = await tx.excuse.findFirst({
         where: { studentId, groupId, expiresAt: { gt: now } },
         select: { id: true },
       });
       if (activeExcuse) return;
 
-      // Check if wird record exists for this day
+      // Check if wird record exists for this day - skip if yes
       const wirdRecord = await tx.studentWird.findUnique({
-        where: { studentId_weekId_dayNumber: { studentId, weekId, dayNumber: checkDayNumber } },
+        where: { studentId_weekId_dayNumber: { studentId, weekId, dayNumber } },
         select: { id: true },
       });
       if (wirdRecord) return;
 
       // No record found — create MISSED wird record and alert
       this.logger.log(
-        `Creating MISSED record and alert for student ${studentId} in week ${weekNumber}, day ${checkDayNumber}`
+        `Creating MISSED record and alert for student ${studentId} in week ${weekNumber}, day ${dayNumber}`
       );
 
       // Create the MISSED wird record
@@ -207,16 +208,16 @@ export class AlertCron {
         data: {
           studentId,
           weekId,
-          dayNumber: checkDayNumber,
+          dayNumber,
           status: 'MISSED',
           recordedAt: now,
         },
       });
 
-      // Create alert
-      await this.alertService.createAlert(tx, studentId, groupId, weekId, checkDayNumber);
+      // Create alert and send notification
+      await this.alertService.createAlert(tx, studentId, groupId, weekId, dayNumber);
 
-      // Check immediate deactivation threshold (>= 3 alerts in current week)
+      // Check immediate deactivation threshold (3 consecutive alerts in same week)
       const wasDeactivated = await this.alertService.checkImmediateDeactivation(
         tx,
         studentId,
@@ -226,12 +227,12 @@ export class AlertCron {
 
       if (wasDeactivated) {
         this.logger.warn(
-          `Student ${studentId} deactivated immediately (3 alerts in week ${weekNumber})`
+          `Student ${studentId} deactivated immediately (3 consecutive alerts in week ${weekNumber})`
         );
       }
     } catch (error) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
-        this.logger.debug(`Alert already exists for student ${studentId}, day ${checkDayNumber}`);
+        this.logger.debug(`Alert already exists for student ${studentId}, day ${dayNumber}`);
       } else {
         this.logger.error(`Failed to process member ${studentId}`, error);
       }
@@ -239,23 +240,18 @@ export class AlertCron {
   }
 
   /**
-   * On Saturday, check grace period deactivations for previous week.
-   * Previous week = week that just ended (week before current Saturday).
+   * On Saturday, check grace period deactivations for the week that just ended.
+   * Policy: If a learner has 1+ alert in the immediately previous week (the week that
+   * just ended), they should be deactivated on this Saturday (after one-week grace period).
+   *
+   * @param previousWeekId - The ID of the week that just ended (contains Thursday we just checked)
    */
   private async processGracePeriodDeactivations(
     tx: Prisma.TransactionClient,
     groupId: string,
-    currentWeekStartDate: Date
+    previousWeekId: string,
+    previousWeekNumber: number
   ): Promise<void> {
-    // Find the immediately previous week (before current Saturday)
-    const previousWeek = await tx.week.findFirst({
-      where: { groupId, startDate: { lt: currentWeekStartDate } },
-      orderBy: { startDate: 'desc' },
-      take: 1,
-      select: { id: true, weekNumber: true },
-    });
-    if (!previousWeek) return;
-
     // Get all ACTIVE members in the group
     const members = await tx.groupMember.findMany({
       where: { groupId, status: 'ACTIVE', removedAt: null },
@@ -263,21 +259,21 @@ export class AlertCron {
     });
 
     this.logger.debug(
-      `Checking grace period for ${members.length} members, previous week ${previousWeek.weekNumber}`
+      `Checking grace period for ${members.length} members in week ${previousWeekNumber} (weekId: ${previousWeekId})`
     );
 
-    // Check each member for deactivation
+    // Check each member for deactivation based on alerts in the previous week
     for (const member of members) {
       const wasDeactivated = await this.alertService.checkGracePeriodDeactivation(
         tx,
         member.studentId,
         groupId,
-        previousWeek.id
+        previousWeekId
       );
 
       if (wasDeactivated) {
         this.logger.warn(
-          `Student ${member.studentId} deactivated after grace period (1 alert in week ${previousWeek.weekNumber})`
+          `Student ${member.studentId} deactivated after grace period (1+ alerts in week ${previousWeekNumber})`
         );
       }
     }
