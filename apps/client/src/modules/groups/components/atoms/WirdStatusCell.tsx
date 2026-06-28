@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Users } from 'lucide-react';
+import { Users, Globe } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { ReadSourceType, WirdStatus } from '@wirdi/shared';
@@ -27,31 +28,55 @@ type WirdStatusCellProps = VariantProps<typeof cellVariants> & {
   className?: string;
 };
 
+type ReadSourceBadge = { Icon: LucideIcon; bg: string; tooltip: string };
+
+function getReadSourceBadge(
+  readSource: ReadSourceType | undefined,
+  readOnMateName: string | undefined
+): ReadSourceBadge | null {
+  if (readSource === 'DIFFERENT_GROUP_MATE') {
+    return {
+      Icon: Users,
+      bg: 'bg-primary text-primary-foreground',
+      tooltip: `سُمع على: ${readOnMateName ?? ''}`,
+    };
+  }
+  if (readSource === 'OUTSIDE_GROUP') {
+    return { Icon: Globe, bg: 'bg-warning text-warning-foreground', tooltip: 'سُمع خارج المجموعة' };
+  }
+  return null;
+}
+
 export function WirdStatusCell({
   status,
   readSource,
   readOnMateName,
   className,
 }: WirdStatusCellProps) {
-  const shouldShowTooltip = readSource === 'OUTSIDE_GROUP' || !!readOnMateName;
+  const badge = getReadSourceBadge(readSource, readOnMateName);
 
   const content = (
     <div className={cn(cellVariants({ status }), className)}>
-      {shouldShowTooltip && (
-        <span className='absolute -top-1 -end-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm'>
-          <Users className='h-2 w-2' />
+      {badge && (
+        <span
+          className={cn(
+            'absolute -top-1 -end-1 flex h-3.5 w-3.5 items-center justify-center rounded-full shadow-sm',
+            badge.bg
+          )}
+        >
+          <badge.Icon className='h-2 w-2' />
         </span>
       )}
     </div>
   );
 
-  if (shouldShowTooltip) {
+  if (badge) {
     return (
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent side='top' className='text-xs'>
-            {readSource === 'OUTSIDE_GROUP' ? 'سُمع خارج المجموعة' : `سُمع على: ${readOnMateName}`}
+            {badge.tooltip}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -1,4 +1,4 @@
-import { BookOpen, Users, Pencil, CalendarDays, GraduationCap } from 'lucide-react';
+import { BookOpen, Users, Pencil, CalendarDays, GraduationCap, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Typography } from '@/components/ui/typography';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ type GroupInfoCardProps = {
   onEditGroup: () => void;
   onOpenSchedule: () => void;
   onManageLearners?: () => void;
+  onDeleteGroup?: () => void;
 };
 
 export function GroupInfoCard({
@@ -20,6 +21,7 @@ export function GroupInfoCard({
   onEditGroup,
   onOpenSchedule,
   onManageLearners,
+  onDeleteGroup,
 }: GroupInfoCardProps) {
   const awradLabel = group.awrad.length > 0 ? group.awrad.join('، ') : 'لا يوجد';
 
@@ -42,16 +44,30 @@ export function GroupInfoCard({
         </div>
 
         {isEditable && (
-          <Button
-            variant='outline'
-            color='warning'
-            size='sm'
-            className='shrink-0 gap-1.5'
-            onClick={onEditGroup}
-          >
-            <Pencil className='h-3.5 w-3.5' />
-            تعديل البيانات
-          </Button>
+          <div className='flex items-center gap-2 shrink-0'>
+            <Button
+              variant='outline'
+              color='warning'
+              size='sm'
+              className='gap-1.5'
+              onClick={onEditGroup}
+            >
+              <Pencil className='h-3.5 w-3.5' />
+              تعديل البيانات
+            </Button>
+            {onDeleteGroup && (
+              <Button
+                variant='ghost'
+                color='danger'
+                size='icon'
+                className='h-8 w-8'
+                onClick={onDeleteGroup}
+                aria-label='حذف المجموعة'
+              >
+                <Trash2 className='h-3.5 w-3.5' />
+              </Button>
+            )}
+          </div>
         )}
       </div>
 

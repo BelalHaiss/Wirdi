@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { queryClient, queryKeys } from '@/lib/query-client';
@@ -8,10 +9,12 @@ import { groupService } from '../services/group.service';
 import type { GroupDto, UpdateGroupDto, StaffUserDto } from '@wirdi/shared';
 
 export function useGroupDetailViewModel(groupId: string) {
+  const navigate = useNavigate();
   const isEditable = true;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const groupQuery = useApiQuery<GroupDto>({
     queryKey: queryKeys.groups.detail(groupId),
@@ -32,6 +35,16 @@ export function useGroupDetailViewModel(groupId: string) {
       setIsEditModalOpen(false);
     },
     onError: (err) => toast.error(err.message ?? 'حدث خطأ'),
+  });
+
+  const deleteGroupMutation = useApiMutation<void, null>({
+    mutationFn: () => groupService.deleteGroup(groupId),
+    onSuccess: async () => {
+      toast.success('تم حذف المجموعة بنجاح');
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+      navigate('/groups');
+    },
+    onError: (err) => toast.error(err.message ?? 'حدث خطأ أثناء حذف المجموعة'),
   });
 
   const group = groupQuery.data?.data;
@@ -58,5 +71,13 @@ export function useGroupDetailViewModel(groupId: string) {
     isScheduleModalOpen,
     openScheduleModal: () => setIsScheduleModalOpen(true),
     closeScheduleModal: () => setIsScheduleModalOpen(false),
+    // Delete modal
+    isDeleteModalOpen,
+    openDeleteModal: () => setIsDeleteModalOpen(true),
+    closeDeleteModal: () => setIsDeleteModalOpen(false),
+    handleDeleteGroup: () => {
+      void deleteGroupMutation.mutateAsync();
+    },
+    isDeleting: deleteGroupMutation.isPending,
   };
 }

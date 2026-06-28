@@ -214,7 +214,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
 
       {/* Main Content */}
       <div className='h-full lg:pr-56 flex flex-col'>
-        <div className='lg:hidden shrink-0 px-4 pt-4'>
+        <div className='lg:hidden shrink-0 px-4 pt-4 flex items-center justify-between'>
           {!isMobileMenuOpen && (
             <Button
               onClick={() => setIsMobileMenuOpen(true)}
@@ -228,6 +228,7 @@ export default function Layout({ user, onLogout, children }: LayoutProps) {
               <Menu className='w-5 h-5' />
             </Button>
           )}
+          <NotificationBell isAuthenticated />
         </div>
         <main className='h-full overflow-y-auto p-4 lg:p-6'>{children}</main>
       </div>

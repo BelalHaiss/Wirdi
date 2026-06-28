@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Typography } from '@/components/ui/typography';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,6 +78,7 @@ export default function AdminGroupDetailView({ groupId }: Props) {
         isEditable={vm.isEditable}
         onEditGroup={vm.openEditModal}
         onOpenSchedule={vm.openScheduleModal}
+        onDeleteGroup={vm.openDeleteModal}
       />
 
       {vm.isEditable && (
@@ -192,6 +194,15 @@ export default function AdminGroupDetailView({ groupId }: Props) {
       )}
 
       <WirdRecordingCard groupId={groupId} />
+
+      <ConfirmDialog
+        open={vm.isDeleteModalOpen}
+        onOpenChange={(open) => !open && vm.closeDeleteModal()}
+        onConfirm={() => vm.handleDeleteGroup()}
+        title='حذف المجموعة'
+        description='هل أنت متأكد من حذف هذه المجموعة؟ سيتم حذف جميع البيانات المرتبطة بها (الأسابيع، الجداول، الطلبات، التنبيهات). لن يتم حذف بيانات الطلاب أنفسهم.'
+        intent='destructive'
+      />
     </div>
   );
 }

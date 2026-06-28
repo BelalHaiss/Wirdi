@@ -8,9 +8,60 @@ import { SaturdayDatePicker } from '@/components/ui/saturday-date-picker';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import type { ISODateOnlyString } from '@wirdi/shared';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import type { ISODateOnlyString, WeekDto } from '@wirdi/shared';
 import { formatDateArabicNoWeekday, formatDateLongArabic } from '@wirdi/shared';
 import { useWeeklyScheduleViewModel } from '../../viewmodels/weekly-schedule.viewmodel';
+
+type ScheduleGridProps = {
+  weeks: WeekDto[];
+  onSelect: (url: string) => void;
+  onEdit: (week: WeekDto) => void;
+};
+
+function ScheduleGrid({ weeks, onSelect, onEdit }: ScheduleGridProps) {
+  return (
+    <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
+      {weeks.map((week) => (
+        <Button
+          key={week.scheduleImage.id}
+          type='button'
+          variant='ghost'
+          className='relative group p-0 rounded-xl overflow-hidden border aspect-3/4 bg-muted h-auto w-full block hover:bg-muted'
+          onClick={() => onSelect(week.scheduleImage.imageUrl)}
+        >
+          <img
+            src={week.scheduleImage.imageUrl}
+            alt={`الأسبوع ${week.weekNumber}`}
+            className='w-full h-full object-cover transition-transform group-hover:scale-105'
+          />
+          <div className='absolute bottom-0 inset-x-0 bg-foreground/60 px-2 py-1.5'>
+            <Typography size='xs' className='text-white text-center'>
+              {week.scheduleImage.name}
+            </Typography>
+            <Typography size='xs' className='text-white/70 text-center'>
+              {formatDateArabicNoWeekday(week.startDate)}
+            </Typography>
+          </div>
+          <Button
+            type='button'
+            size='icon'
+            variant='ghost'
+            color='warning'
+            className='absolute top-2 left-2 h-7 w-7 z-10'
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(week);
+            }}
+          >
+            <Pencil className='h-3.5 w-3.5' />
+          </Button>
+        </Button>
+      ))}
+    </div>
+  );
+}
 
 type WeeklyScheduleModalProps = {
   open: boolean;
@@ -172,44 +223,57 @@ export function WeeklyScheduleModal({ open, onOpenChange, groupId }: WeeklySched
               </AlertDescription>
             </Alert>
           ) : (
-            <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
-              {vm.weeks.map((week) => (
-                <Button
-                  key={week.scheduleImage.id}
-                  type='button'
-                  variant='ghost'
-                  className='relative group p-0 rounded-xl overflow-hidden border aspect-3/4 bg-muted h-auto w-full block hover:bg-muted'
-                  onClick={() => vm.setSelectedImage(week.scheduleImage.imageUrl)}
-                >
-                  <img
-                    src={week.scheduleImage.imageUrl}
-                    alt={`الأسبوع ${week.weekNumber}`}
-                    className='w-full h-full object-cover transition-transform group-hover:scale-105'
+            <Tabs
+              value={vm.activeTab}
+              onValueChange={(v) => vm.setActiveTab(v as 'current' | 'past')}
+            >
+              <TabsList className='w-full'>
+                <TabsTrigger value='current' className='flex-1 gap-2'>
+                  الحالية
+                  {vm.currentWeeks.length > 0 && (
+                    <Badge variant='soft' color='primary' className='text-xs px-1.5 py-0 h-4'>
+                      {vm.currentWeeks.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value='past' className='flex-1 gap-2'>
+                  السابقة
+                  {vm.pastWeeks.length > 0 && (
+                    <Badge variant='soft' color='muted' className='text-xs px-1.5 py-0 h-4'>
+                      {vm.pastWeeks.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value='current' className='mt-4'>
+                {vm.currentWeeks.length === 0 ? (
+                  <Alert alertType='WARN'>
+                    <AlertDescription>لا توجد جداول للأسابيع الحالية أو القادمة.</AlertDescription>
+                  </Alert>
+                ) : (
+                  <ScheduleGrid
+                    weeks={vm.currentWeeks}
+                    onSelect={vm.setSelectedImage}
+                    onEdit={vm.openEditImage}
                   />
-                  <div className='absolute bottom-0 inset-x-0 bg-foreground/60 px-2 py-1.5'>
-                    <Typography size='xs' className='text-white text-center'>
-                      {week.scheduleImage.name}
-                    </Typography>
-                    <Typography size='xs' className='text-white/70 text-center'>
-                      {formatDateArabicNoWeekday(week.startDate)}
-                    </Typography>
-                  </div>
-                  <Button
-                    type='button'
-                    size='icon'
-                    variant='ghost'
-                    color='warning'
-                    className='absolute top-2 left-2 h-7 w-7 z-10'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      vm.openEditImage(week);
-                    }}
-                  >
-                    <Pencil className='h-3.5 w-3.5' />
-                  </Button>
-                </Button>
-              ))}
-            </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value='past' className='mt-4'>
+                {vm.pastWeeks.length === 0 ? (
+                  <Alert alertType='WARN'>
+                    <AlertDescription>لا توجد جداول سابقة.</AlertDescription>
+                  </Alert>
+                ) : (
+                  <ScheduleGrid
+                    weeks={vm.pastWeeks}
+                    onSelect={vm.setSelectedImage}
+                    onEdit={vm.openEditImage}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>

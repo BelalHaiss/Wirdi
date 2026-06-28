@@ -120,7 +120,23 @@ export class GroupService {
   }
 
   async deleteGroup(id: string): Promise<void> {
-    await this.db.group.delete({ where: { id } });
+    // Collect ImageKit file IDs inside the transaction before cascade deletes them,
+    // then delete from DB. ImageKit cleanup runs after commit — external calls cannot
+    // participate in a DB transaction and we don't want a failed cleanup to block deletion.
+    const imagekitFileIds = await this.db.$transaction(async (tx) => {
+      const images = await tx.scheduleImage.findMany({
+        where: { week: { groupId: id } },
+        select: { imagekitFileId: true },
+      });
+
+      await tx.group.delete({ where: { id } });
+
+      return images.map((img) => img.imagekitFileId);
+    });
+
+    await Promise.allSettled(
+      imagekitFileIds.map((fileId) => this.fileService.deleteFileFromImageKit(fileId))
+    );
   }
 
   // ─── Weekly Schedules ───────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ import type {
   ScheduleImageDto,
   WeekDto,
 } from '@wirdi/shared';
+import { getNowAsUTC, formatDate } from '@wirdi/shared';
 import { useApiQuery } from '@/lib/hooks/useApiQuery';
 import { useApiMutation } from '@/lib/hooks/useApiMutation';
 import { queryClient, queryKeys } from '@/lib/query-client';
@@ -31,6 +32,7 @@ export function useWeeklyScheduleViewModel(groupId: string, isOpen: boolean) {
   const [editingCtx, setEditingCtx] = useState<EditingImageContext | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editName, setEditName] = useState('');
+  const [activeTab, setActiveTab] = useState<'current' | 'past'>('current');
 
   const schedulesQuery = useApiQuery<WeekDto[]>({
     queryKey: queryKeys.groups.schedules(groupId),
@@ -75,6 +77,10 @@ export function useWeeklyScheduleViewModel(groupId: string, isOpen: boolean) {
   const weeks = schedulesQuery.data?.data ?? [];
   const isFirstWeek = weeks.length === 0;
 
+  const today = formatDate({ date: getNowAsUTC(), token: 'yyyy-MM-dd' });
+  const currentWeeks = weeks.filter((w) => w.endDate >= today);
+  const pastWeeks = weeks.filter((w) => w.endDate < today);
+
   const handleUpload = async (data: UploadFormValues) => {
     await uploadScheduleMutation.mutateAsync({
       dto: { saturdayDate: data.saturdayDate, scheduleName: data.scheduleName },
@@ -118,10 +124,15 @@ export function useWeeklyScheduleViewModel(groupId: string, isOpen: boolean) {
     setEditingCtx(null);
     setEditFile(null);
     setEditName('');
+    setActiveTab('current');
   };
 
   return {
     weeks,
+    currentWeeks,
+    pastWeeks,
+    activeTab,
+    setActiveTab,
     isFirstWeek,
     isLoadingSchedules: schedulesQuery.isLoading,
 
