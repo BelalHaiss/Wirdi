@@ -35,7 +35,11 @@ const DISPLAY_DAY_ORDER = [6, 0, 1, 2, 3, 4] as const;
 /** 4:00 PM as minutes from midnight */
 const FOUR_PM: TimeMinutes = (16 * 60) as TimeMinutes;
 
-type LocalReadSourceType = 'DEFAULT_GROUP_MATE' | 'DIFFERENT_GROUP_MATE' | 'OUTSIDE_GROUP';
+type LocalReadSourceType =
+  | 'DEFAULT_GROUP_MATE'
+  | 'DIFFERENT_GROUP_MATE'
+  | 'OUTSIDE_GROUP'
+  | 'MANUAL';
 
 type WirdRecord = {
   dayNumber: number;
@@ -55,7 +59,8 @@ function normalizeReadSource(value: string): LocalReadSourceType {
   if (
     value === 'DEFAULT_GROUP_MATE' ||
     value === 'DIFFERENT_GROUP_MATE' ||
-    value === 'OUTSIDE_GROUP'
+    value === 'OUTSIDE_GROUP' ||
+    value === 'MANUAL'
   ) {
     return value;
   }
@@ -385,10 +390,14 @@ export class StudentWirdService {
             weekId,
             dayNumber: update.dayNumber,
             status: update.status,
+            readSource: 'MANUAL',
+            readOnMateId: null,
             recordedAt: now,
           },
           update: {
             status: update.status,
+            readSource: 'MANUAL',
+            readOnMateId: null,
             recordedAt: now,
           },
         })

@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from 'generated/prisma/client';
+import { PrismaClient, ReadSourceType, UserRole } from 'generated/prisma/client';
 import {
   addDaysToDateStr,
   combineDateTime,
@@ -32,12 +32,14 @@ type RecordingSeed = {
   hour: number;
   minute?: number;
   readOnMatePhone?: string;
+  readSource?: ReadSourceType;
 };
 
 type WirdEntrySeed = {
   dayNumber: WeekDayNumber;
   status: WirdSeedStatus;
   recordedAt: Date;
+  readSource?: ReadSourceType;
   readOnMateId?: string;
 };
 
@@ -90,6 +92,7 @@ function recordOn(
     hour?: number;
     minute?: number;
     readOnMatePhone?: string;
+    readSource?: ReadSourceType;
   }
 ): RecordingSeed {
   return {
@@ -98,6 +101,7 @@ function recordOn(
     hour: options?.hour ?? 10,
     minute: options?.minute ?? 0,
     readOnMatePhone: options?.readOnMatePhone,
+    readSource: options?.readSource,
   };
 }
 
@@ -258,6 +262,7 @@ function simulateWeekPolicy(input: SimulatedWeekInput, users: PhoneMap): Simulat
         dayNumber: event.recording.dayNumber,
         status: 'ATTENDED',
         recordedAt: event.at,
+        readSource: event.recording.readSource,
         readOnMateId: event.recording.readOnMatePhone
           ? users[event.recording.readOnMatePhone]?.id
           : undefined,
@@ -413,6 +418,7 @@ async function addWirds(
       weekId: input.weekId,
       dayNumber: entry.dayNumber,
       status: entry.status,
+      readSource: entry.readSource ?? 'DEFAULT_GROUP_MATE',
       readOnMateId: entry.readOnMateId,
       recordedAt: entry.recordedAt,
     })),
@@ -503,7 +509,8 @@ async function applyWeekSimulation(
 function createAttendedEntries(
   weekStartDateStr: ISODateOnlyString,
   timezone: string,
-  days: WeekDayNumber[]
+  days: WeekDayNumber[],
+  readSource?: ReadSourceType
 ): WirdEntrySeed[] {
   return days.map((dayNumber) => ({
     dayNumber,
@@ -512,6 +519,7 @@ function createAttendedEntries(
       offsetDays: DAY_OFFSET_BY_NUMBER[dayNumber],
       hour: 10,
     }),
+    readSource,
   }));
 }
 
@@ -747,7 +755,9 @@ export async function seedWirdTracking(prisma: PrismaClient) {
     weekStartDateStr: anchors.currentSaturdayStr,
     timezone: groupTimezone,
     asOf: at(3, 12),
-    recordings: [recordOn(6, { readOnMatePhone: '+966500000009' })],
+    recordings: [
+      recordOn(6, { readOnMatePhone: '+966500000009', readSource: 'DIFFERENT_GROUP_MATE' }),
+    ],
   });
 
   await applyWeekSimulation(prisma, {
@@ -764,7 +774,7 @@ export async function seedWirdTracking(prisma: PrismaClient) {
   await addWirds(prisma, {
     weekId: currentWeek.id,
     userId: users['+966500000010'].id,
-    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6, 0]),
+    entries: createAttendedEntries(anchors.currentSaturdayStr, groupTimezone, [6, 0], 'MANUAL'),
   });
 
   await applyWeekSimulation(prisma, {

@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Users, Globe } from 'lucide-react';
+import { Users, Globe, Pencil } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -34,6 +34,9 @@ function getReadSourceBadge(
   readSource: ReadSourceType | undefined,
   readOnMateName: string | undefined
 ): ReadSourceBadge | null {
+  if (readSource === 'MANUAL') {
+    return { Icon: Pencil, bg: 'bg-warning text-warning-foreground', tooltip: 'تم التعديل يدوياً' };
+  }
   if (readSource === 'DIFFERENT_GROUP_MATE') {
     return {
       Icon: Users,

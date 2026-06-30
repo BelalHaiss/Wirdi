@@ -220,6 +220,7 @@ enum ReadSourceType {
   DEFAULT_GROUP_MATE
   DIFFERENT_GROUP_MATE
   OUTSIDE_GROUP
+  MANUAL
 }
 
 enum RequestType {
